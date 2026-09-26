@@ -125,7 +125,7 @@ export default function Dashboard() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ giftId: docRef.id, recipientName: formData.recipientName })
+        body: JSON.stringify({ giftId: docRef.id, recipientName: formData.recipientName, email: user?.email })
       });
       
       const data = await res.json();
