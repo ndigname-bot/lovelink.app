@@ -450,7 +450,7 @@ export default function GiftViewer({ params }) {
         {/* STAGE 5: FINAL LETTER */}
         {stage === 5 && (
           <motion.div key="letter" initial={{opacity:0, y:40}} animate={{opacity:1, y:0}} transition={{duration:1.5}} className={`w-full max-w-2xl bg-slate-100 dark:bg-black/60 backdrop-blur-2xl border ${styles.border} p-10 md:p-16 rounded-[3rem] shadow-2xl relative z-10 text-center mt-12 mb-12`}>
-            <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/05/16/audio_0cb9b119cb.mp3" />
+            {giftData?.songQuery ? <iframe width="0" height="0" src={`https://www.youtube.com/embed/${giftData.songQuery.split("v=")[1]?.split("&")[0] || "dQw4w9WgXcQ"}?autoplay=1&loop=1&playlist=${giftData.songQuery.split("v=")[1]?.split("&")[0] || "dQw4w9WgXcQ"}`} allow="autoplay" style={{display: "none"}}></iframe> : <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/05/16/audio_0cb9b119cb.mp3" />}
             <div className="relative z-10 flex flex-col items-center">
               
               <Heart className={`w-16 h-16 ${styles.heart} mx-auto mb-8 animate-pulse`} />
