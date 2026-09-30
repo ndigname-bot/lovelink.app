@@ -305,7 +305,7 @@ export default function Dashboard() {
                         value={formData.photoCaptions[i] || ""} 
                         onChange={(e) => updateCaption(i, e.target.value)}
                         placeholder="Add caption..."
-                        className="w-full bg-white dark:bg-black/80 text-slate-900 dark:text-white text-xs px-2 py-2 outline-none border-t border-slate-200 dark:border-white/10 focus:bg-slate-100 dark:bg-black"
+                        className="w-full bg-white dark:bg-black/80 text-slate-900 dark:text-white text-sm px-3 py-3 w-full border-2 focus:border-pink-500 rounded-b-xl outline-none border-t border-slate-200 dark:border-white/10 focus:bg-slate-100 dark:bg-black"
                       />
                     </div>
                   ))}
