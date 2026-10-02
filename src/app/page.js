@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, Sparkles, ArrowRight, CheckCircle2, Image as ImageIcon, Link as LinkIcon, Star } from "lucide-react";
+import { Sparkles, ArrowRight, CheckCircle2, Image as ImageIcon, Link as LinkIcon, Star } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ThemeToggle";
+omponents/ThemeToggle";/a import { Logo } from "@/components/Logo";
 
 export default function Home() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
@@ -12,7 +12,7 @@ export default function Home() {
       {/* Navbar */}
       <nav className="flex items-center justify-between px-8 py-6 max-w-7xl mx-auto relative z-50">
         <div className="flex items-center gap-2">
-          <Heart className="w-6 h-6 text-pink-500 fill-pink-500" />
+          <Logo className="w-6 h-6 text-pink-500" />
           <span className="text-xl font-bold tracking-tight">LoveLink</span>
         </div>
         <div className="flex gap-4 md:gap-6 items-center">
@@ -41,12 +41,12 @@ export default function Home() {
             <span>The ultimate digital romantic experience</span>
           </div>
 
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6">
             The most <br className="hidden lg:block"/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-600">unforgettable gift</span><br/> you will ever give.
           </h1>
           
-          <p className="text-lg md:text-xl text-slate-500 dark:text-gray-400 max-w-xl mb-10 leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl px-2 sm:px-0 text-slate-500 dark:text-gray-400 max-w-xl mb-10 leading-relaxed">
             Create a highly personalized, interactive digital love letter in minutes. 
             Complete with mini-games, your favorite memories, and your couple's song.
           </p>

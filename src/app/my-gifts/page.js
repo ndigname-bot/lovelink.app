@@ -138,7 +138,7 @@ export default function MyGifts() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 transition-colors">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2">
-          <Heart className="w-6 h-6 text-pink-500 fill-pink-500" />
+          <Logo className="w-6 h-6 text-pink-500" />
           <Link href="/" className="text-xl font-bold tracking-tight">LoveLink</Link>
         </motion.div>
         <div className="flex gap-4 md:gap-6 items-center">

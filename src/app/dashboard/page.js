@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X } from "lucide-react";
+import { UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { auth, db } from "../../lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
@@ -209,7 +210,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Heart className="w-6 h-6 text-pink-500 fill-pink-500" />
+              <Logo className="w-6 h-6 text-pink-500" />
               <span className="font-bold text-xl tracking-tight hidden sm:block">LoveLink Builder</span>
             </div>
           </div>
