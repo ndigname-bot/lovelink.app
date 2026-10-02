@@ -54,7 +54,7 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-4 items-center">
             <Link href="/dashboard" className="group flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 text-slate-900 dark:text-white px-8 py-4 rounded-full font-semibold text-lg hover:scale-105 transition-all shadow-[0_0_40px_rgba(236,72,153,0.4)]">
-              Create Yours for $15
+              Create Yours for $10
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
