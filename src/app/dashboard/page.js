@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { auth, db } from "../../lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 
 import { useRouter } from "next/navigation";
 
@@ -116,12 +116,17 @@ export default function Dashboard() {
     window.open("/gift/draft", "_blank");
   };
 
-  const IS_LAUNCH_PROMO = false;
+  
 
   const handlePublish = async () => {
     if (!auth.currentUser) return router.push("/login");
     setIsPublishing(true);
     try {
+      // Freemium Logic: First 2 links are free
+      const q = query(collection(db, "gifts"), where("creatorId", "==", auth.currentUser.uid));
+      const querySnapshot = await getDocs(q);
+      const isFreePromo = querySnapshot.size < 2;
+
       let photoUrls = [];
 
       // Upload Multiple Photos to Cloudinary
@@ -175,10 +180,10 @@ export default function Dashboard() {
         photoUrls, 
         creatorId: auth.currentUser.uid,
         createdAt: serverTimestamp(),
-        paid: IS_LAUNCH_PROMO ? true : false 
+        paid: isFreePromo 
       });
 
-      if (IS_LAUNCH_PROMO) {
+      if (isFreePromo) {
         window.location.href = `/success?giftId=${docRef.id}`;
         return;
       }
