@@ -153,16 +153,10 @@ export default function GiftViewer({ params }) {
               photoCaptions: draftData.photoCaptions || [],
               reasons: draftData.reasons || ["Your smile", "Your laugh", "Your kindness"],
               questions: [
-                {
-                  question: draftData.q1?.question || "What is my favorite thing about you?",
-                  options: [{ text: draftData.q1?.correct || "Your smile", isCorrect: true }, { text: draftData.q1?.wrong1 || "Your cooking", isCorrect: false }, { text: draftData.q1?.wrong2 || "Your jokes", isCorrect: false }].sort(() => Math.random() - 0.5),
-                  reward: "You already know! ❤️"
-                },
-                {
-                  question: draftData.q2?.question || "Where was our first date?",
-                  options: [{ text: draftData.q2?.correct || "The coffee shop", isCorrect: true }, { text: draftData.q2?.wrong1 || "The movies", isCorrect: false }, { text: draftData.q2?.wrong2 || "The park", isCorrect: false }].sort(() => Math.random() - 0.5),
-                  reward: "Best day of my life. 🎉"
-                }
+                ...(draftData.q1?.question ? [{ question: draftData.q1.question, type: draftData.q1.type, options: [{text:draftData.q1.correct, isCorrect:true}, {text:draftData.q1.wrong1, isCorrect:false}, {text:draftData.q1.wrong2, isCorrect:false}].filter(o=>o.text).sort(()=>Math.random()-0.5) }] : []),
+                ...(draftData.q2?.question ? [{ question: draftData.q2.question, type: draftData.q2.type, options: [{text:draftData.q2.correct, isCorrect:true}, {text:draftData.q2.wrong1, isCorrect:false}, {text:draftData.q2.wrong2, isCorrect:false}].filter(o=>o.text).sort(()=>Math.random()-0.5) }] : []),
+                ...(draftData.q3?.question ? [{ question: draftData.q3.question, type: draftData.q3.type, options: [{text:draftData.q3.correct, isCorrect:true}, {text:draftData.q3.wrong1, isCorrect:false}, {text:draftData.q3.wrong2, isCorrect:false}].filter(o=>o.text).sort(()=>Math.random()-0.5) }] : []),
+                ...(draftData.q4?.question ? [{ question: draftData.q4.question, type: draftData.q4.type, options: [{text:draftData.q4.correct, isCorrect:true}, {text:draftData.q4.wrong1, isCorrect:false}, {text:draftData.q4.wrong2, isCorrect:false}].filter(o=>o.text).sort(()=>Math.random()-0.5) }] : [])
               ],
               letter: draftData.letter || "I just wanted to make something special...",
               signOff: `Yours forever,\n${draftData.creatorName || "Me"}`,
@@ -188,16 +182,10 @@ export default function GiftViewer({ params }) {
             photoCaptions: dbData.photoCaptions || [],
             reasons: dbData.reasons || ["Your beautiful smile", "How you care for me", "Your incredible patience"],
             questions: [
-              {
-                question: dbData.q1?.question || "Question 1?",
-                options: [{ text: dbData.q1?.correct || "Correct", isCorrect: true }, { text: dbData.q1?.wrong1 || "Wrong", isCorrect: false }, { text: dbData.q1?.wrong2 || "Wrong", isCorrect: false }].sort(() => Math.random() - 0.5),
-                reward: "You got it! ❤️"
-              },
-              {
-                question: dbData.q2?.question || "Question 2?",
-                options: [{ text: dbData.q2?.correct || "Correct", isCorrect: true }, { text: dbData.q2?.wrong1 || "Wrong", isCorrect: false }, { text: dbData.q2?.wrong2 || "Wrong", isCorrect: false }].sort(() => Math.random() - 0.5),
-                reward: "Amazing! 🎉"
-              }
+              ...(dbData.q1?.question ? [{ question: dbData.q1.question, type: dbData.q1.type, options: [{text:dbData.q1.correct, isCorrect:true}, {text:dbData.q1.wrong1, isCorrect:false}, {text:dbData.q1.wrong2, isCorrect:false}].filter(o=>o.text).sort(()=>Math.random()-0.5) }] : []),
+              ...(dbData.q2?.question ? [{ question: dbData.q2.question, type: dbData.q2.type, options: [{text:dbData.q2.correct, isCorrect:true}, {text:dbData.q2.wrong1, isCorrect:false}, {text:dbData.q2.wrong2, isCorrect:false}].filter(o=>o.text).sort(()=>Math.random()-0.5) }] : []),
+              ...(dbData.q3?.question ? [{ question: dbData.q3.question, type: dbData.q3.type, options: [{text:dbData.q3.correct, isCorrect:true}, {text:dbData.q3.wrong1, isCorrect:false}, {text:dbData.q3.wrong2, isCorrect:false}].filter(o=>o.text).sort(()=>Math.random()-0.5) }] : []),
+              ...(dbData.q4?.question ? [{ question: dbData.q4.question, type: dbData.q4.type, options: [{text:dbData.q4.correct, isCorrect:true}, {text:dbData.q4.wrong1, isCorrect:false}, {text:dbData.q4.wrong2, isCorrect:false}].filter(o=>o.text).sort(()=>Math.random()-0.5) }] : [])
             ],
             letter: dbData.letter || "This is my letter to you...",
             signOff: `Yours forever,\n${dbData.creatorName || "Me"}`,
@@ -228,7 +216,8 @@ export default function GiftViewer({ params }) {
   // Handle Photo Carousel Autoplay
   useEffect(() => {
     let interval;
-    if (stage === 3 && giftData?.photoUrls?.length > 1) {
+    const qLen = giftData?.questions?.length || 2;
+    if (stage === qLen + 1 && giftData?.photoUrls?.length > 1) {
       interval = setInterval(() => {
         setActivePhoto((prev) => (prev + 1) % giftData.photoUrls.length);
       }, 3500); // Change photo every 3.5s
@@ -360,7 +349,7 @@ export default function GiftViewer({ params }) {
         )}
 
         {/* TRIVIA STAGES */}
-        {(stage === 1 || stage === 2) && !activeModal && (
+        {stage >= 1 && stage <= (giftData?.questions?.length || 2) && !activeModal && (
           <motion.div key={`q-${stage}`} initial={{opacity:0, y:30}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-30}} className={`w-full max-w-md ${styles.glass} p-8 rounded-[2rem] border ${styles.border} shadow-2xl relative z-10`}>
             <h2 className={`text-xs uppercase tracking-widest font-bold mb-4 ${styles.accentText}`}>Memory #{stage}</h2>
             <p className="text-2xl md:text-3xl font-semibold mb-10 leading-snug">{giftData.questions[stage-1].question}</p>
@@ -415,7 +404,7 @@ export default function GiftViewer({ params }) {
         )}
 
         {/* STAGE 3: MEMORY CAROUSEL */}
-        {stage === 3 && (
+        {stage === (giftData?.questions?.length || 2) + 1 && (
           <motion.div key="carousel" initial={{opacity:0, scale:0.9}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:1.1}} transition={{duration:1.5}} className="w-full max-w-2xl text-center z-10 flex flex-col items-center">
             <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light leading-relaxed mb-8`}>Memory Lane...</h1>
             
@@ -459,7 +448,7 @@ export default function GiftViewer({ params }) {
         )}
 
         {/* STAGE 4: REASONS WHY (Floating Bubbles) */}
-        {stage === 4 && (
+        {stage === (giftData?.questions?.length || 2) + 2 && (
           <motion.div key="reasons" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:1}} className="w-full h-full flex flex-col items-center justify-center z-10 min-h-[60vh]">
             <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light mb-16 text-center`}>Why I love you...</h1>
             
@@ -522,7 +511,7 @@ export default function GiftViewer({ params }) {
         )}
 
         {/* STAGE 5: FINAL LETTER */}
-        {stage === 5 && (
+        {stage === (giftData?.questions?.length || 2) + 3 && (
           <motion.div key="letter" initial={{opacity:0, y:40}} animate={{opacity:1, y:0}} transition={{duration:1.5}} className={`w-full max-w-2xl bg-slate-100 dark:bg-black/60 backdrop-blur-2xl border ${styles.border} p-6 md:p-12 rounded-[3rem] shadow-2xl relative z-10 text-center mt-12 mb-12`}>
             
             {(!giftData?.songQuery || giftData.songQuery === "") && <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/05/16/audio_0cb9b119cb.mp3" />}
