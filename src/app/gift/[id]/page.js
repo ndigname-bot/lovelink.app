@@ -3,7 +3,8 @@ import { useState, useEffect, use, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon } from "lucide-react";
 import confetti from "canvas-confetti";
-import { db } from "../../../lib/firebase";
+import { db, storage } from "../../../lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 
 const getThemeStyles = (theme) => {
@@ -102,21 +103,9 @@ export default function GiftViewer({ params }) {
       let finalContent = reactionText;
       
       if (type === 'voice' && blob) {
-        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-        const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-        
-        const formData = new FormData();
-        formData.append("file", blob, "voicenote.webm");
-        formData.append("upload_preset", uploadPreset);
-        
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-          method: "POST",
-          body: formData
-        });
-        
-        if (!res.ok) throw new Error("Failed to upload audio");
-        const data = await res.json();
-        finalContent = data.secure_url;
+        const audioRef = ref(storage, `reactions/${id}/${Date.now()}_voicenote.webm`);
+        const snapshot = await uploadBytes(audioRef, blob);
+        finalContent = await getDownloadURL(snapshot.ref);
       }
       
       // Update Firestore

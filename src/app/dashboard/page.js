@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { auth, db } from "../../lib/firebase";
+import { auth, db, storage } from "../../lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 
 import { useRouter } from "next/navigation";
@@ -160,16 +161,9 @@ export default function Dashboard() {
 
       let finalSongUrl = formData.songQuery;
       if (formData.songQuery === "upload" && audioFile) {
-        const audioData = new FormData();
-        audioData.append("file", audioFile);
-        audioData.append("upload_preset", uploadPreset);
-        const audioRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-          method: "POST",
-          body: audioData,
-        });
-        if (!audioRes.ok) throw new Error("Failed to upload audio to Cloudinary");
-        const audioJson = await audioRes.json();
-        finalSongUrl = audioJson.secure_url;
+        const audioRef = ref(storage, `gifts/${auth.currentUser.uid}/audio_${Date.now()}_${audioFile.name}`);
+        const snapshot = await uploadBytes(audioRef, audioFile);
+        finalSongUrl = await getDownloadURL(snapshot.ref);
       } else if (formData.songQuery === "upload") {
         finalSongUrl = "";
       }
