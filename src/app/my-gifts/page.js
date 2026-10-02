@@ -1,5 +1,5 @@
-import { Logo } from "@/components/Logo";
 "use client";
+import { Logo } from "@/components/Logo";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 } from "lucide-react";
