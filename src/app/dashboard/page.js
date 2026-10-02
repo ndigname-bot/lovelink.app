@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X } from "lucide-react";
+import { ChevronDown, Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { auth, db, storage } from "../../lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -54,6 +54,8 @@ export default function Dashboard() {
     songQuery: "",
     q1: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     q2: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
+    q3: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
+    q4: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     reasons: ["", "", ""],
     letter: "",
     photoCaptions: []
@@ -265,10 +267,11 @@ export default function Dashboard() {
               </div>
               <div className="space-y-4">
                 <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Music className="w-4 h-4 text-pink-400" /> Background Song</label>
+                <div className="relative">
                 <select 
                   value={PRESET_SONGS.find(s => s.url === formData.songQuery) ? formData.songQuery : (formData.songQuery ? "custom" : "")} 
                   onChange={(e) => updateForm('songQuery', e.target.value === "custom" ? "https://www.youtube.com/watch?v=" : e.target.value)}
-                  className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none mb-3"
+                  className="appearance-none w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-4 pr-12 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none mb-3 transition-colors cursor-pointer shadow-sm"
                 >
                   <option value="">Select a romantic song...</option>
                   {PRESET_SONGS.map((song, idx) => (
@@ -277,6 +280,8 @@ export default function Dashboard() {
                   <option value="custom">👉 Paste my own YouTube Link...</option>
                   <option value="upload">👉 Upload MP3 from my device...</option>
                 </select>
+                <ChevronDown className="absolute right-4 top-[22px] -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+              </div>
                 
                 {(!PRESET_SONGS.find(s => s.url === formData.songQuery) && formData.songQuery !== "" && formData.songQuery !== "upload") && (
                   <input type="text" value={formData.songQuery} onChange={(e) => updateForm('songQuery', e.target.value)} placeholder="Paste custom YouTube link here..." className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none animate-in fade-in slide-in-from-top-2" />
@@ -285,144 +290,38 @@ export default function Dashboard() {
                   <input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files[0])} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-slate-600 dark:text-gray-300 focus:border-pink-500 outline-none animate-in fade-in slide-in-from-top-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100" />
                 )}
               </div>
-              {/* Question 1 */}
-              <div className="p-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl space-y-6 relative group">
+              {['q1', 'q2', 'q3', 'q4'].map((qId, index) => (
+              <div key={qId} className="p-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl space-y-6 relative group">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-lg flex items-center gap-2"><Lock className="w-5 h-5 text-pink-500" /> Trivia Question 1</h3>
-                  <select 
-                    value={formData.q1.type || "multiple_choice"} 
-                    onChange={(e) => updateQuestion('q1', 'type', e.target.value)}
-                    className="bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-600 dark:text-gray-300 outline-none focus:border-pink-500"
-                  >
-                    <option value="multiple_choice">Multiple Choice</option>
-                    <option value="open_ended">Open Ended (Text)</option>
-                  </select>
+                  <h3 className="font-bold text-lg flex items-center gap-2"><Lock className="w-5 h-5 text-pink-500" /> Trivia Question {index + 1}</h3>
+                  <div className="relative">
+                    <select 
+                      value={formData[qId].type || "multiple_choice"} 
+                      onChange={(e) => updateQuestion(qId, 'type', e.target.value)}
+                      className="appearance-none bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl pl-3 pr-8 py-1.5 text-sm text-slate-600 dark:text-gray-300 outline-none focus:border-pink-500 cursor-pointer shadow-sm"
+                    >
+                      <option value="multiple_choice">Multiple Choice</option>
+                      <option value="open_ended">Open Ended (Text)</option>
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
                 </div>
                 <div className="space-y-4">
-                  <input type="text" value={formData.q1.question} onChange={(e) => updateQuestion('q1', 'question', e.target.value)} placeholder="e.g. What is my favorite thing about you?" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
+                  <input type="text" value={formData[qId].question} onChange={(e) => updateQuestion(qId, 'question', e.target.value)} placeholder={`e.g. ${index === 0 ? "What is my favorite thing about you?" : index === 1 ? "Where was our first date?" : "What is my biggest pet peeve?"}`} className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
                   
-                  {formData.q1.type === "open_ended" ? (
+                  {formData[qId].type === "open_ended" ? (
                     <div className="bg-slate-100 dark:bg-white/5 border border-dashed border-slate-300 dark:border-white/20 rounded-xl p-4 text-center">
                       <p className="text-sm text-slate-500 dark:text-gray-400">The recipient will type their own answer in a text box.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <input type="text" value={formData.q1.correct} onChange={(e) => updateQuestion('q1', 'correct', e.target.value)} placeholder="Correct ✅" className="w-full bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-green-500 outline-none transition-colors" />
-                      <input type="text" value={formData.q1.wrong1} onChange={(e) => updateQuestion('q1', 'wrong1', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
-                      <input type="text" value={formData.q1.wrong2} onChange={(e) => updateQuestion('q1', 'wrong2', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
+                      <input type="text" value={formData[qId].correct} onChange={(e) => updateQuestion(qId, 'correct', e.target.value)} placeholder="Correct ✅" className="w-full bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-green-500 outline-none transition-colors" />
+                      <input type="text" value={formData[qId].wrong1} onChange={(e) => updateQuestion(qId, 'wrong1', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
+                      <input type="text" value={formData[qId].wrong2} onChange={(e) => updateQuestion(qId, 'wrong2', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
                     </div>
                   )}
                 </div>
               </div>
-
-              {/* Question 2 */}
-              <div className="p-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl space-y-6 relative group">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-lg flex items-center gap-2"><Lock className="w-5 h-5 text-pink-500" /> Trivia Question 2</h3>
-                  <select 
-                    value={formData.q2.type || "multiple_choice"} 
-                    onChange={(e) => updateQuestion('q2', 'type', e.target.value)}
-                    className="bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-600 dark:text-gray-300 outline-none focus:border-pink-500"
-                  >
-                    <option value="multiple_choice">Multiple Choice</option>
-                    <option value="open_ended">Open Ended (Text)</option>
-                  </select>
-                </div>
-                <div className="space-y-4">
-                  <input type="text" value={formData.q2.question} onChange={(e) => updateQuestion('q2', 'question', e.target.value)} placeholder="e.g. Where was our first date?" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
-                  
-                  {formData.q2.type === "open_ended" ? (
-                    <div className="bg-slate-100 dark:bg-white/5 border border-dashed border-slate-300 dark:border-white/20 rounded-xl p-4 text-center">
-                      <p className="text-sm text-slate-500 dark:text-gray-400">The recipient will type their own answer in a text box.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <input type="text" value={formData.q2.correct} onChange={(e) => updateQuestion('q2', 'correct', e.target.value)} placeholder="Correct ✅" className="w-full bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-green-500 outline-none transition-colors" />
-                      <input type="text" value={formData.q2.wrong1} onChange={(e) => updateQuestion('q2', 'wrong1', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
-                      <input type="text" value={formData.q2.wrong2} onChange={(e) => updateQuestion('q2', 'wrong2', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {step === 3 && (
-            <motion.div key="step3" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0, x:-20}} className="space-y-10">
-              <div>
-                <h1 className="text-3xl font-bold mb-2">The Deep Journey.</h1>
-                <p className="text-slate-500 dark:text-gray-400">Photos, reasons why you love them, and the final letter.</p>
-              </div>
-
-              {/* Memory Carousel Photos */}
-              <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-pink-400" /> Photo Gallery (Up to 10)</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {photoPreviews.map((src, i) => (
-                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 group flex flex-col bg-slate-100 dark:bg-black">
-                      <div className="relative flex-1">
-                        <img src={src} alt="Upload" className="absolute inset-0 w-full h-full object-cover" />
-                        <button onClick={() => removePhoto(i)} className="absolute top-2 right-2 bg-white dark:bg-black/50 p-1 rounded-full text-slate-900 dark:text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <input 
-                        type="text" 
-                        value={formData.photoCaptions[i] || ""} 
-                        onChange={(e) => updateCaption(i, e.target.value)}
-                        placeholder="Add caption..."
-                        className="w-full bg-slate-50 dark:bg-[#111] text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-600 text-sm px-3 py-3 border-2 border-transparent focus:border-pink-500 rounded-b-xl outline-none border-t border-slate-200 dark:border-white/10 transition-colors"
-                      />
-                    </div>
-                  ))}
-                  {photoPreviews.length < 10 && (
-                    <div className="relative aspect-square rounded-xl border-2 border-dashed border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:bg-white/10 flex flex-col items-center justify-center cursor-pointer">
-                      <input type="file" multiple accept="image/*" onChange={handlePhotoSelect} className="absolute inset-0 opacity-0 cursor-pointer" />
-                      <Plus className="w-8 h-8 text-gray-500" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Reasons Why */}
-              <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Heart className="w-4 h-4 text-pink-400" /> 3 Reasons I Love You</label>
-                <div className="space-y-3">
-                  {[0, 1, 2].map(i => (
-                    <input key={i} type="text" value={formData.reasons[i]} onChange={(e) => updateReason(i, e.target.value)} placeholder={`Reason ${i+1}... (e.g. Your beautiful smile)`} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none" />
-                  ))}
-                </div>
-              </div>
-
-              {/* Love Letter */}
-              <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-pink-400" /> Final Love Letter</label>
-                <textarea rows="6" value={formData.letter} onChange={(e) => updateForm('letter', e.target.value)} placeholder="Pour your heart out here..." className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-6 py-5 text-slate-900 dark:text-white outline-none resize-none" />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
-
-      <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-black/80 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 py-4 px-8 z-50">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <button onClick={() => setStep(s => s > 1 ? s - 1 : 1)} className={`flex items-center gap-2 font-medium ${step === 1 ? 'text-gray-600' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:text-white'}`} disabled={step === 1}>
-            <ChevronLeft className="w-5 h-5" /> Back
-          </button>
-          {step < 3 ? (
-            <button onClick={() => setStep(s => s + 1)} className="flex items-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-black px-8 py-3 rounded-full font-semibold hover:bg-slate-800 dark:hover:bg-gray-200">
-              Continue <ChevronRight className="w-5 h-5" />
-            </button>
-          ) : (
-            <div className="flex gap-4">
-              <button onClick={handlePreview} className="hidden md:flex items-center gap-2 text-slate-900 dark:text-white/70 hover:text-slate-900 dark:text-white px-6 py-3 font-medium">Preview</button>
-              <button onClick={handlePublish} disabled={isPublishing} className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 text-slate-900 dark:text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 disabled:opacity-50">
-                {isPublishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Sparkles className="w-5 h-5" /> Generate Link</>}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+            ))}
   );
 }

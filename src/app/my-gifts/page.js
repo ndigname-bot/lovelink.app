@@ -144,6 +144,7 @@ export default function MyGifts() {
         </motion.div>
         <div className="flex gap-4 md:gap-6 items-center">
           <ThemeToggle />
+          <Link href="/inbox" className="text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors flex items-center gap-1">Inbox <div className="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></div></Link>
           <button onClick={() => auth.signOut()} className="text-sm text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-slate-900 dark:text-white transition-colors">Sign Out</button>
           <Link href="/dashboard" className="text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-black px-4 py-2 rounded-full hover:bg-slate-800 dark:hover:bg-gray-200 transition-colors shadow-lg flex items-center gap-2">
             <Plus className="w-4 h-4" /> New Gift
