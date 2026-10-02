@@ -323,5 +323,85 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div key="step3" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0, x:-20}} className="space-y-10">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">The Deep Journey.</h1>
+                <p className="text-slate-500 dark:text-gray-400">Photos, reasons why you love them, and the final letter.</p>
+              </div>
+
+              {/* Memory Carousel Photos */}
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-pink-400" /> Photo Gallery (Up to 10)</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {photoPreviews.map((src, i) => (
+                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 group flex flex-col bg-slate-100 dark:bg-black">
+                      <div className="relative flex-1">
+                        <img src={src} alt="Upload" className="absolute inset-0 w-full h-full object-cover" />
+                        <button onClick={() => removePhoto(i)} className="absolute top-2 right-2 bg-white dark:bg-black/50 p-1 rounded-full text-slate-900 dark:text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <input 
+                        type="text" 
+                        value={formData.photoCaptions[i] || ""} 
+                        onChange={(e) => updateCaption(i, e.target.value)}
+                        placeholder="Add caption..."
+                        className="w-full bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 text-sm px-3 py-3 border-2 border-transparent focus:border-pink-500 rounded-b-xl outline-none border-t border-slate-200 dark:border-white/10 transition-colors"
+                      />
+                    </div>
+                  ))}
+                  {photoPreviews.length < 10 && (
+                    <div className="relative aspect-square rounded-xl border-2 border-dashed border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:bg-white/10 flex flex-col items-center justify-center cursor-pointer">
+                      <input type="file" multiple accept="image/*" onChange={handlePhotoSelect} className="absolute inset-0 opacity-0 cursor-pointer" />
+                      <Plus className="w-8 h-8 text-gray-500" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Reasons Why */}
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Heart className="w-4 h-4 text-pink-400" /> 3 Reasons I Love You</label>
+                <div className="space-y-3">
+                  {[0, 1, 2].map(i => (
+                    <input key={i} type="text" value={formData.reasons[i]} onChange={(e) => updateReason(i, e.target.value)} placeholder={`Reason ${i+1}... (e.g. Your beautiful smile)`} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none" />
+                  ))}
+                </div>
+              </div>
+
+              {/* Love Letter */}
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-pink-400" /> Final Love Letter</label>
+                <textarea rows="6" value={formData.letter} onChange={(e) => updateForm('letter', e.target.value)} placeholder="Pour your heart out here..." className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-6 py-5 text-slate-900 dark:text-white outline-none resize-none" />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-black/80 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 py-4 px-8 z-50">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <button onClick={() => setStep(s => s > 1 ? s - 1 : 1)} className={`flex items-center gap-2 font-medium ${step === 1 ? 'text-gray-600' : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:text-white'}`} disabled={step === 1}>
+            <ChevronLeft className="w-5 h-5" /> Back
+          </button>
+          {step < 3 ? (
+            <button onClick={() => setStep(s => s + 1)} className="flex items-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-black px-8 py-3 rounded-full font-semibold hover:bg-slate-800 dark:hover:bg-gray-200">
+              Continue <ChevronRight className="w-5 h-5" />
+            </button>
+          ) : (
+            <div className="flex gap-4">
+              <button onClick={handlePreview} className="hidden md:flex items-center gap-2 text-slate-900 dark:text-white/70 hover:text-slate-900 dark:text-white px-6 py-3 font-medium">Preview</button>
+              <button onClick={handlePublish} disabled={isPublishing} className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 text-slate-900 dark:text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 disabled:opacity-50">
+                {isPublishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Sparkles className="w-5 h-5" /> Generate Link</>}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
