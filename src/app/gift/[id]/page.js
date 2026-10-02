@@ -63,6 +63,91 @@ export default function GiftViewer({ params }) {
   const [poppedReasons, setPoppedReasons] = useState([false, false, false]);
   const pressInterval = useRef(null);
 
+  
+  // --- REACTION BOOTH LOGIC ---
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      setMediaRecorder(recorder);
+      setAudioChunks([]);
+      
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) setAudioChunks((prev) => [...prev, e.data]);
+      };
+      
+      recorder.start();
+      setIsRecording(true);
+      
+      // Stop automatically after 60s
+      setTimeout(() => {
+        if (recorder.state === "recording") stopRecording();
+      }, 60000);
+    } catch (err) {
+      alert("Microphone access denied. Please allow microphone access to record a voice note.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  const submitReaction = async (type, blob = null) => {
+    setIsSubmittingReaction(true);
+    try {
+      let finalContent = reactionText;
+      
+      if (type === 'voice' && blob) {
+        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+        const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+        
+        const formData = new FormData();
+        formData.append("file", blob, "voicenote.webm");
+        formData.append("upload_preset", uploadPreset);
+        
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+          method: "POST",
+          body: formData
+        });
+        
+        if (!res.ok) throw new Error("Failed to upload audio");
+        const data = await res.json();
+        finalContent = data.secure_url;
+      }
+      
+      // Update Firestore
+      const giftRef = doc(db, "gifts", id);
+      await updateDoc(giftRef, {
+        response: {
+          type,
+          content: finalContent,
+          createdAt: new Date().toISOString()
+        }
+      });
+      
+      setReactionSent(true);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send reaction. Please try again.");
+    }
+    setIsSubmittingReaction(false);
+  };
+
+  
+  useEffect(() => {
+    let interval;
+    if (isRecording) {
+      interval = setInterval(() => setRecordingTime(p => p + 1), 1000);
+    } else {
+      setRecordingTime(0);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording]);
+
   useEffect(() => {
     const fetchGiftData = async () => {
       if (giftId === "draft") {
@@ -167,7 +252,7 @@ export default function GiftViewer({ params }) {
   if (giftData.paid === false) {
     return (
       <div className="min-h-screen bg-white dark:bg-[#0a0a0a] flex items-center justify-center text-slate-900 dark:text-white px-6 text-center">
-        <div className="max-w-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-10 rounded-3xl">
+        <div className="max-w-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-6 md:p-10 rounded-3xl">
           <Lock className="w-12 h-12 text-pink-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">This gift is locked.</h1>
           <p className="text-slate-500 dark:text-gray-400">The creator has not completed payment for this digital letter yet.</p>
@@ -256,7 +341,7 @@ export default function GiftViewer({ params }) {
         
         {stage === -2 && (
           <motion.div key="greeting" initial={{opacity:0, filter:"blur(10px)"}} animate={{opacity:1, filter:"blur(0px)"}} exit={{opacity:0, filter:"blur(10px)"}} transition={{duration:1.5}} className="text-center z-10 cursor-pointer" onClick={() => setStage(-1)}>
-            <h1 className={`text-4xl md:text-6xl ${styles.font} italic opacity-90 font-light mb-6`}>Hey, {giftData.recipientName}...</h1>
+            <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light mb-6`}>Hey, {giftData.recipientName}...</h1>
             <p className={`text-sm opacity-40 tracking-widest uppercase animate-pulse ${styles.font}`}>Tap anywhere to continue</p>
           </motion.div>
         )}
@@ -325,7 +410,7 @@ export default function GiftViewer({ params }) {
         )}
 
         {activeModal === "reward" && (
-          <motion.div key="reward" initial={{scale:0.8, opacity:0}} animate={{scale:1, opacity:1}} exit={{opacity:0, scale:0.9}} className={`w-full max-w-md ${styles.glass} p-10 rounded-[2rem] border ${styles.border} text-center shadow-2xl z-20`}>
+          <motion.div key="reward" initial={{scale:0.8, opacity:0}} animate={{scale:1, opacity:1}} exit={{opacity:0, scale:0.9}} className={`w-full max-w-md ${styles.glass} p-6 md:p-10 rounded-[2rem] border ${styles.border} text-center shadow-2xl z-20`}>
             <Heart className={`w-20 h-20 ${styles.heart} mx-auto mb-6 animate-bounce`} />
             <p className="text-xl opacity-90 mb-10 leading-relaxed font-medium">"{giftData.questions[stage-1].reward}"</p>
             <button onClick={nextStage} className={`w-full py-4 bg-gradient-to-r ${styles.accentGradient} rounded-2xl font-bold shadow-lg hover:scale-105 transition-transform text-slate-900 dark:text-white text-lg flex items-center justify-center gap-2`}>
@@ -359,7 +444,7 @@ export default function GiftViewer({ params }) {
                     <img src={giftData.photoUrls[activePhoto]} className="absolute inset-0 w-full h-full object-cover" />
                     {giftData.photoCaptions && giftData.photoCaptions[activePhoto] && (
                       <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-16 pb-8 px-6 text-center">
-                        <p className="text-slate-900 dark:text-white text-lg md:text-xl font-medium tracking-wide drop-shadow-md">
+                        <p className="text-slate-900 dark:text-white text-base md:text-xl font-medium tracking-wide drop-shadow-md">
                           "{giftData.photoCaptions[activePhoto]}"
                         </p>
                       </div>
@@ -449,7 +534,7 @@ export default function GiftViewer({ params }) {
 
         {/* STAGE 5: FINAL LETTER */}
         {stage === 5 && (
-          <motion.div key="letter" initial={{opacity:0, y:40}} animate={{opacity:1, y:0}} transition={{duration:1.5}} className={`w-full max-w-2xl bg-slate-100 dark:bg-black/60 backdrop-blur-2xl border ${styles.border} p-10 md:p-16 rounded-[3rem] shadow-2xl relative z-10 text-center mt-12 mb-12`}>
+          <motion.div key="letter" initial={{opacity:0, y:40}} animate={{opacity:1, y:0}} transition={{duration:1.5}} className={`w-full max-w-2xl bg-slate-100 dark:bg-black/60 backdrop-blur-2xl border ${styles.border} p-6 md:p-12 rounded-[3rem] shadow-2xl relative z-10 text-center mt-12 mb-12`}>
             
             {(!giftData?.songQuery || giftData.songQuery === "") && <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/05/16/audio_0cb9b119cb.mp3" />}
             {giftData?.songQuery?.includes("youtube.com") && <iframe width="0" height="0" src={`https://www.youtube.com/embed/${giftData.songQuery.split("v=")[1]?.split("&")[0]}?autoplay=1&loop=1&playlist=${giftData.songQuery.split("v=")[1]?.split("&")[0]}`} allow="autoplay" style={{display: "none"}}></iframe>}
@@ -459,11 +544,11 @@ export default function GiftViewer({ params }) {
               
               <Heart className={`w-16 h-16 ${styles.heart} mx-auto mb-8 animate-pulse`} />
               
-              <h2 className={`text-3xl md:text-4xl ${styles.font} italic mb-10 text-transparent bg-clip-text bg-gradient-to-r ${styles.accentGradient}`}>
+              <h2 className={`text-2xl md:text-4xl ${styles.font} italic mb-10 text-transparent bg-clip-text bg-gradient-to-r ${styles.accentGradient}`}>
                 My dearest {giftData.recipientName},
               </h2>
               
-              <div className="text-lg md:text-xl opacity-90 leading-loose whitespace-pre-wrap font-medium mb-12 text-left">
+              <div className="text-base md:text-xl opacity-90 leading-loose whitespace-pre-wrap font-medium mb-12 text-left">
                 {giftData.letter}
               </div>
               
