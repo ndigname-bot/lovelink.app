@@ -64,6 +64,14 @@ export default function GiftViewer({ params }) {
   const [poppedReasons, setPoppedReasons] = useState([false, false, false]);
   const pressInterval = useRef(null);
 
+  // Reaction Booth State
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [audioChunks, setAudioChunks] = useState([]);
+  const [reactionText, setReactionText] = useState("");
+  const [isSubmittingReaction, setIsSubmittingReaction] = useState(false);
+
   
   // --- REACTION BOOTH LOGIC ---
   const startRecording = async () => {
