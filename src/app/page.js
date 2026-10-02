@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, ArrowRight, CheckCircle2, Image as ImageIcon, Link as LinkIcon, Star } from "lucide-react";
+import { Heart, Sparkles, ArrowRight, CheckCircle2, Image as ImageIcon, Link as LinkIcon, Star } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/Logo";
