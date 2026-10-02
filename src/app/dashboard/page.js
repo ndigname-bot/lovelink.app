@@ -59,6 +59,7 @@ export default function Dashboard() {
 
   const [photos, setPhotos] = useState([]);
   const [photoPreviews, setPhotoPreviews] = useState([]);
+  const [audioFile, setAudioFile] = useState(null);
 
   const updateForm = (key, value) => setFormData(prev => ({ ...prev, [key]: value }));
   const updateQuestion = (q, key, value) => setFormData(prev => ({ ...prev, [q]: { ...prev[q], [key]: value } }));
@@ -109,7 +110,8 @@ export default function Dashboard() {
   };
 
   const handlePreview = () => {
-    localStorage.setItem("lovelink_draft", JSON.stringify({ ...formData, photoUrls: photoPreviews }));
+    localStorage.setItem("lovelink_draft", JSON.stringify({ ...formData,
+        songQuery: finalSongUrl, photoUrls: photoPreviews }));
     window.open("/gift/draft", "_blank");
   };
 
@@ -148,6 +150,22 @@ export default function Dashboard() {
           return data.secure_url;
         });
         photoUrls = await Promise.all(uploadPromises);
+      }
+
+      let finalSongUrl = formData.songQuery;
+      if (formData.songQuery === "upload" && audioFile) {
+        const audioData = new FormData();
+        audioData.append("file", audioFile);
+        audioData.append("upload_preset", uploadPreset);
+        const audioRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+          method: "POST",
+          body: audioData,
+        });
+        if (!audioRes.ok) throw new Error("Failed to upload audio to Cloudinary");
+        const audioJson = await audioRes.json();
+        finalSongUrl = audioJson.secure_url;
+      } else if (formData.songQuery === "upload") {
+        finalSongUrl = "";
       }
 
       // Save to Firestore
@@ -251,10 +269,14 @@ export default function Dashboard() {
                     <option key={idx} value={song.url}>{song.title}</option>
                   ))}
                   <option value="custom">👉 Paste my own YouTube Link...</option>
+                  <option value="upload">👉 Upload MP3 from my device...</option>
                 </select>
                 
-                {(!PRESET_SONGS.find(s => s.url === formData.songQuery) && formData.songQuery !== "") && (
+                {(!PRESET_SONGS.find(s => s.url === formData.songQuery) && formData.songQuery !== "" && formData.songQuery !== "upload") && (
                   <input type="text" value={formData.songQuery} onChange={(e) => updateForm('songQuery', e.target.value)} placeholder="Paste custom YouTube link here..." className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none animate-in fade-in slide-in-from-top-2" />
+                )}
+                {formData.songQuery === "upload" && (
+                  <input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files[0])} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-slate-600 dark:text-gray-300 focus:border-pink-500 outline-none animate-in fade-in slide-in-from-top-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100" />
                 )}
               </div>
               {/* Question 1 */}
