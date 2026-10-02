@@ -125,7 +125,7 @@ export default function Dashboard() {
       // Freemium Logic: First 2 links are free
       const q = query(collection(db, "gifts"), where("creatorId", "==", auth.currentUser.uid));
       const querySnapshot = await getDocs(q);
-      const isFreePromo = querySnapshot.size < 2;
+      const isFreePromo = true; // Temporarily free for all testing
 
       let photoUrls = [];
 
