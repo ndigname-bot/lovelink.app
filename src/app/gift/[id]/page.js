@@ -146,6 +146,7 @@ export default function GiftViewer({ params }) {
             const draftData = JSON.parse(saved);
             setGiftData({
               theme: draftData.theme || "blush",
+              occasion: draftData.occasion || "standard",
               recipientName: draftData.recipientName || "Cutie",
               creatorName: draftData.creatorName || "Me",
               songQuery: draftData.songQuery || "Daniel Caesar - Get You",
@@ -175,6 +176,7 @@ export default function GiftViewer({ params }) {
           const dbData = docSnap.data();
           setGiftData({
             theme: dbData.theme || "blush",
+            occasion: dbData.occasion || "standard",
             recipientName: dbData.recipientName || "Cutie",
             creatorName: dbData.creatorName || "Me",
             songQuery: dbData.songQuery || "Daniel Caesar - Get You",
@@ -197,7 +199,7 @@ export default function GiftViewer({ params }) {
 
       // Default Fallback
       setGiftData({
-        theme: "blush", recipientName: "Yuri", creatorName: "Emmanuel", songQuery: "Beautiful - Bazzi", 
+        theme: "blush", occasion: "standard", recipientName: "Yuri", creatorName: "Emmanuel", songQuery: "Beautiful - Bazzi", 
         photoUrls: ["https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=500&q=80", "https://images.unsplash.com/photo-1474552226712-ac0f0961a954?w=500&q=80"],
         reasons: ["Your radiant energy", "How safe I feel with you", "Your endless creativity"],
         paid: true,

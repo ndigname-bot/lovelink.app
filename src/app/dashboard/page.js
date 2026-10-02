@@ -48,6 +48,7 @@ export default function Dashboard() {
   }, [router]);
 
   const [formData, setFormData] = useState({
+    occasion: "standard",
     theme: "blush",
     recipientName: "",
     creatorName: "",
@@ -246,6 +247,28 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+
+              <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-white/10">
+                <label className="text-sm font-medium text-slate-600 dark:text-gray-300">What is the occasion?</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { id: 'standard', name: 'Just Because', emoji: '💌' },
+                    { id: 'birthday', name: 'Birthday', emoji: '🎂' },
+                    { id: 'anniversary', name: 'Anniversary', emoji: '🥂' },
+                    { id: 'proposal', name: 'Proposal', emoji: '💍' }
+                  ].map(occ => (
+                    <button 
+                      key={occ.id} 
+                      onClick={() => updateForm('occasion', occ.id)}
+                      className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${formData.occasion === occ.id ? 'border-pink-500 bg-pink-500/10 text-pink-600 dark:text-pink-400 shadow-md' : 'border-slate-200 dark:border-white/10 hover:border-pink-500/50 bg-white dark:bg-white/5 text-slate-600 dark:text-gray-300'}`}
+                    >
+                      <span className="text-2xl">{occ.emoji}</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-center">{occ.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-slate-600 dark:text-gray-300">Who is this for?</label>
@@ -365,17 +388,17 @@ export default function Dashboard() {
 
               {/* Reasons Why */}
               <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Heart className="w-4 h-4 text-pink-400" /> 3 Reasons I Love You</label>
+                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Heart className="w-4 h-4 text-pink-400" /> {formData.occasion === "proposal" ? "3 Promises For Our Future" : formData.occasion === "birthday" ? "3 Birthday Wishes" : "3 Reasons I Love You"}</label>
                 <div className="space-y-3">
                   {[0, 1, 2].map(i => (
-                    <input key={i} type="text" value={formData.reasons[i]} onChange={(e) => updateReason(i, e.target.value)} placeholder={`Reason ${i+1}... (e.g. Your beautiful smile)`} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none" />
+                    <input key={i} type="text" value={formData.reasons[i]} onChange={(e) => updateReason(i, e.target.value)} placeholder={`${formData.occasion === "proposal" ? "Promise" : formData.occasion === "birthday" ? "Wish" : "Reason"} ${i+1}... (e.g. ${formData.occasion === "proposal" ? "I promise to always listen" : "Your beautiful smile"})`} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none" />
                   ))}
                 </div>
               </div>
 
               {/* Love Letter */}
               <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-pink-400" /> Final Love Letter</label>
+                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-pink-400" /> {formData.occasion === "proposal" ? "The Big Proposal Letter" : "Final Love Letter"}</label>
                 <textarea rows="6" value={formData.letter} onChange={(e) => updateForm('letter', e.target.value)} placeholder="Pour your heart out here..." className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-6 py-5 text-slate-900 dark:text-white outline-none resize-none" />
               </div>
             </motion.div>
