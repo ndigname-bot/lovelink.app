@@ -144,7 +144,7 @@ export default function Dashboard() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ giftId: docRef.id, recipientName: formData.recipientName, email: user?.email })
+        body: JSON.stringify({ giftId: docRef.id, recipientName: formData.recipientName, email: auth.currentUser?.email })
       });
       
       const data = await res.json();
@@ -156,7 +156,7 @@ export default function Dashboard() {
       }
     } catch (e) {
       console.error("Error publishing:", e);
-      alert("Failed to save gift.");
+      alert("Failed to save gift: " + e.message);
       setIsPublishing(false);
     }
   };
