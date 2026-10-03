@@ -5,7 +5,15 @@ import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon } 
 import confetti from "canvas-confetti";
 import { db, storage } from "../../../lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";\n\nconst PRESET_SONGS = [
+  { title: "Daniel Caesar - Get You", url: "https://www.youtube.com/watch?v=uQFVqltOXRg" },
+  { title: "Bazzi - Beautiful", url: "https://www.youtube.com/watch?v=Uk1hqVGREy0" },
+  { title: "Ed Sheeran - Perfect", url: "https://www.youtube.com/watch?v=2Vv-BfVoq4g" },
+  { title: "John Legend - All of Me", url: "https://www.youtube.com/watch?v=450p7goxZqg" },
+  { title: "Bruno Mars - Just The Way You Are", url: "https://www.youtube.com/watch?v=LjhCEhWiKXk" },
+  { title: "Christina Perri - A Thousand Years", url: "https://www.youtube.com/watch?v=rtOvBOTyX00" },
+  { title: "Celine Dion - My Heart Will Go On", url: "https://www.youtube.com/watch?v=pWtCBSmWn2A" },
+];
 
 const getThemeStyles = (theme) => {
   switch (theme) {
@@ -310,11 +318,19 @@ export default function GiftViewer({ params }) {
 
   return (
     <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-1000`}>
+      {stage >= 1 && (
+        <>
+          {(!giftData?.songQuery || giftData.songQuery === "") && <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/05/16/audio_0cb9b119cb.mp3" />}
+          {giftData?.songQuery?.includes("youtube") && <iframe width="0" height="0" src={`https://www.youtube.com/embed/${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}?autoplay=1&loop=1&playlist=${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}`} allow="autoplay" style={{display: "none"}}></iframe>}
+          {giftData?.songQuery && !giftData.songQuery.includes("youtube") && <audio autoPlay loop src={giftData.songQuery} />}
+        </>
+      )}
+
       
       {stage >= 0 && (
         <motion.div initial={{y:-50, opacity:0}} animate={{y:0, opacity:1}} className={`absolute top-6 left-1/2 -translate-x-1/2 ${styles.glass} ${styles.border} px-4 py-2 rounded-full border flex items-center gap-2 z-50`}>
           <Music className={`w-3 h-3 ${styles.accentText} animate-pulse`} />
-          <span className="text-xs font-medium tracking-wide">Playing: {giftData.songQuery}</span>
+          <span className="text-xs font-medium tracking-wide">Playing: {PRESET_SONGS.find(s => s.url === giftData.songQuery)?.title || (giftData.songQuery.startsWith("http") ? "Our Special Song 🎵" : giftData.songQuery)}</span>
         </motion.div>
       )}
 
@@ -337,8 +353,9 @@ export default function GiftViewer({ params }) {
         {stage === -1 && (
           <motion.div key="buildup" initial={{opacity:0, filter:"blur(10px)"}} animate={{opacity:1, filter:"blur(0px)"}} exit={{opacity:0, filter:"blur(10px)"}} transition={{duration:1.5}} className="text-center z-10 cursor-pointer" onClick={() => setStage(0)}>
             <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light leading-relaxed mb-6`}>
-              I made something <br/><span className={`${styles.accentText} font-semibold`}>special</span> just for you.
+              You have a classified digital package from <span className={`${styles.accentText} font-semibold`}>{giftData.creatorName}</span>.
             </h1>
+            <p className="text-lg opacity-80 mb-8 font-medium">But before you can open it, you must prove your identity.</p>
             <p className={`text-sm opacity-40 tracking-widest uppercase animate-pulse ${styles.font}`}>Tap anywhere to continue</p>
           </motion.div>
         )}
@@ -400,7 +417,7 @@ export default function GiftViewer({ params }) {
         {activeModal === "reward" && (
           <motion.div key="reward" initial={{scale:0.8, opacity:0}} animate={{scale:1, opacity:1}} exit={{opacity:0, scale:0.9}} className={`w-full max-w-md ${styles.glass} p-6 md:p-10 rounded-[2rem] border ${styles.border} text-center shadow-2xl z-20`}>
             <Heart className={`w-20 h-20 ${styles.heart} mx-auto mb-6 animate-bounce`} />
-            <p className="text-xl opacity-90 mb-10 leading-relaxed font-medium">"{giftData.questions[stage-1].reward}"</p>
+            <p className="text-xl opacity-90 mb-10 leading-relaxed font-medium">"{giftData.questions[stage-1].reward || \"You know me so well! ❤️\"}"</p>
             <button onClick={nextStage} className={`w-full py-4 bg-gradient-to-r ${styles.accentGradient} rounded-2xl font-bold shadow-lg hover:scale-105 transition-transform text-slate-900 dark:text-white text-lg flex items-center justify-center gap-2`}>
               Next Step <ArrowRight className="w-5 h-5" />
             </button>
@@ -524,9 +541,7 @@ export default function GiftViewer({ params }) {
         {stage === (giftData?.questions?.length || 2) + 3 && (
           <motion.div key="letter" initial={{opacity:0, y:40}} animate={{opacity:1, y:0}} transition={{duration:1.5}} className={`w-full max-w-2xl bg-slate-100 dark:bg-black/60 backdrop-blur-2xl border ${styles.border} p-6 md:p-12 rounded-[3rem] shadow-2xl relative z-10 text-center mt-12 mb-12`}>
             
-            {(!giftData?.songQuery || giftData.songQuery === "") && <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/05/16/audio_0cb9b119cb.mp3" />}
-            {giftData?.songQuery?.includes("youtube.com") && <iframe width="0" height="0" src={`https://www.youtube.com/embed/${giftData.songQuery.split("v=")[1]?.split("&")[0]}?autoplay=1&loop=1&playlist=${giftData.songQuery.split("v=")[1]?.split("&")[0]}`} allow="autoplay" style={{display: "none"}}></iframe>}
-            {giftData?.songQuery && !giftData.songQuery.includes("youtube.com") && <audio autoPlay loop src={giftData.songQuery} />}
+            
 
             <div className="relative z-10 flex flex-col items-center">
               
