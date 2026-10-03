@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X } from "lucide-react";
+import { Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { auth, db, storage } from "../../lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -48,15 +48,12 @@ export default function Dashboard() {
   }, [router]);
 
   const [formData, setFormData] = useState({
-    occasion: "standard",
     theme: "blush",
     recipientName: "",
     creatorName: "",
     songQuery: "",
     q1: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     q2: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
-    q3: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
-    q4: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     reasons: ["", "", ""],
     letter: "",
     photoCaptions: []
@@ -247,29 +244,6 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-
-              <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-white/10">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300">What is the occasion?</label>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {[
-                    { id: 'standard', name: 'Just Because', emoji: '💌' },
-                    { id: 'birthday', name: 'Birthday', emoji: '🎂' },
-                    { id: 'anniversary', name: 'Anniversary', emoji: '🥂' },
-                    { id: 'proposal', name: 'Proposal', emoji: '💍' },
-                    { id: 'family', name: 'Family', emoji: '👨‍👩‍👧' }
-                  ].map(occ => (
-                    <button 
-                      key={occ.id} 
-                      onClick={() => updateForm('occasion', occ.id)}
-                      className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${formData.occasion === occ.id ? 'border-pink-500 bg-pink-500/10 text-pink-600 dark:text-pink-400 shadow-md' : 'border-slate-200 dark:border-white/10 hover:border-pink-500/50 bg-white dark:bg-white/5 text-slate-600 dark:text-gray-300'}`}
-                    >
-                      <span className="text-2xl">{occ.emoji}</span>
-                      <span className="text-xs font-bold uppercase tracking-wider text-center">{occ.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-slate-600 dark:text-gray-300">Who is this for?</label>
@@ -291,21 +265,18 @@ export default function Dashboard() {
               </div>
               <div className="space-y-4">
                 <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Music className="w-4 h-4 text-pink-400" /> Background Song</label>
-                <div className="relative">
                 <select 
                   value={PRESET_SONGS.find(s => s.url === formData.songQuery) ? formData.songQuery : (formData.songQuery ? "custom" : "")} 
                   onChange={(e) => updateForm('songQuery', e.target.value === "custom" ? "https://www.youtube.com/watch?v=" : e.target.value)}
-                  className="appearance-none w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-4 pr-12 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none mb-3 transition-colors cursor-pointer shadow-sm"
+                  className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none mb-3"
                 >
-                  <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="">Select a romantic song...</option>
+                  <option value="">Select a romantic song...</option>
                   {PRESET_SONGS.map((song, idx) => (
-                    <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" key={idx} value={song.url}>{song.title}</option>
+                    <option key={idx} value={song.url}>{song.title}</option>
                   ))}
-                  <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="custom">👉 Paste my own YouTube Link...</option>
-                  <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="upload">👉 Upload MP3 from my device...</option>
+                  <option value="custom">👉 Paste my own YouTube Link...</option>
+                  <option value="upload">👉 Upload MP3 from my device...</option>
                 </select>
-                <ChevronDown className="absolute right-4 top-[22px] -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-              </div>
                 
                 {(!PRESET_SONGS.find(s => s.url === formData.songQuery) && formData.songQuery !== "" && formData.songQuery !== "upload") && (
                   <input type="text" value={formData.songQuery} onChange={(e) => updateForm('songQuery', e.target.value)} placeholder="Paste custom YouTube link here..." className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none animate-in fade-in slide-in-from-top-2" />
@@ -314,39 +285,65 @@ export default function Dashboard() {
                   <input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files[0])} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-slate-600 dark:text-gray-300 focus:border-pink-500 outline-none animate-in fade-in slide-in-from-top-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100" />
                 )}
               </div>
-              {['q1', 'q2', 'q3', 'q4'].map((qId, index) => (
-              <div key={qId} className="p-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl space-y-6 relative group">
+              {/* Question 1 */}
+              <div className="p-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl space-y-6 relative group">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-lg flex items-center gap-2"><Lock className="w-5 h-5 text-pink-500" /> Trivia Question {index + 1}</h3>
-                  <div className="relative">
-                    <select 
-                      value={formData[qId].type || "multiple_choice"} 
-                      onChange={(e) => updateQuestion(qId, 'type', e.target.value)}
-                      className="appearance-none bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl pl-3 pr-8 py-1.5 text-sm text-slate-600 dark:text-gray-300 outline-none focus:border-pink-500 cursor-pointer shadow-sm"
-                    >
-                      <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="multiple_choice">Multiple Choice</option>
-                      <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="open_ended">Open Ended (Text)</option>
-                    </select>
-                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                  </div>
+                  <h3 className="font-bold text-lg flex items-center gap-2"><Lock className="w-5 h-5 text-pink-500" /> Trivia Question 1</h3>
+                  <select 
+                    value={formData.q1.type || "multiple_choice"} 
+                    onChange={(e) => updateQuestion('q1', 'type', e.target.value)}
+                    className="bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-600 dark:text-gray-300 outline-none focus:border-pink-500"
+                  >
+                    <option value="multiple_choice">Multiple Choice</option>
+                    <option value="open_ended">Open Ended (Text)</option>
+                  </select>
                 </div>
                 <div className="space-y-4">
-                  <input type="text" value={formData[qId].question} onChange={(e) => updateQuestion(qId, 'question', e.target.value)} placeholder={`e.g. ${index === 0 ? "What is my favorite thing about you?" : index === 1 ? "Where was our first date?" : "What is my biggest pet peeve?"}`} className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
+                  <input type="text" value={formData.q1.question} onChange={(e) => updateQuestion('q1', 'question', e.target.value)} placeholder="e.g. What is my favorite thing about you?" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
                   
-                  {formData[qId].type === "open_ended" ? (
+                  {formData.q1.type === "open_ended" ? (
                     <div className="bg-slate-100 dark:bg-white/5 border border-dashed border-slate-300 dark:border-white/20 rounded-xl p-4 text-center">
                       <p className="text-sm text-slate-500 dark:text-gray-400">The recipient will type their own answer in a text box.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <input type="text" value={formData[qId].correct} onChange={(e) => updateQuestion(qId, 'correct', e.target.value)} placeholder="Correct ✅" className="w-full bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-green-500 outline-none transition-colors" />
-                      <input type="text" value={formData[qId].wrong1} onChange={(e) => updateQuestion(qId, 'wrong1', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
-                      <input type="text" value={formData[qId].wrong2} onChange={(e) => updateQuestion(qId, 'wrong2', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
+                      <input type="text" value={formData.q1.correct} onChange={(e) => updateQuestion('q1', 'correct', e.target.value)} placeholder="Correct ✅" className="w-full bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-green-500 outline-none transition-colors" />
+                      <input type="text" value={formData.q1.wrong1} onChange={(e) => updateQuestion('q1', 'wrong1', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
+                      <input type="text" value={formData.q1.wrong2} onChange={(e) => updateQuestion('q1', 'wrong2', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
                     </div>
                   )}
                 </div>
               </div>
-            ))}
+
+              {/* Question 2 */}
+              <div className="p-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl space-y-6 relative group">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-lg flex items-center gap-2"><Lock className="w-5 h-5 text-pink-500" /> Trivia Question 2</h3>
+                  <select 
+                    value={formData.q2.type || "multiple_choice"} 
+                    onChange={(e) => updateQuestion('q2', 'type', e.target.value)}
+                    className="bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-600 dark:text-gray-300 outline-none focus:border-pink-500"
+                  >
+                    <option value="multiple_choice">Multiple Choice</option>
+                    <option value="open_ended">Open Ended (Text)</option>
+                  </select>
+                </div>
+                <div className="space-y-4">
+                  <input type="text" value={formData.q2.question} onChange={(e) => updateQuestion('q2', 'question', e.target.value)} placeholder="e.g. Where was our first date?" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
+                  
+                  {formData.q2.type === "open_ended" ? (
+                    <div className="bg-slate-100 dark:bg-white/5 border border-dashed border-slate-300 dark:border-white/20 rounded-xl p-4 text-center">
+                      <p className="text-sm text-slate-500 dark:text-gray-400">The recipient will type their own answer in a text box.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <input type="text" value={formData.q2.correct} onChange={(e) => updateQuestion('q2', 'correct', e.target.value)} placeholder="Correct ✅" className="w-full bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-green-500 outline-none transition-colors" />
+                      <input type="text" value={formData.q2.wrong1} onChange={(e) => updateQuestion('q2', 'wrong1', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
+                      <input type="text" value={formData.q2.wrong2} onChange={(e) => updateQuestion('q2', 'wrong2', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
+                    </div>
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -374,7 +371,7 @@ export default function Dashboard() {
                         value={formData.photoCaptions[i] || ""} 
                         onChange={(e) => updateCaption(i, e.target.value)}
                         placeholder="Add caption..."
-                        className="w-full bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 text-sm px-3 py-3 border-2 border-transparent focus:border-pink-500 rounded-b-xl outline-none border-t border-slate-200 dark:border-white/10 transition-colors"
+                        className="w-full bg-slate-50 dark:bg-[#111] text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-600 text-sm px-3 py-3 border-2 border-transparent focus:border-pink-500 rounded-b-xl outline-none border-t border-slate-200 dark:border-white/10 transition-colors"
                       />
                     </div>
                   ))}
@@ -389,17 +386,17 @@ export default function Dashboard() {
 
               {/* Reasons Why */}
               <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Heart className="w-4 h-4 text-pink-400" /> {formData.occasion === "proposal" ? "3 Promises For Our Future" : formData.occasion === "birthday" ? "3 Birthday Wishes" : formData.occasion === "family" ? "3 Things I Appreciate About You" : "3 Reasons I Love You"}</label>
+                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Heart className="w-4 h-4 text-pink-400" /> 3 Reasons I Love You</label>
                 <div className="space-y-3">
                   {[0, 1, 2].map(i => (
-                    <input key={i} type="text" value={formData.reasons[i]} onChange={(e) => updateReason(i, e.target.value)} placeholder={`${formData.occasion === "proposal" ? "Promise" : formData.occasion === "birthday" ? "Wish" : formData.occasion === "family" ? "Appreciation" : "Reason"} ${i+1}... (e.g. ${formData.occasion === "proposal" ? "I promise to always listen" : formData.occasion === "family" ? "Always supporting my dreams" : "Your beautiful smile"})`} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none" />
+                    <input key={i} type="text" value={formData.reasons[i]} onChange={(e) => updateReason(i, e.target.value)} placeholder={`Reason ${i+1}... (e.g. Your beautiful smile)`} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none" />
                   ))}
                 </div>
               </div>
 
               {/* Love Letter */}
               <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-pink-400" /> {formData.occasion === "proposal" ? "The Big Proposal Letter" : "Final Love Letter"}</label>
+                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-pink-400" /> Final Love Letter</label>
                 <textarea rows="6" value={formData.letter} onChange={(e) => updateForm('letter', e.target.value)} placeholder="Pour your heart out here..." className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-6 py-5 text-slate-900 dark:text-white outline-none resize-none" />
               </div>
             </motion.div>

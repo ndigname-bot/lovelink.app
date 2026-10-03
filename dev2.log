@@ -1,0 +1,16 @@
+
+> gift-saas@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.110.36:3000
+- Environments: .env.local
+✓ Ready in 1074ms
+⚠ Warning: Next.js ignored package-lock.json in /home/nelimo because it is outside the current Git repository (/home/nelimo/Downloads/yuri gift/gift-saas).
+ To use this directory, set `turbopack.root` in your Next.js config.
+
+✓ Running next.config.mjs took 51ms
+⚠ The Edge Runtime is deprecated. You can use the "nodejs" runtime instead. Learn more: https://nextjs.org/docs/messages/edge-runtime-deprecated
+
+ GET /gift/demo-gift 200 in 3.6s (next.js: 2.7s, application-code: 939ms)
