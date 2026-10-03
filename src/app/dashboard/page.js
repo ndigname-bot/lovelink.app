@@ -296,12 +296,12 @@ export default function Dashboard() {
                   onChange={(e) => updateForm('songQuery', e.target.value === "custom" ? "https://www.youtube.com/watch?v=" : e.target.value)}
                   className="appearance-none w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-4 pr-12 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none mb-3 transition-colors cursor-pointer shadow-sm"
                 >
-                  <option value="">Select a romantic song...</option>
+                  <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="">Select a romantic song...</option>
                   {PRESET_SONGS.map((song, idx) => (
-                    <option key={idx} value={song.url}>{song.title}</option>
+                    <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" key={idx} value={song.url}>{song.title}</option>
                   ))}
-                  <option value="custom">👉 Paste my own YouTube Link...</option>
-                  <option value="upload">👉 Upload MP3 from my device...</option>
+                  <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="custom">👉 Paste my own YouTube Link...</option>
+                  <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="upload">👉 Upload MP3 from my device...</option>
                 </select>
                 <ChevronDown className="absolute right-4 top-[22px] -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
               </div>
@@ -323,8 +323,8 @@ export default function Dashboard() {
                       onChange={(e) => updateQuestion(qId, 'type', e.target.value)}
                       className="appearance-none bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl pl-3 pr-8 py-1.5 text-sm text-slate-600 dark:text-gray-300 outline-none focus:border-pink-500 cursor-pointer shadow-sm"
                     >
-                      <option value="multiple_choice">Multiple Choice</option>
-                      <option value="open_ended">Open Ended (Text)</option>
+                      <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="multiple_choice">Multiple Choice</option>
+                      <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="open_ended">Open Ended (Text)</option>
                     </select>
                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
