@@ -2,7 +2,7 @@
 import { Logo } from "@/components/Logo";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 , Edit3 } from "lucide-react";
+import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 , Edit3, Mail } from "lucide-react";
 import Link from "next/link";
 import { db, auth } from "../../lib/firebase";
 import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore";
@@ -144,7 +144,10 @@ export default function MyGifts() {
         </motion.div>
         <div className="flex gap-2 md:gap-6 items-center">
           <ThemeToggle />
-          <Link href="/inbox" className="text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors flex items-center gap-1">Inbox <div className="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></div></Link>
+          <Link href="/inbox" className="relative p-2 text-slate-500 hover:text-pink-500 dark:text-gray-400 dark:hover:text-pink-400 transition-colors" title="Inbox">
+            <Mail className="w-5 h-5" />
+            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-pink-500 rounded-full animate-pulse border-2 border-white dark:border-[#0a0a0a]"></span>
+          </Link>
           <button onClick={() => auth.signOut()} className="text-sm text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-slate-900 dark:text-white transition-colors">Sign Out</button>
           <Link href="/dashboard" className="text-xs md:text-sm font-medium whitespace-nowrap bg-slate-900 text-white dark:bg-white dark:text-black px-3 md:px-5 py-2 md:py-2.5 rounded-full hover:bg-slate-800 dark:hover:bg-gray-200 transition-colors shadow-lg flex items-center gap-1 md:gap-2">
             <Plus className="w-4 h-4" /> New Gift

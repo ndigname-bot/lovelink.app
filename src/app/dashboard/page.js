@@ -296,8 +296,8 @@ export default function Dashboard() {
                   ].map(occ => (
                     <button 
                       key={occ.id} 
-                      onClick={() => updateForm('occasion', occ.id)}
-                      className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${formData.occasion === occ.id ? 'border-pink-500 bg-pink-500/10 text-pink-600 dark:text-pink-400 shadow-md' : 'border-slate-200 dark:border-white/10 hover:border-pink-500/50 bg-white dark:bg-white/5 text-slate-600 dark:text-gray-300'}`}
+                      onClick={() => updateForm('occasion', occ.id)} disabled={isEditing}
+                      className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${formData.occasion === occ.id ? 'border-pink-500 bg-pink-500/10 text-pink-600 dark:text-pink-400 shadow-md' : 'border-slate-200 dark:border-white/10 hover:border-pink-500/50 bg-white dark:bg-white/5 text-slate-600 dark:text-gray-300'} ${isEditing && formData.occasion !== occ.id ? 'opacity-30 cursor-not-allowed hidden md:flex' : ''}`}
                     >
                       <span className="text-2xl">{occ.emoji}</span>
                       <span className="text-xs font-bold uppercase tracking-wider text-center">{occ.name}</span>
@@ -309,7 +309,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-slate-600 dark:text-gray-300">Who is this for?</label>
-                  <input type="text" value={formData.recipientName} onChange={(e) => updateForm('recipientName', e.target.value)} placeholder="e.g. Sarah" className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none" />
+                  <input type="text" value={formData.recipientName} onChange={(e) => updateForm('recipientName', e.target.value)} disabled={isEditing} placeholder="e.g. Sarah" className={`w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none ${isEditing ? "opacity-60 cursor-not-allowed" : ""}`} />
                 </div>
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-slate-600 dark:text-gray-300">Your Name / Nickname</label>
