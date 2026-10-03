@@ -2,7 +2,7 @@
 import { Logo } from "@/components/Logo";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 } from "lucide-react";
+import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 , Edit3 } from "lucide-react";
 import Link from "next/link";
 import { db, auth } from "../../lib/firebase";
 import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore";
@@ -137,16 +137,16 @@ export default function MyGifts() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0a] text-slate-900 dark:text-white selection:bg-pink-500/30 transition-colors duration-300">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 transition-colors">
+      <nav className="fixed top-0 left-0 w-full px-4 md:px-8 py-4 flex justify-between items-center z-50 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 transition-colors">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2">
           <Logo className="w-6 h-6 text-pink-500" />
           <Link href="/" className="text-xl font-bold tracking-tight">LoveLink</Link>
         </motion.div>
-        <div className="flex gap-4 md:gap-6 items-center">
+        <div className="flex gap-2 md:gap-6 items-center">
           <ThemeToggle />
           <Link href="/inbox" className="text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors flex items-center gap-1">Inbox <div className="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></div></Link>
           <button onClick={() => auth.signOut()} className="text-sm text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-slate-900 dark:text-white transition-colors">Sign Out</button>
-          <Link href="/dashboard" className="text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-black px-4 py-2 rounded-full hover:bg-slate-800 dark:hover:bg-gray-200 transition-colors shadow-lg flex items-center gap-2">
+          <Link href="/dashboard" className="text-xs md:text-sm font-medium whitespace-nowrap bg-slate-900 text-white dark:bg-white dark:text-black px-3 md:px-5 py-2 md:py-2.5 rounded-full hover:bg-slate-800 dark:hover:bg-gray-200 transition-colors shadow-lg flex items-center gap-1 md:gap-2">
             <Plus className="w-4 h-4" /> New Gift
           </Link>
         </div>
@@ -257,11 +257,14 @@ export default function MyGifts() {
                       <div className="pt-4 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-4">
                         {gift.paid ? (
                           <>
-                            <button onClick={() => copyToClipboard(gift.id)} className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors">
-                              <LinkIcon className="w-4 h-4" /> Copy Link
+                            <button onClick={() => copyToClipboard(gift.id)} className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors" title="Copy Link">
+                              <LinkIcon className="w-4 h-4" /> <span className="hidden sm:inline">Copy</span>
                             </button>
-                            <Link href={`/gift/${gift.id}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-pink-500 hover:bg-pink-600 py-2 rounded-xl text-sm font-bold transition-colors shadow-lg shadow-pink-500/20">
-                              View <ExternalLink className="w-4 h-4" />
+                            <Link href={`/dashboard?edit=${gift.id}`} className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors" title="Edit Gift">
+                              <Edit3 className="w-4 h-4" /> <span className="hidden sm:inline">Edit</span>
+                            </Link>
+                            <Link href={`/gift/${gift.id}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-pink-500 hover:bg-pink-600 py-2 rounded-xl text-sm font-bold transition-colors shadow-lg shadow-pink-500/20 text-white" title="View Live">
+                              <ExternalLink className="w-4 h-4" /> <span className="hidden sm:inline">View</span>
                             </Link>
                           </>
                         ) : (
@@ -301,7 +304,7 @@ export default function MyGifts() {
               </div>
 
               {/* Community Reviews Card */}
-              <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 flex flex-col h-[400px]">
+              <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl px-4 md:px-8 py-4 flex flex-col h-[400px]">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-bold">Community Love</h3>
                 </div>

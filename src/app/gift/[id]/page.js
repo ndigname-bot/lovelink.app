@@ -5,7 +5,9 @@ import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon } 
 import confetti from "canvas-confetti";
 import { db, storage } from "../../../lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";\n\nconst PRESET_SONGS = [
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+
+const PRESET_SONGS = [
   { title: "Daniel Caesar - Get You", url: "https://www.youtube.com/watch?v=uQFVqltOXRg" },
   { title: "Bazzi - Beautiful", url: "https://www.youtube.com/watch?v=Uk1hqVGREy0" },
   { title: "Ed Sheeran - Perfect", url: "https://www.youtube.com/watch?v=2Vv-BfVoq4g" },
@@ -417,7 +419,7 @@ export default function GiftViewer({ params }) {
         {activeModal === "reward" && (
           <motion.div key="reward" initial={{scale:0.8, opacity:0}} animate={{scale:1, opacity:1}} exit={{opacity:0, scale:0.9}} className={`w-full max-w-md ${styles.glass} p-6 md:p-10 rounded-[2rem] border ${styles.border} text-center shadow-2xl z-20`}>
             <Heart className={`w-20 h-20 ${styles.heart} mx-auto mb-6 animate-bounce`} />
-            <p className="text-xl opacity-90 mb-10 leading-relaxed font-medium">"{giftData.questions[stage-1].reward || \"You know me so well! ❤️\"}"</p>
+            <p className="text-xl opacity-90 mb-10 leading-relaxed font-medium">"{giftData.questions[stage-1].reward || "You know me so well! ❤️"}"</p>
             <button onClick={nextStage} className={`w-full py-4 bg-gradient-to-r ${styles.accentGradient} rounded-2xl font-bold shadow-lg hover:scale-105 transition-transform text-slate-900 dark:text-white text-lg flex items-center justify-center gap-2`}>
               Next Step <ArrowRight className="w-5 h-5" />
             </button>

@@ -7,7 +7,7 @@ import { auth, db, storage } from "../../lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const PRESET_SONGS = [
   { title: "A Thousand Years - Christina Perri", url: "https://www.youtube.com/watch?v=rtOvBOTyX00" },
@@ -36,9 +36,45 @@ import { onAuthStateChanged } from "firebase/auth";
 
 export default function Dashboard() {
   const router = useRouter();
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const editGiftId = searchParams?.get("edit");
+  const [isEditing, setIsEditing] = useState(false);
   const [step, setStep] = useState(1);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedLink, setPublishedLink] = useState(null);
+
+  useEffect(() => {
+    if (editGiftId && auth.currentUser) {
+      const fetchGift = async () => {
+        setIsEditing(true);
+        try {
+          const docRef = doc(db, "gifts", editGiftId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists() && docSnap.data().creatorId === auth.currentUser.uid) {
+            const data = docSnap.data();
+            const loadedData = {
+              theme: data.theme || "blush",
+              occasion: data.occasion || "standard",
+              recipientName: data.recipientName || "",
+              creatorName: data.creatorName || "",
+              songQuery: data.songQuery || "",
+              photoCaptions: data.photoCaptions || [],
+              reasons: data.reasons || ["", "", ""],
+              q1: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q1 },
+              q2: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q2 },
+              q3: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q3 },
+              q4: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q4 },
+              letter: data.letter || "",
+            };
+            setFormData(loadedData);
+            if (data.photoUrls) setPhotoPreviews(data.photoUrls);
+          }
+        } catch(e) { console.error(e); }
+        setIsEditing(false);
+      };
+      fetchGift();
+    }
+  }, [editGiftId, auth.currentUser]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {

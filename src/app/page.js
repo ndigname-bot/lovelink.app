@@ -11,15 +11,15 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0a] text-slate-900 dark:text-white selection:bg-pink-500/30 font-sans overflow-x-hidden transition-colors duration-300">
       {/* Navbar */}
-      <nav className="flex items-center justify-between px-8 py-6 max-w-7xl mx-auto relative z-50">
+      <nav className="flex items-center justify-between px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto relative z-50">
         <div className="flex items-center gap-2">
           <Logo className="w-6 h-6 text-pink-500" />
           <span className="text-xl font-bold tracking-tight">LoveLink</span>
         </div>
-        <div className="flex gap-4 md:gap-6 items-center">
+        <div className="flex gap-2 md:gap-6 items-center">
           <ThemeToggle />
-          <Link href="/login" className="text-sm text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors">Sign In</Link>
-          <Link href="/dashboard" className="text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-black px-4 py-2 rounded-full hover:bg-slate-800 dark:hover:bg-gray-200 transition-colors shadow-lg">
+          <Link href="/login" className="text-xs md:text-sm whitespace-nowrap text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white transition-colors">Sign In</Link>
+          <Link href="/dashboard" className="text-xs md:text-sm font-medium whitespace-nowrap bg-slate-900 text-white dark:bg-white dark:text-black px-3 md:px-5 py-2 md:py-2.5 rounded-full hover:bg-slate-800 dark:hover:bg-gray-200 transition-colors shadow-lg">
             Start Building
           </Link>
         </div>
