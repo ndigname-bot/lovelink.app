@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, use, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon } from "lucide-react";
+import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon, Clock, Hourglass } from "lucide-react";
 import confetti from "canvas-confetti";
 import { db, storage } from "../../../lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -322,6 +322,37 @@ export default function GiftViewer({ params }) {
     setTimeout(() => setStage(nextStage), 800);
   };
 
+  // Time Capsule Sequence Logic
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (stage === 'tc_1') {
+      let t = 0;
+      const interval = setInterval(() => {
+        t++;
+        setTick(t);
+        if (t === 2) {
+          clearInterval(interval);
+          setTimeout(() => setStage('tc_2'), 1500);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    } else if (stage === 'tc_2') {
+      setTimeout(() => setStage('tc_3'), 5000);
+    } else if (stage === 'tc_3') {
+      let t = 0;
+      setTick(0);
+      const interval = setInterval(() => {
+        t++;
+        setTick(t);
+        if (t === 3) {
+          clearInterval(interval);
+          setTimeout(() => setStage((giftData?.questions ? giftData.questions.length : 0) + 1), 1500);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [stage, giftData]);
+
   const handleAnswer = async (isCorrect, text) => {
     // Silently save their answer to the database if it's a real gift
     if (giftId !== "demo-gift" && giftId !== "draft" && giftData.paid !== false) {
@@ -359,7 +390,7 @@ export default function GiftViewer({ params }) {
 
   return (
     <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-1000`}>
-      {stage >= -1 && (
+      {((giftData?.occasion === "family" ? (typeof stage === "number" && stage >= (giftData?.questions ? giftData.questions.length : 0) + 1) : (typeof stage === "number" && stage >= -1))) && (
         <>
           {(!giftData?.songQuery || giftData.songQuery === "") && <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/05/16/audio_0cb9b119cb.mp3" />}
           {giftData?.songQuery?.includes("youtube") && <iframe width="0" height="0" src={`https://www.youtube.com/embed/${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}?autoplay=1&loop=1&playlist=${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}`} allow="autoplay" style={{display: "none"}}></iframe>}
@@ -368,7 +399,7 @@ export default function GiftViewer({ params }) {
       )}
 
       
-      {stage >= -1 && (
+      {((giftData?.occasion === "family" ? (typeof stage === "number" && stage >= (giftData?.questions ? giftData.questions.length : 0) + 1) : (typeof stage === "number" && stage >= -1))) && (
         <motion.div initial={{y:-50, opacity:0}} animate={{y:0, opacity:1}} className={`absolute top-6 left-1/2 -translate-x-1/2 ${styles.glass} ${styles.border} px-4 py-2 rounded-full border flex items-center gap-2 z-50`}>
           <Music className={`w-3 h-3 ${styles.accentText} animate-pulse`} />
           <span className="text-xs font-medium tracking-wide">Playing: {PRESET_SONGS.find(s => s.url === giftData.songQuery)?.title || (giftData.songQuery.startsWith("http") ? "Our Special Song 🎵" : giftData.songQuery)}</span>
@@ -401,7 +432,7 @@ export default function GiftViewer({ params }) {
           </motion.div>
         )}
 
-        {stage === 0 && (
+        {stage === 0 && giftData?.occasion !== 'family' && (
           <motion.div key="lock" initial={{opacity:0, scale:0.9}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:1.1}} transition={{duration:1}} className="text-center z-10 flex flex-col items-center">
             <div className={`w-24 h-24 rounded-full ${styles.glass} ${styles.border} border flex items-center justify-center mb-10 shadow-2xl relative`}>
               {pressProgress >= 100 ? <Unlock className={`w-10 h-10 ${styles.accentText}`} /> : <Lock className="w-10 h-10 opacity-50" />}
@@ -413,6 +444,51 @@ export default function GiftViewer({ params }) {
             <motion.button onPointerDown={startPress} onPointerUp={stopPress} onPointerLeave={stopPress} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-white text-black px-10 py-4 rounded-full font-bold shadow-[0_0_40px_rgba(255,255,255,0.2)] select-none touch-none">
               Press and Hold to Unlock
             </motion.button>
+          </motion.div>
+        )}
+
+        
+
+        {stage === 0 && giftData?.occasion === 'family' && (
+          <motion.div key="tc_start" initial={{opacity:0, scale:0.9}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:1.1}} transition={{duration:1}} className="text-center z-10 flex flex-col items-center">
+            <div className={`w-24 h-24 rounded-full ${styles.glass} ${styles.border} border flex items-center justify-center mb-10 shadow-2xl relative`}>
+              <Clock className={`w-10 h-10 ${styles.accentText} animate-pulse`} />
+            </div>
+            <motion.button onClick={() => setStage('tc_1')} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-white text-black px-10 py-4 rounded-full font-bold shadow-[0_0_40px_rgba(255,255,255,0.2)]">
+              Open Time Capsule
+            </motion.button>
+          </motion.div>
+        )}
+
+        {stage === 'tc_1' && (
+          <motion.div key="tc_1" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-center z-10 flex flex-col items-center justify-center h-full">
+            <motion.div 
+              animate={{ rotate: tick * 30, scale: [1, 1.2, 1] }} 
+              transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              className={`w-40 h-40 rounded-full ${styles.glass} border ${styles.border} flex items-center justify-center shadow-[0_0_100px_rgba(255,255,255,0.1)]`}
+            >
+              <Clock className={`w-20 h-20 ${styles.accentText}`} />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {stage === 'tc_2' && (
+          <motion.div key="tc_2" initial={{opacity:0, filter:"blur(10px)"}} animate={{opacity:1, filter:"blur(0px)"}} exit={{opacity:0, filter:"blur(10px)"}} transition={{duration:2}} className="text-center z-10 max-w-xl px-6">
+            <p className={`text-2xl md:text-3xl font-light leading-relaxed tracking-wide opacity-90 italic ${styles.font}`}>
+              Time is the most precious gift we have. This is a journey back through the moments that built us... prepare to go back.
+            </p>
+          </motion.div>
+        )}
+
+        {stage === 'tc_3' && (
+          <motion.div key="tc_3" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration: 1}} className="text-center z-10 flex flex-col items-center justify-center h-full">
+            <motion.div 
+              animate={{ rotate: tick * -45, scale: [1, 1.3, 1] }} 
+              transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              className={`w-48 h-48 rounded-full border-4 ${styles.border} flex items-center justify-center shadow-[0_0_150px_rgba(255,255,255,0.2)]`}
+            >
+              <Hourglass className={`w-24 h-24 ${styles.accentText}`} />
+            </motion.div>
           </motion.div>
         )}
 
