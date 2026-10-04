@@ -450,7 +450,10 @@ export default function GiftViewer({ params }) {
                 ))
               )}
             </div>
-          </motion.div>
+              <button onClick={() => nextStage()} className="mt-8 text-sm text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors underline underline-offset-4 decoration-slate-300 dark:decoration-gray-600">
+                Skip this question
+              </button>
+            </motion.div>
         )}
 
         {activeModal === "reward" && (
