@@ -63,6 +63,7 @@ export default function Dashboard() {
               q1: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q1 },
               q2: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q2 },
               q3: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q3 },
+              skipTrivia: data.skipTrivia || false,
               q4: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q4 },
               letter: data.letter || "",
             };
@@ -92,6 +93,7 @@ export default function Dashboard() {
     q1: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     q2: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     q3: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
+    skipTrivia: false,
     q4: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     reasons: ["", "", ""],
     letter: "",
@@ -208,24 +210,37 @@ export default function Dashboard() {
       }
 
       // Save to Firestore
-      const docRef = await addDoc(collection(db, "gifts"), {
-        ...formData,
-        photoUrls, 
-        creatorId: auth.currentUser.uid,
-        createdAt: serverTimestamp(),
-        paid: isFreePromo 
-      });
-
-      if (isFreePromo) {
-        window.location.href = `/success?giftId=${docRef.id}`;
+      let finalGiftId = editGiftId;
+      if (editGiftId) {
+        const docRef = doc(db, "gifts", editGiftId);
+        await updateDoc(docRef, {
+          ...formData,
+          ...(photoUrls.length > 0 && { photoUrls }), 
+          updatedAt: serverTimestamp(),
+        });
+        window.location.href = '/my-gifts';
         return;
+      } else {
+        const docRef = await addDoc(collection(db, "gifts"), {
+          ...formData,
+          photoUrls, 
+          creatorId: auth.currentUser.uid,
+          createdAt: serverTimestamp(),
+          paid: isFreePromo 
+        });
+        finalGiftId = docRef.id;
+        
+        if (isFreePromo) {
+          window.location.href = `/success?giftId=${finalGiftId}`;
+          return;
+        }
       }
 
       // Request Stripe Checkout Session
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ giftId: docRef.id, recipientName: formData.recipientName, email: auth.currentUser?.email })
+        body: JSON.stringify({ giftId: finalGiftId, recipientName: formData.recipientName, email: auth.currentUser?.email })
       });
       
       const data = await res.json();
@@ -351,7 +366,18 @@ export default function Dashboard() {
                   <input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files[0])} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-slate-600 dark:text-gray-300 focus:border-pink-500 outline-none animate-in fade-in slide-in-from-top-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100" />
                 )}
               </div>
-              {['q1', 'q2', 'q3', 'q4'].map((qId, index) => (
+              {/* Skip Trivia Toggle */}
+              <div className="flex items-center justify-between p-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl cursor-pointer hover:border-pink-500/50 transition-colors" onClick={() => updateForm('skipTrivia', !formData.skipTrivia)} id="skipTriviaToggle">
+                <div>
+                  <h3 className="font-bold text-lg flex items-center gap-2"><Sparkles className="w-5 h-5 text-pink-500" /> Skip Trivia Section</h3>
+                  <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">If enabled, your recipient will go straight to the photos without answering questions.</p>
+                </div>
+                <div className={`w-12 h-6 rounded-full flex items-center p-1 transition-colors ${formData.skipTrivia ? 'bg-pink-500' : 'bg-slate-300 dark:bg-slate-700'}`}>
+                  <div className={`w-4 h-4 bg-white rounded-full transition-transform ${formData.skipTrivia ? 'translate-x-6' : 'translate-x-0'}`} />
+                </div>
+              </div>
+
+              {!formData.skipTrivia && ['q1', 'q2', 'q3', 'q4'].map((qId, index) => (
               <div key={qId} className="p-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl space-y-6 relative group">
                 <div className="flex justify-between items-center">
                   <h3 className="font-bold text-lg flex items-center gap-2"><Lock className="w-5 h-5 text-pink-500" /> Trivia Question {index + 1}</h3>

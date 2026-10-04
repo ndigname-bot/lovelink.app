@@ -316,7 +316,8 @@ export default function GiftViewer({ params }) {
 
   const triggerUnlock = () => {
     confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: styles.particles });
-    setTimeout(() => setStage(1), 800);
+    const nextStage = giftData?.skipTrivia ? (giftData?.questions?.length || 2) + 1 : 1;
+    setTimeout(() => setStage(nextStage), 800);
   };
 
   const handleAnswer = async (isCorrect, text) => {
