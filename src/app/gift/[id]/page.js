@@ -359,7 +359,7 @@ export default function GiftViewer({ params }) {
 
   return (
     <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-1000`}>
-      {stage >= 1 && (
+      {stage >= -1 && (
         <>
           {(!giftData?.songQuery || giftData.songQuery === "") && <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/05/16/audio_0cb9b119cb.mp3" />}
           {giftData?.songQuery?.includes("youtube") && <iframe width="0" height="0" src={`https://www.youtube.com/embed/${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}?autoplay=1&loop=1&playlist=${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}`} allow="autoplay" style={{display: "none"}}></iframe>}
@@ -368,7 +368,7 @@ export default function GiftViewer({ params }) {
       )}
 
       
-      {stage >= 0 && (
+      {stage >= -1 && (
         <motion.div initial={{y:-50, opacity:0}} animate={{y:0, opacity:1}} className={`absolute top-6 left-1/2 -translate-x-1/2 ${styles.glass} ${styles.border} px-4 py-2 rounded-full border flex items-center gap-2 z-50`}>
           <Music className={`w-3 h-3 ${styles.accentText} animate-pulse`} />
           <span className="text-xs font-medium tracking-wide">Playing: {PRESET_SONGS.find(s => s.url === giftData.songQuery)?.title || (giftData.songQuery.startsWith("http") ? "Our Special Song 🎵" : giftData.songQuery)}</span>
