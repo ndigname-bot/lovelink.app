@@ -60,6 +60,22 @@ const getThemeStyles = (theme) => {
 };
 
 export default function GiftViewer({ params }) {
+  const INTROS = [
+    "You have a highly classified digital package from",
+    "Someone has been thinking about you a lot... Sender:",
+    "Warning: The following message might cause uncontrollable smiling. Sender:",
+    "Top Secret clearance required. Authorized by:"
+  ];
+
+  const CHEEKY_REWARDS = [
+    "Damn right you know it 😉",
+    "Okay, I see you... 😏",
+    "Lucky guess... or maybe you just love me too much 🙄❤️",
+    "You passed the test... this time. 💅",
+    "I knew you were obsessed with me. 😂❤️",
+    "Look at you, paying attention and stuff! 👏"
+  ];
+
   const unwrappedParams = use(params);
   const giftId = unwrappedParams?.id || "demo-gift";
   
@@ -355,7 +371,7 @@ export default function GiftViewer({ params }) {
         {stage === -1 && (
           <motion.div key="buildup" initial={{opacity:0, filter:"blur(10px)"}} animate={{opacity:1, filter:"blur(0px)"}} exit={{opacity:0, filter:"blur(10px)"}} transition={{duration:1.5}} className="text-center z-10 cursor-pointer" onClick={() => setStage(0)}>
             <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light leading-relaxed mb-6`}>
-              You have a classified digital package from <span className={`${styles.accentText} font-semibold`}>{giftData.creatorName}</span>.
+              {INTROS[(giftId?.length || 0) % INTROS.length]} <span className={`${styles.accentText} font-semibold`}>{giftData.creatorName}</span>.
             </h1>
             <p className="text-lg opacity-80 mb-8 font-medium">But before you can open it, you must prove your identity.</p>
             <p className={`text-sm opacity-40 tracking-widest uppercase animate-pulse ${styles.font}`}>Tap anywhere to continue</p>
@@ -419,7 +435,7 @@ export default function GiftViewer({ params }) {
         {activeModal === "reward" && (
           <motion.div key="reward" initial={{scale:0.8, opacity:0}} animate={{scale:1, opacity:1}} exit={{opacity:0, scale:0.9}} className={`w-full max-w-md ${styles.glass} p-6 md:p-10 rounded-[2rem] border ${styles.border} text-center shadow-2xl z-20`}>
             <Heart className={`w-20 h-20 ${styles.heart} mx-auto mb-6 animate-bounce`} />
-            <p className="text-xl opacity-90 mb-10 leading-relaxed font-medium">"{giftData.questions[stage-1].reward || "You know me so well! ❤️"}"</p>
+            <p className="text-xl opacity-90 mb-10 leading-relaxed font-medium">"{giftData.questions[stage-1].reward || CHEEKY_REWARDS[(stage + (giftId?.length || 0)) % CHEEKY_REWARDS.length]}"</p>
             <button onClick={nextStage} className={`w-full py-4 bg-gradient-to-r ${styles.accentGradient} rounded-2xl font-bold shadow-lg hover:scale-105 transition-transform text-slate-900 dark:text-white text-lg flex items-center justify-center gap-2`}>
               Next Step <ArrowRight className="w-5 h-5" />
             </button>
