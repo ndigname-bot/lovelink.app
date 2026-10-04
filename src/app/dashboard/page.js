@@ -292,15 +292,16 @@ export default function Dashboard() {
                     { id: 'birthday', name: 'Birthday', emoji: '🎂' },
                     { id: 'anniversary', name: 'Anniversary', emoji: '🥂' },
                     { id: 'proposal', name: 'Proposal', emoji: '💍' },
-                    { id: 'family', name: 'Family', emoji: '👨‍👩‍👧' }
+                    { id: 'family', name: 'Family (Time Capsule)', emoji: '🕰️' }
                   ].map(occ => (
                     <button 
                       key={occ.id} 
                       onClick={() => updateForm('occasion', occ.id)} disabled={isEditing}
-                      className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${formData.occasion === occ.id ? 'border-pink-500 bg-pink-500/10 text-pink-600 dark:text-pink-400 shadow-md' : 'border-slate-200 dark:border-white/10 hover:border-pink-500/50 bg-white dark:bg-white/5 text-slate-600 dark:text-gray-300'} ${isEditing && formData.occasion !== occ.id ? 'opacity-30 cursor-not-allowed hidden md:flex' : ''}`}
+                      className={`relative p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${formData.occasion === occ.id ? 'border-pink-500 bg-pink-500/10 text-pink-600 dark:text-pink-400 shadow-md' : 'border-slate-200 dark:border-white/10 hover:border-pink-500/50 bg-white dark:bg-white/5 text-slate-600 dark:text-gray-300'} ${isEditing && formData.occasion !== occ.id ? 'opacity-30 cursor-not-allowed hidden md:flex' : ''}`}
                     >
                       <span className="text-2xl">{occ.emoji}</span>
                       <span className="text-xs font-bold uppercase tracking-wider text-center">{occ.name}</span>
+                      {occ.id === "family" && <span className="absolute -top-3 bg-pink-500 text-white text-[9px] px-2 py-1 rounded-full animate-bounce shadow-lg shadow-pink-500/50">Recommended</span>}
                     </button>
                   ))}
                 </div>
