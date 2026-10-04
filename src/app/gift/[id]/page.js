@@ -137,13 +137,13 @@ export default function GiftViewer({ params }) {
       let finalContent = reactionText;
       
       if (type === 'voice' && blob) {
-        const audioRef = ref(storage, `reactions/${id}/${Date.now()}_voicenote.webm`);
+        const audioRef = ref(storage, `reactions/${giftId}/${Date.now()}_voicenote.webm`);
         const snapshot = await uploadBytes(audioRef, blob);
         finalContent = await getDownloadURL(snapshot.ref);
       }
       
       // Update Firestore
-      const giftRef = doc(db, "gifts", id);
+      const giftRef = doc(db, "gifts", giftId);
       await updateDoc(giftRef, {
         response: {
           type,
