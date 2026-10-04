@@ -179,6 +179,7 @@ export default function GiftViewer({ params }) {
           if (saved) {
             const draftData = JSON.parse(saved);
             setGiftData({
+              skipTrivia: draftData.skipTrivia || false,
               theme: draftData.theme || "blush",
               occasion: draftData.occasion || "standard",
               recipientName: draftData.recipientName || "Cutie",
@@ -209,6 +210,7 @@ export default function GiftViewer({ params }) {
         if (docSnap.exists()) {
           const dbData = docSnap.data();
           setGiftData({
+            skipTrivia: dbData.skipTrivia || false,
             theme: dbData.theme || "blush",
             occasion: dbData.occasion || "standard",
             recipientName: dbData.recipientName || "Cutie",
@@ -316,7 +318,7 @@ export default function GiftViewer({ params }) {
 
   const triggerUnlock = () => {
     confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: styles.particles });
-    const nextStage = giftData?.skipTrivia ? (giftData?.questions?.length || 2) + 1 : 1;
+    const nextStage = giftData?.skipTrivia ? (giftData?.questions ? giftData.questions.length : 0) + 1 : 1;
     setTimeout(() => setStage(nextStage), 800);
   };
 
@@ -415,7 +417,7 @@ export default function GiftViewer({ params }) {
         )}
 
         {/* TRIVIA STAGES */}
-        {stage >= 1 && stage <= (giftData?.questions?.length || 2) && !activeModal && (
+        {stage >= 1 && stage <= (giftData?.questions ? giftData.questions.length : 0) && !activeModal && (
           <motion.div key={`q-${stage}`} initial={{opacity:0, y:30}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-30}} className={`w-full max-w-md ${styles.glass} p-8 rounded-[2rem] border ${styles.border} shadow-2xl relative z-10`}>
             <h2 className={`text-xs uppercase tracking-widest font-bold mb-4 ${styles.accentText}`}>Memory #{stage}</h2>
             <p className="text-2xl md:text-3xl font-semibold mb-10 leading-snug">{giftData.questions[stage-1].question}</p>
@@ -473,7 +475,7 @@ export default function GiftViewer({ params }) {
         )}
 
         {/* STAGE 3: MEMORY CAROUSEL */}
-        {stage === (giftData?.questions?.length || 2) + 1 && (
+        {stage === (giftData?.questions ? giftData.questions.length : 0) + 1 && (
           <motion.div key="carousel" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="w-full max-w-2xl text-center z-10 flex flex-col items-center overflow-hidden">
             
             <AnimatePresence mode="wait">
@@ -536,7 +538,7 @@ export default function GiftViewer({ params }) {
         )}
 
         {/* STAGE 4: REASONS WHY (Floating Bubbles) */}
-        {stage === (giftData?.questions?.length || 2) + 2 && (
+        {stage === (giftData?.questions ? giftData.questions.length : 0) + 2 && (
           <motion.div key="reasons" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:1}} className="w-full h-full flex flex-col items-center justify-center z-10 min-h-[60vh]">
             <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light mb-16 text-center`}>{giftData?.occasion === "proposal" ? "My Promises to You..." : giftData?.occasion === "birthday" ? "My Birthday Wishes..." : giftData?.occasion === "family" ? "Things I Appreciate About You..." : "Why I love you..."}</h1>
             
@@ -590,7 +592,7 @@ export default function GiftViewer({ params }) {
 
             <AnimatePresence>
               {poppedReasons.every(Boolean) && (
-                <motion.button initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} onClick={() => setStage(5)} className={`mt-16 px-8 py-3 bg-gradient-to-r ${styles.accentGradient} rounded-full font-bold shadow-lg hover:scale-105 transition-transform text-slate-900 dark:text-white text-lg flex items-center gap-2`}>
+                <motion.button initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} onClick={() => setStage(prev => prev + 1)} className={`mt-16 px-8 py-3 bg-gradient-to-r ${styles.accentGradient} rounded-full font-bold shadow-lg hover:scale-105 transition-transform text-slate-900 dark:text-white text-lg flex items-center gap-2`}>
                   Read My Letter <ArrowRight className="w-5 h-5" />
                 </motion.button>
               )}
@@ -599,7 +601,7 @@ export default function GiftViewer({ params }) {
         )}
 
         {/* STAGE 5: FINAL LETTER */}
-        {stage === (giftData?.questions?.length || 2) + 3 && (
+        {stage === (giftData?.questions ? giftData.questions.length : 0) + 3 && (
           <motion.div key="letter" initial={{opacity:0, y:40}} animate={{opacity:1, y:0}} transition={{duration:1.5}} className={`w-full max-w-2xl bg-slate-100 dark:bg-black/60 backdrop-blur-2xl border ${styles.border} p-6 md:p-12 rounded-[3rem] shadow-2xl relative z-10 text-center mt-12 mb-12`}>
             
             
@@ -631,7 +633,7 @@ export default function GiftViewer({ params }) {
         )}
 
         {/* STAGE: PROPOSAL (ONLY IF OCCASION === PROPOSAL) */}
-        {stage === (giftData?.questions?.length || 2) + 4 && giftData?.occasion === 'proposal' && (
+        {stage === (giftData?.questions ? giftData.questions.length : 0) + 4 && giftData?.occasion === 'proposal' && (
           <motion.div key="proposal" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:2}} className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 bg-black/90 backdrop-blur-xl">
             <motion.div initial={{opacity:0, scale:0.9, y: 50}} animate={{opacity:1, scale:1, y: 0}} transition={{delay: 1, duration:2}} className="flex flex-col items-center w-full max-w-2xl">
               <h1 className={`text-4xl md:text-7xl font-serif italic text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] font-light leading-relaxed mb-12`}>Will you marry me? 💍</h1>
@@ -652,7 +654,7 @@ export default function GiftViewer({ params }) {
         )}
 
         {/* STAGE: REACTION BOOTH */}
-        {stage === (giftData?.questions?.length || 2) + (giftData?.occasion === 'proposal' ? 5 : 4) && (
+        {stage === (giftData?.questions ? giftData.questions.length : 0) + (giftData?.occasion === 'proposal' ? 5 : 4) && (
           <motion.div key="reaction" initial={{opacity:0, scale:0.9}} animate={{opacity:1, scale:1}} className={`w-full max-w-xl ${styles.glass} p-8 md:p-12 rounded-[3rem] border ${styles.border} text-center shadow-2xl relative z-10`}>
             <h2 className={`text-3xl md:text-5xl ${styles.font} italic mb-6`}>Leave a Reaction</h2>
             <p className="text-lg opacity-80 mb-10">
