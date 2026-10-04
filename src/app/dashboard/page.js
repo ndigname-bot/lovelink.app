@@ -177,31 +177,12 @@ export default function Dashboard() {
 
       let photoUrls = [];
 
-      // Upload Multiple Photos to Cloudinary
+      // Upload Multiple Photos to Firebase Storage
       if (photos.length > 0) {
-        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-        const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-        
-        if (!cloudName || !uploadPreset) {
-          throw new Error("Cloudinary environment variables are missing. Please configure them in Vercel.");
-        }
-
         const uploadPromises = photos.map(async (photo) => {
-          const formData = new FormData();
-          formData.append("file", photo);
-          formData.append("upload_preset", uploadPreset);
-
-          const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-            method: "POST",
-            body: formData,
-          });
-
-          if (!res.ok) {
-            throw new Error("Failed to upload image to Cloudinary");
-          }
-
-          const data = await res.json();
-          return data.secure_url;
+          const photoRef = ref(storage, `gifts/${auth.currentUser.uid}/photos/${Date.now()}_${photo.name}`);
+          const snapshot = await uploadBytes(photoRef, photo);
+          return await getDownloadURL(snapshot.ref);
         });
         photoUrls = await Promise.all(uploadPromises);
       }
@@ -317,7 +298,7 @@ export default function Dashboard() {
                   ].map(occ => (
                     <button 
                       key={occ.id} 
-                      onClick={() => updateForm('occasion', occ.id)} disabled={isEditing}
+                      onClick={() => { updateForm('occasion', occ.id); if (occ.id === 'family' || occ.id === 'birthday') { updateForm('skipTrivia', true); } else { updateForm('skipTrivia', false); } }} disabled={isEditing}
                       className={`relative p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${formData.occasion === occ.id ? 'border-pink-500 bg-pink-500/10 text-pink-600 dark:text-pink-400 shadow-md' : 'border-slate-200 dark:border-white/10 hover:border-pink-500/50 bg-white dark:bg-white/5 text-slate-600 dark:text-gray-300'} ${isEditing && formData.occasion !== occ.id ? 'opacity-30 cursor-not-allowed hidden md:flex' : ''}`}
                     >
                       <span className="text-2xl">{occ.emoji}</span>
