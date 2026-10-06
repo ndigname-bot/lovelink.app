@@ -152,6 +152,25 @@ export default function GiftViewer({ params }) {
         }
       });
       
+      // Trigger Email Notification API
+      if (giftData.creatorEmail && giftId !== "demo-gift" && giftId !== "draft") {
+        try {
+          await fetch('/api/notify-reaction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              creatorEmail: giftData.creatorEmail,
+              creatorName: giftData.creatorName,
+              recipientName: giftData.recipientName,
+              giftId: giftId,
+              reactionType: type
+            })
+          });
+        } catch (e) {
+          console.error("Failed to send email notification", e);
+        }
+      }
+      
       setReactionSent(true);
     } catch (err) {
       console.error(err);
@@ -215,6 +234,7 @@ export default function GiftViewer({ params }) {
             occasion: dbData.occasion || "standard",
             recipientName: dbData.recipientName || "Cutie",
             creatorName: dbData.creatorName || "Me",
+            creatorEmail: dbData.creatorEmail || "",
             songQuery: dbData.songQuery || "Daniel Caesar - Get You",
             photoUrls: dbData.photoUrls || (dbData.photoUrl ? [dbData.photoUrl] : []),
             photoCaptions: dbData.photoCaptions || [],

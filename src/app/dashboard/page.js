@@ -212,6 +212,7 @@ export default function Dashboard() {
           ...formData,
           photoUrls, 
           creatorId: auth.currentUser.uid,
+          creatorEmail: auth.currentUser.email || "",
           createdAt: serverTimestamp(),
           paid: isFreePromo 
         });
