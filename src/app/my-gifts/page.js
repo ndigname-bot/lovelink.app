@@ -1,8 +1,9 @@
 "use client";
 import { Logo } from "@/components/Logo";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 , Edit3, Mail } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 , Edit3, Mail, QrCode, Printer, X } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import Link from "next/link";
 import { db, auth } from "../../lib/firebase";
 import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore";
@@ -21,6 +22,7 @@ export default function MyGifts() {
   const [newReviewStars, setNewReviewStars] = useState(5);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [activeLovecard, setActiveLovecard] = useState(null);
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -266,6 +268,9 @@ export default function MyGifts() {
                             <Link href={`/dashboard?edit=${gift.id}`} className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors" title="Edit Gift">
                               <Edit3 className="w-4 h-4" /> <span className="hidden sm:inline">Edit</span>
                             </Link>
+                            <button onClick={() => setActiveLovecard(gift)} className="flex-1 flex items-center justify-center gap-2 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 py-2 rounded-xl text-sm font-bold transition-colors" title="Print Lovecard">
+                              <QrCode className="w-4 h-4" /> <span className="hidden sm:inline">Card</span>
+                            </button>
                             <Link href={`/gift/${gift.id}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-pink-500 hover:bg-pink-600 py-2 rounded-xl text-sm font-bold transition-colors shadow-lg shadow-pink-500/20 text-white" title="View Live">
                               <ExternalLink className="w-4 h-4" /> <span className="hidden sm:inline">View</span>
                             </Link>
@@ -389,6 +394,69 @@ export default function MyGifts() {
             </div>
           </div>
         )}
+
+
+      {/* LOVECARD MODAL */}
+      <AnimatePresence>
+        {activeLovecard && (
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="absolute inset-0" onClick={() => setActiveLovecard(null)} />
+            
+            <motion.div initial={{scale:0.9, y:20}} animate={{scale:1, y:0}} exit={{scale:0.9, y:20}} className="relative bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl flex flex-col items-center">
+              <button onClick={() => setActiveLovecard(null)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-full bg-slate-100 dark:bg-white/5 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="text-center mb-6 mt-4">
+                <h2 className="text-2xl font-bold mb-2">Printable Lovecard</h2>
+                <p className="text-sm text-slate-500 dark:text-gray-400">Print this physical card and hand it to {activeLovecard.recipientName} in person.</p>
+              </div>
+
+              {/* The Physical Card to Print */}
+              <div id="lovecard-print-area" className="w-full aspect-[3/4] bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-950/40 dark:to-pink-900/20 border-2 border-rose-200 dark:border-rose-900/50 rounded-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden shadow-inner mb-6">
+                <Heart className="w-12 h-12 text-rose-400 mb-6 fill-rose-400/20" />
+                <h3 className="text-3xl font-serif text-rose-900 dark:text-rose-100 mb-2 italic">For {activeLovecard.recipientName}</h3>
+                <p className="text-rose-700/70 dark:text-rose-300/70 text-sm font-medium tracking-widest uppercase mb-10 text-center">Scan to open your gift</p>
+                
+                <div className="bg-white p-4 rounded-2xl shadow-lg border border-slate-100 dark:border-none">
+                  <QRCodeSVG 
+                    value={`https://lovelink-app-beta.vercel.app/gift/${activeLovecard.id}`} 
+                    size={160}
+                    level="H"
+                    fgColor="#000000"
+                    bgColor="#FFFFFF"
+                    imageSettings={{
+                      src: "https://cdn-icons-png.flaticon.com/512/833/833472.png", // heart icon
+                      x: undefined,
+                      y: undefined,
+                      height: 35,
+                      width: 35,
+                      excavate: true,
+                    }}
+                  />
+                </div>
+                
+                <p className="absolute bottom-6 text-xs text-rose-800/50 dark:text-rose-200/40 font-medium">From {activeLovecard.creatorName}</p>
+              </div>
+
+              <button 
+                onClick={() => {
+                  const printContent = document.getElementById('lovecard-print-area').innerHTML;
+                  const originalContent = document.body.innerHTML;
+                  document.body.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; padding:40px;">${printContent}</div>`;
+                  window.print();
+                  document.body.innerHTML = originalContent;
+                  window.location.reload();
+                }}
+                className="w-full py-4 bg-slate-900 text-white dark:bg-white dark:text-black rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 dark:hover:bg-gray-200 transition-colors shadow-lg shadow-black/10"
+              >
+                <Printer className="w-5 h-5" /> Print or Save as PDF
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       </main>
     </div>
   );

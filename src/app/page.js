@@ -101,40 +101,34 @@ export default function Home() {
         </motion.div>
       </main>
 
-      {/* VIDEO TUTORIAL SECTION */}
-      <section className="py-24 max-w-5xl mx-auto px-8 relative z-10">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">See how it works.</h2>
-          <p className="text-slate-500 dark:text-gray-400">Watch how easy it is to build a cinematic experience in under 2 minutes.</p>
+      {/* USE CASES SECTION */}
+      <section className="py-24 max-w-7xl mx-auto px-8 relative z-10">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-5xl font-bold mb-4">Perfect for every moment.</h2>
+          <p className="text-slate-500 dark:text-gray-400">Cinematic experiences designed to make them cry tears of joy.</p>
         </div>
         
-        <div className="relative w-full aspect-video bg-slate-100 dark:bg-black border border-slate-200 dark:border-white/10 rounded-[2rem] overflow-hidden shadow-[0_0_80px_rgba(236,72,153,0.15)] flex items-center justify-center group">
-          {isVideoPlaying ? (
-            <iframe 
-              className="w-full h-full border-none"
-              src="https://www.youtube.com/embed/gPBg_M-C4-A?autoplay=1" 
-              allow="autoplay; encrypted-media; fullscreen" 
-              allowFullScreen
-            />
-          ) : (
-            <div onClick={() => setIsVideoPlaying(true)} className="absolute inset-0 cursor-pointer flex items-center justify-center">
-              <img src="https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=1200&q=80" alt="Video thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              
-              {/* Play Button */}
-              <div className="relative z-10 w-20 h-20 rounded-full bg-pink-500/90 flex items-center justify-center shadow-[0_0_40px_rgba(236,72,153,0.6)] group-hover:scale-110 group-hover:bg-pink-500 transition-all duration-300">
-                <svg className="w-8 h-8 text-slate-900 dark:text-white ml-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </div>
-              
-              {/* Video Title Bar */}
-              <div className="absolute bottom-6 left-8 right-8 flex items-center justify-between z-10">
-                <span className="text-slate-900 dark:text-white text-lg font-medium drop-shadow-md">LoveLink Walkthrough</span>
-                <span className="text-slate-900 dark:text-white text-sm font-bold bg-slate-100 dark:bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-md">2:15</span>
-              </div>
-            </div>
-          )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 hover:-translate-y-2 transition-transform">
+            <div className="w-12 h-12 bg-pink-500/20 text-pink-500 rounded-2xl flex items-center justify-center mb-6 text-2xl">💍</div>
+            <h3 className="text-xl font-bold mb-2">The Proposal</h3>
+            <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">Lock in your promises. Let them solve trivia about your relationship before popping the ultimate question.</p>
+          </div>
+          <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 hover:-translate-y-2 transition-transform">
+            <div className="w-12 h-12 bg-blue-500/20 text-blue-500 rounded-2xl flex items-center justify-center mb-6 text-2xl">🕰️</div>
+            <h3 className="text-xl font-bold mb-2">Time Capsule</h3>
+            <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">Perfect for family. A cinematic ticking clock that rewinds time through your favorite childhood memories.</p>
+          </div>
+          <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 hover:-translate-y-2 transition-transform">
+            <div className="w-12 h-12 bg-amber-500/20 text-amber-500 rounded-2xl flex items-center justify-center mb-6 text-2xl">🎂</div>
+            <h3 className="text-xl font-bold mb-2">Birthdays</h3>
+            <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">Make them feel like the main character. A personalized photo scroll scored to their favorite song.</p>
+          </div>
+          <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 hover:-translate-y-2 transition-transform">
+            <div className="w-12 h-12 bg-rose-500/20 text-rose-500 rounded-2xl flex items-center justify-center mb-6 text-2xl">💌</div>
+            <h3 className="text-xl font-bold mb-2">Just Because</h3>
+            <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">You don't need an excuse to show appreciation. Send a surprise love letter that unlocks with their fingerprint.</p>
+          </div>
         </div>
       </section>
 
