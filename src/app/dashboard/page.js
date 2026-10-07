@@ -170,10 +170,11 @@ export default function Dashboard() {
     if (!auth.currentUser) return router.push("/login");
     setIsPublishing(true);
     try {
-      // Freemium Logic: First 2 links are free
-      const q = query(collection(db, "gifts"), where("creatorId", "==", auth.currentUser.uid));
-      const querySnapshot = await getDocs(q);
-      const isFreePromo = true; // Temporarily free for all testing
+      // Add strict timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Network timeout - please check your connection and disable adblockers")), 15000));
+      
+      const publishTask = async () => {
+        const isFreePromo = true; // Temporarily free for all testing
 
       let photoUrls = [];
 
@@ -224,20 +225,17 @@ export default function Dashboard() {
         }
       }
 
-      // Request Stripe Checkout Session
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ giftId: finalGiftId, recipientName: formData.recipientName, email: auth.currentUser?.email })
       });
-      
       const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert("Failed to start checkout: " + data.error);
-        setIsPublishing(false);
-      }
+      if (data.url) window.location.href = data.url;
+      else throw new Error(data.error);
+    };
+
+    await Promise.race([publishTask(), timeoutPromise]);
     } catch (e) {
       console.error("Error publishing:", e);
       alert("Failed to save gift: " + e.message);
