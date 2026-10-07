@@ -276,20 +276,21 @@ export default function GiftViewer({ params }) {
   
   useEffect(() => {
     const qLen = giftData?.questions ? giftData.questions.length : 0;
-    if (stage === qLen + 1 && giftData?.photoUrls?.length > 0) {
+    if (stage === qLen + 1) {
+      if (!giftData?.photoUrls || giftData.photoUrls.length === 0) {
+        setStage(prev => prev + 1);
+        return;
+      }
       let currentPhoto = 0;
-      
+      let activeTimer;
       const runSequence = () => {
         if (currentPhoto < giftData.photoUrls.length - 1) {
           currentPhoto++;
           setActivePhoto(currentPhoto);
-          setTimeout(runSequence, 3000); // Pause for 3s on each photo
+          activeTimer = setTimeout(runSequence, 3000);
         } else {
-          // Trigger the crazy spin out after the last photo
-          setTimeout(() => {
+          activeTimer = setTimeout(() => {
             setIsSpinningOut(true);
-            
-            // Wait for crazy spin to finish, then go to next stage
             setTimeout(() => {
               setIsSpinningOut(false);
               setStage(prev => prev + 1);
@@ -297,9 +298,8 @@ export default function GiftViewer({ params }) {
           }, 3000);
         }
       };
-      
-      const timer = setTimeout(runSequence, 3000);
-      return () => clearTimeout(timer);
+      activeTimer = setTimeout(runSequence, 3000);
+      return () => clearTimeout(activeTimer);
     }
   }, [stage, giftData?.photoUrls?.length]);
 
