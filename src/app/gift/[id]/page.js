@@ -275,7 +275,7 @@ export default function GiftViewer({ params }) {
   const [isSpinningOut, setIsSpinningOut] = useState(false);
   
   useEffect(() => {
-    const qLen = giftData?.questions?.length || 2;
+    const qLen = giftData?.questions ? giftData.questions.length : 0;
     if (stage === qLen + 1 && giftData?.photoUrls?.length > 0) {
       let currentPhoto = 0;
       
