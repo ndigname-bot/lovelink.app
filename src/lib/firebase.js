@@ -21,13 +21,18 @@ let db;
 if (typeof window !== "undefined") {
   try {
     db = initializeFirestore(app, {
-      localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+      localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
+      experimentalForceLongPolling: true
     });
   } catch (e) {
-    db = getFirestore(app);
+    db = initializeFirestore(app, {
+      experimentalForceLongPolling: true
+    });
   }
 } else {
-  db = getFirestore(app);
+  db = initializeFirestore(app, {
+    experimentalForceLongPolling: true
+  });
 }
 
 const storage = getStorage(app);
