@@ -19,20 +19,9 @@ const googleProvider = new GoogleAuthProvider();
 
 let db;
 if (typeof window !== "undefined") {
-  try {
-    db = initializeFirestore(app, {
-      localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
-      experimentalForceLongPolling: true
-    });
-  } catch (e) {
-    db = initializeFirestore(app, {
-      experimentalForceLongPolling: true
-    });
-  }
+  db = getFirestore(app);
 } else {
-  db = initializeFirestore(app, {
-    experimentalForceLongPolling: true
-  });
+  db = getFirestore(app);
 }
 
 const storage = getStorage(app);

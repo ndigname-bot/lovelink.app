@@ -41,6 +41,7 @@ export default function Dashboard() {
   const [isEditing, setIsEditing] = useState(false);
   const [step, setStep] = useState(1);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [publishStatus, setPublishStatus] = useState("");
   const [publishedLink, setPublishedLink] = useState(null);
 
   useEffect(() => {
@@ -169,77 +170,84 @@ export default function Dashboard() {
   const handlePublish = async () => {
     if (!auth.currentUser) return router.push("/login");
     setIsPublishing(true);
+    setPublishStatus("Starting...");
+    
     try {
-      // Add strict timeout to prevent infinite loading
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Upload timed out. If you added large photos, try connecting to a faster network.")), 180000));
       
       const publishTask = async () => {
-        const isFreePromo = true; // Temporarily free for all testing
+        const isFreePromo = true; 
 
-      let photoUrls = [];
+        let photoUrls = [];
 
-      // Upload Multiple Photos to Firebase Storage
-      if (photos.length > 0) {
-        const uploadPromises = photos.map(async (photo) => {
-          const photoRef = ref(storage, `gifts/${auth.currentUser.uid}/photos/${Date.now()}_${photo.name}`);
-          const snapshot = await uploadBytes(photoRef, photo);
-          return await getDownloadURL(snapshot.ref);
-        });
-        photoUrls = await Promise.all(uploadPromises);
-      }
-
-      let finalSongUrl = formData.songQuery;
-      if (formData.songQuery === "upload" && audioFile) {
-        const audioRef = ref(storage, `gifts/${auth.currentUser.uid}/audio_${Date.now()}_${audioFile.name}`);
-        const snapshot = await uploadBytes(audioRef, audioFile);
-        finalSongUrl = await getDownloadURL(snapshot.ref);
-      } else if (formData.songQuery === "upload") {
-        finalSongUrl = "";
-      }
-
-      // Save to Firestore
-      let finalGiftId = editGiftId;
-      if (editGiftId) {
-        const docRef = doc(db, "gifts", editGiftId);
-        await updateDoc(docRef, {
-          ...formData,
-          ...(photoUrls.length > 0 && { photoUrls }), 
-          updatedAt: serverTimestamp(),
-        });
-        window.location.href = '/my-gifts';
-        return;
-      } else {
-        const docRef = await addDoc(collection(db, "gifts"), {
-          ...formData,
-          photoUrls, 
-          creatorId: auth.currentUser.uid,
-          creatorEmail: auth.currentUser.email || "",
-          createdAt: serverTimestamp(),
-          paid: isFreePromo 
-        });
-        finalGiftId = docRef.id;
-        
-        if (isFreePromo) {
-          window.location.href = `/success?giftId=${finalGiftId}`;
-          return;
+        if (photos.length > 0) {
+          setPublishStatus("Uploading " + photos.length + " photos...");
+          const uploadPromises = photos.map(async (photo) => {
+            const photoRef = ref(storage, `gifts/${auth.currentUser.uid}/photos/${Date.now()}_${photo.name}`);
+            const snapshot = await uploadBytes(photoRef, photo);
+            return await getDownloadURL(snapshot.ref);
+          });
+          photoUrls = await Promise.all(uploadPromises);
         }
-      }
 
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ giftId: finalGiftId, recipientName: formData.recipientName, email: auth.currentUser?.email })
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-      else throw new Error(data.error);
-    };
+        let finalSongUrl = formData.songQuery;
+        if (formData.songQuery === "upload" && audioFile) {
+          setPublishStatus("Uploading audio...");
+          const audioRef = ref(storage, `gifts/${auth.currentUser.uid}/audio_${Date.now()}_${audioFile.name}`);
+          const snapshot = await uploadBytes(audioRef, audioFile);
+          finalSongUrl = await getDownloadURL(snapshot.ref);
+        } else if (formData.songQuery === "upload") {
+          finalSongUrl = "";
+        }
 
-    await Promise.race([publishTask(), timeoutPromise]);
+        setPublishStatus("Saving to database...");
+        let finalGiftId = editGiftId;
+        
+        if (editGiftId) {
+          const docRef = doc(db, "gifts", editGiftId);
+          await updateDoc(docRef, {
+            ...formData,
+            ...(photoUrls.length > 0 && { photoUrls }), 
+            updatedAt: serverTimestamp(),
+          });
+          setPublishStatus("Done!");
+          router.push('/my-gifts');
+          return;
+        } else {
+          const docRef = await addDoc(collection(db, "gifts"), {
+            ...formData,
+            photoUrls, 
+            creatorId: auth.currentUser.uid,
+            creatorEmail: auth.currentUser.email || "",
+            createdAt: serverTimestamp(),
+            paid: isFreePromo 
+          });
+          finalGiftId = docRef.id;
+          
+          if (isFreePromo) {
+            setPublishStatus("Redirecting...");
+            router.push(`/success?giftId=${finalGiftId}`);
+            return;
+          }
+        }
+
+        setPublishStatus("Initializing Payment...");
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ giftId: finalGiftId, recipientName: formData.recipientName, email: auth.currentUser?.email })
+        });
+        const data = await res.json();
+        if (data.url) router.push(data.url);
+        else throw new Error(data.error);
+      };
+
+      await Promise.race([publishTask(), timeoutPromise]);
     } catch (e) {
       console.error("Error publishing:", e);
       alert("Failed to save gift: " + e.message);
       setIsPublishing(false);
+      setPublishStatus("");
     }
   };
 
@@ -368,15 +376,20 @@ export default function Dashboard() {
                 <div className="flex justify-between items-center">
                   <h3 className="font-bold text-lg flex items-center gap-2"><Lock className="w-5 h-5 text-pink-500" /> Trivia Question {index + 1}</h3>
                   <div className="relative">
-                    <select 
-                      value={formData[qId].type || "multiple_choice"} 
-                      onChange={(e) => updateQuestion(qId, 'type', e.target.value)}
-                      className="appearance-none bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl pl-3 pr-8 py-1.5 text-sm text-slate-600 dark:text-gray-300 outline-none focus:border-pink-500 cursor-pointer shadow-sm"
-                    >
-                      <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="multiple_choice">Multiple Choice</option>
-                      <option className="bg-white dark:bg-[#111] text-slate-900 dark:text-white" value="open_ended">Open Ended (Text)</option>
-                    </select>
-                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    <div className="flex bg-slate-200 dark:bg-white/10 rounded-lg p-1">
+                      <button 
+                        onClick={() => updateQuestion(qId, 'type', 'multiple_choice')}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${(!formData[qId].type || formData[qId].type === 'multiple_choice') ? 'bg-white dark:bg-black text-pink-500 shadow-sm' : 'text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'}`}
+                      >
+                        Multiple Choice
+                      </button>
+                      <button 
+                        onClick={() => updateQuestion(qId, 'type', 'open_ended')}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${formData[qId].type === 'open_ended' ? 'bg-white dark:bg-black text-pink-500 shadow-sm' : 'text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'}`}
+                      >
+                        Open Ended
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -469,7 +482,7 @@ export default function Dashboard() {
             <div className="flex gap-4">
               <button onClick={handlePreview} className="hidden md:flex items-center gap-2 text-slate-900 dark:text-white/70 hover:text-slate-900 dark:text-white px-6 py-3 font-medium">Preview</button>
               <button onClick={handlePublish} disabled={isPublishing} className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 text-slate-900 dark:text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 disabled:opacity-50">
-                {isPublishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Sparkles className="w-5 h-5" /> Generate Link</>}
+                {isPublishing ? <><Loader2 className="w-5 h-5 animate-spin" /> {publishStatus}</> : <><Sparkles className="w-5 h-5" /> Generate Link</>}
               </button>
             </div>
           )}
