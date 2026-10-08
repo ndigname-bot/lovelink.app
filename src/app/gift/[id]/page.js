@@ -303,6 +303,37 @@ export default function GiftViewer({ params }) {
     }
   }, [stage, giftData?.photoUrls?.length]);
 
+  // Time Capsule Sequence Logic
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (stage === 'tc_1') {
+      let t = 0;
+      const interval = setInterval(() => {
+        t++;
+        setTick(t);
+        if (t === 2) {
+          clearInterval(interval);
+          setTimeout(() => setStage('tc_2'), 1500);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    } else if (stage === 'tc_2') {
+      setTimeout(() => setStage('tc_3'), 5000);
+    } else if (stage === 'tc_3') {
+      let t = 0;
+      setTick(0);
+      const interval = setInterval(() => {
+        t++;
+        setTick(t);
+        if (t === 3) {
+          clearInterval(interval);
+          setTimeout(() => setStage((giftData?.questions ? giftData.questions.length : 0) + 1), 1500);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [stage, giftData]);
+
   if (!giftData) return <div className="min-h-screen bg-white dark:bg-[#0a0a0a] flex items-center justify-center"><Heart className="w-10 h-10 text-pink-500 animate-pulse" /></div>;
 
   if (giftData.paid === false) {
@@ -342,36 +373,7 @@ export default function GiftViewer({ params }) {
     setTimeout(() => setStage(nextStage), 800);
   };
 
-  // Time Capsule Sequence Logic
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    if (stage === 'tc_1') {
-      let t = 0;
-      const interval = setInterval(() => {
-        t++;
-        setTick(t);
-        if (t === 2) {
-          clearInterval(interval);
-          setTimeout(() => setStage('tc_2'), 1500);
-        }
-      }, 1000);
-      return () => clearInterval(interval);
-    } else if (stage === 'tc_2') {
-      setTimeout(() => setStage('tc_3'), 5000);
-    } else if (stage === 'tc_3') {
-      let t = 0;
-      setTick(0);
-      const interval = setInterval(() => {
-        t++;
-        setTick(t);
-        if (t === 3) {
-          clearInterval(interval);
-          setTimeout(() => setStage((giftData?.questions ? giftData.questions.length : 0) + 1), 1500);
-        }
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [stage, giftData]);
+
 
   const handleAnswer = async (isCorrect, text) => {
     // Silently save their answer to the database if it's a real gift
