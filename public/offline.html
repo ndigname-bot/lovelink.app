@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Offline | LoveLink</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0a0a0a;
+      color: white;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+    .heart {
+      color: #ec4899;
+      font-size: 4rem;
+      animation: pulse 2s infinite;
+      margin-bottom: 2rem;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      color: #a1a1aa;
+      max-width: 400px;
+      line-height: 1.5;
+      padding: 0 1rem;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    button {
+      margin-top: 2rem;
+      background: linear-gradient(to right, #ec4899, #e11d48);
+      color: white;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 9999px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="heart">❤️</div>
+  <h1>Waiting for connection...</h1>
+  <p>Your internet connection dropped, but don't worry! We'll load your gift as soon as you reconnect.</p>
+  <button onclick="window.location.reload()">Try Again</button>
+  
+  <script>
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

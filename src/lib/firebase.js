@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -12,15 +12,24 @@ const firebaseConfig = {
   appId: "1:456623557713:web:7a7b8169296dcca1acfc70"
 };
 
-// Initialize Firebase only if it hasn't been initialized yet (Next.js hot reload safe)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Initialize Auth & Google Provider
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
-// Initialize Database & Storage
-const db = getFirestore(app);
+let db;
+if (typeof window !== "undefined") {
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+    });
+  } catch (e) {
+    db = getFirestore(app);
+  }
+} else {
+  db = getFirestore(app);
+}
+
 const storage = getStorage(app);
 
 export { app, auth, googleProvider, db, storage };

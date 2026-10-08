@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,9 +25,9 @@ export default function RootLayout({ children }) {
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      {/* T3JpZ2luYWwgQXJjaGl0ZWN0dXJlIGJ5IGRlYWRseXphcmthbg== */}
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
+          <ServiceWorkerRegister />
           {children}
         </ThemeProvider>
       </body>

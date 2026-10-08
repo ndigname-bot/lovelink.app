@@ -84,11 +84,16 @@ export default function Home() {
             </div>
             
             {/* Playable iframe Demo */}
-            <iframe 
-              src="/gift/demo-gift" 
-              className="w-full h-full border-none bg-slate-100 dark:bg-black"
-              title="Interactive Demo"
-            />
+            <div className="w-full h-full flex flex-col relative">
+              <iframe 
+                src="/gift/demo-gift" 
+                className="w-full h-full border-none bg-slate-100 dark:bg-black"
+                title="Interactive Demo"
+              />
+              <div className="absolute bottom-4 left-0 right-0 text-center text-xs text-white bg-black/50 p-2">
+                If the demo above crashed, your connection is too slow for dynamic routing.
+              </div>
+            </div>
             
             {/* Hover overlay hint */}
             <div className="absolute top-8 right-[-100px] group-hover:right-4 transition-all duration-500 bg-pink-500 text-slate-900 dark:text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-40 rotate-12">
