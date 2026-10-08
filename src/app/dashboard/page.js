@@ -171,7 +171,7 @@ export default function Dashboard() {
     setIsPublishing(true);
     try {
       // Add strict timeout to prevent infinite loading
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Network timeout - please check your connection and disable adblockers")), 15000));
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Upload timed out. If you added large photos, try connecting to a faster network.")), 180000));
       
       const publishTask = async () => {
         const isFreePromo = true; // Temporarily free for all testing
