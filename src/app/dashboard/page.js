@@ -9,29 +9,9 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 
 import { useRouter, useSearchParams } from "next/navigation";
-
-const PRESET_SONGS = [
-  { title: "A Thousand Years - Christina Perri", url: "https://www.youtube.com/watch?v=rtOvBOTyX00" },
-  { title: "Perfect - Ed Sheeran", url: "https://www.youtube.com/watch?v=2Vv-BfVoq4g" },
-  { title: "All of Me - John Legend", url: "https://www.youtube.com/watch?v=450p7goxZqg" },
-  { title: "No One Like You - P-Square", url: "https://www.youtube.com/watch?v=ty2advRiWJM" },
-  { title: "African Queen - 2Baba", url: "https://www.youtube.com/watch?v=_TzXhN4-xGE" },
-  { title: "Thinking Out Loud - Ed Sheeran", url: "https://www.youtube.com/watch?v=alZZqaXbUSM" },
-  { title: "Best Part - H.E.R. ft. Daniel Caesar", url: "https://www.youtube.com/watch?v=vBGiFtb8xaw" },
-  { title: "Just The Way You Are - Bruno Mars", url: "https://www.youtube.com/watch?v=LjhCEhWiKXk" },
-  { title: "Can't Help Falling In Love - Elvis Presley", url: "https://www.youtube.com/watch?v=vGJTaP6anOU" },
-  { title: "Running (To You) - Chike ft. Simi", url: "https://www.youtube.com/watch?v=9DpeQbECK14" },
-  { title: "Make You Feel My Love - Adele", url: "https://www.youtube.com/watch?v=0put0_a--Ng" },
-  { title: "I Will Always Love You - Whitney Houston", url: "https://www.youtube.com/watch?v=3JWTaaS7LdU" },
-  { title: "My Heart Will Go On - Celine Dion", url: "https://www.youtube.com/watch?v=DNyKDI9pn0Q" },
-  { title: "At Last - Etta James", url: "https://www.youtube.com/watch?v=1qJU8G7gR_g" },
-  { title: "Romeo & Juliet - Johnny Drille", url: "https://www.youtube.com/watch?v=xxx" },
-  { title: "Duduke - Simi", url: "https://www.youtube.com/watch?v=-L8hLkg21MQ" },
-  { title: "I'm Yours - Jason Mraz", url: "https://www.youtube.com/watch?v=EkHTsc9PU2A" },
-  { title: "Love Me Like You Do - Ellie Goulding", url: "https://www.youtube.com/watch?v=AJtDXIazrMo" },
-  { title: "Beyond - Leon Bridges", url: "https://www.youtube.com/watch?v=OepXY20E_3g" },
-  { title: "Tattoo - Fireboy DML", url: "https://www.youtube.com/watch?v=R2_0-R5E2Z0" }
-];
+import { PhotoUploader } from "../../components/PhotoUploader";
+import { TriviaBuilder } from "../../components/TriviaBuilder";
+import { MusicSelector } from "../../components/MusicSelector";
 
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -189,7 +169,7 @@ export default function Dashboard() {
               const options = {
                 maxSizeMB: 0.8,
                 maxWidthOrHeight: 1920,
-                useWebWorker: true
+                useWebWorker: false
               };
               const compressedFile = await imageCompression(photo, options);
               const photoRef = ref(storage, `gifts/${auth.currentUser.uid}/photos/${Date.now()}_${compressedFile.name}`);
@@ -350,141 +330,18 @@ export default function Dashboard() {
                 <h1 className="text-3xl font-bold mb-2">Music & Memories</h1>
                 <p className="text-slate-500 dark:text-gray-400">Add their favorite song and inside jokes.</p>
               </div>
-              <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Music className="w-4 h-4 text-pink-400" /> Background Song (Tap play to preview)</label>
-              
-              <div className="flex flex-col gap-3 mt-4">
-                  {PRESET_SONGS.map((song, idx) => (
-                    <div key={idx} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${formData.songQuery === song.url ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-500' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-pink-300/50'}`}>
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <button 
-                          type="button"
-                          onClick={(e) => { e.preventDefault(); setPreviewSong(previewSong === song.url ? null : song.url); }} 
-                          className={`w-8 h-8 flex items-center justify-center rounded-full ${previewSong === song.url ? 'bg-pink-500 text-white shadow-lg shadow-pink-500/30' : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-pink-100 hover:text-pink-600 dark:hover:bg-pink-500/20 dark:hover:text-pink-400'} transition-all shrink-0`}
-                        >
-                          {previewSong === song.url ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
-                        </button>
-                        <span className="font-medium text-sm text-slate-700 dark:text-gray-200 truncate">{song.title}</span>
-                      </div>
-                      <button 
-                        type="button"
-                        onClick={(e) => { e.preventDefault(); updateForm('songQuery', song.url); }}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${formData.songQuery === song.url ? 'bg-pink-500 text-white shadow-md' : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-gray-400 hover:bg-slate-300 dark:hover:bg-white/20'}`}
-                      >
-                        {formData.songQuery === song.url ? 'Selected' : 'Select'}
-                      </button>
-                    </div>
-                  ))}
-                  
-                  {/* Custom YouTube Link */}
-                  <div className={`flex flex-col gap-2 p-3 rounded-xl border transition-all ${formData.songQuery && !PRESET_SONGS.find(s => s.url === formData.songQuery) && formData.songQuery !== 'upload' ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-500' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10'}`}>
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm text-slate-700 dark:text-gray-200">Custom YouTube Link</span>
-                      <button 
-                        type="button"
-                        onClick={(e) => { e.preventDefault(); updateForm('songQuery', 'https://www.youtube.com/watch?v='); }}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${formData.songQuery && !PRESET_SONGS.find(s => s.url === formData.songQuery) && formData.songQuery !== 'upload' ? 'bg-pink-500 text-white shadow-md' : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-gray-400 hover:bg-slate-300 dark:hover:bg-white/20'}`}
-                      >
-                        Use Custom
-                      </button>
-                    </div>
-                    {formData.songQuery && !PRESET_SONGS.find(s => s.url === formData.songQuery) && formData.songQuery !== 'upload' && (
-                      <div className="mt-2 flex gap-2">
-                        <input 
-                          type="text"
-                          value={formData.songQuery}
-                          onChange={(e) => updateForm('songQuery', e.target.value)}
-                          placeholder="Paste YouTube URL here..."
-                          className="w-full bg-white dark:bg-black/50 border border-slate-300 dark:border-white/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-pink-500 text-slate-900 dark:text-white"
-                        />
-                        <button 
-                          type="button"
-                          onClick={(e) => { e.preventDefault(); setPreviewSong(previewSong === formData.songQuery ? null : formData.songQuery); }} 
-                          className={`w-10 h-10 flex items-center justify-center rounded-lg ${previewSong === formData.songQuery ? 'bg-pink-500 text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-pink-100 hover:text-pink-600'} transition-all shrink-0`}
-                        >
-                          {previewSong === formData.songQuery ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Custom MP3 Upload */}
-                  <div className={`flex flex-col gap-2 p-3 rounded-xl border transition-all ${formData.songQuery === 'upload' ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-500' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10'}`}>
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm text-slate-700 dark:text-gray-200">Upload MP3 from Device</span>
-                      <button 
-                        type="button"
-                        onClick={(e) => { e.preventDefault(); updateForm('songQuery', 'upload'); }}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${formData.songQuery === 'upload' ? 'bg-pink-500 text-white shadow-md' : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-gray-400 hover:bg-slate-300 dark:hover:bg-white/20'}`}
-                      >
-                        Upload MP3
-                      </button>
-                    </div>
-                    {formData.songQuery === "upload" && (
-                        <input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files[0])} className="w-full mt-2 bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-600 dark:text-gray-300 focus:border-pink-500 outline-none animate-in fade-in slide-in-from-top-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100" />
-                    )}
-                  </div>
-                  
-                  {/* Invisible YouTube Player for Previews */}
-                  {previewSong && previewSong.includes('youtube') && (
-                     <iframe 
-                        width="0" height="0" 
-                        src={`https://www.youtube.com/embed/${previewSong.includes("v=") ? previewSong.split("v=")[1]?.split("&")[0] : previewSong.split("youtu.be/")[1]?.split("?")[0]}?autoplay=1&loop=1&playlist=${previewSong.includes("v=") ? previewSong.split("v=")[1]?.split("&")[0] : previewSong.split("youtu.be/")[1]?.split("?")[0]}`}
-                        allow="autoplay" 
-                        style={{display: "none"}}
-                     ></iframe>
-                  )}
-              </div>
-            </div>
-              {/* Skip Trivia Toggle */}
-              <div className="flex items-center justify-between p-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl cursor-pointer hover:border-pink-500/50 transition-colors" onClick={() => updateForm('skipTrivia', !formData.skipTrivia)} id="skipTriviaToggle">
-                <div>
-                  <h3 className="font-bold text-lg flex items-center gap-2"><Sparkles className="w-5 h-5 text-pink-500" /> Skip Trivia Section</h3>
-                  <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">If enabled, your recipient will go straight to the photos without answering questions.</p>
-                </div>
-                <div className={`w-12 h-6 rounded-full flex items-center p-1 transition-colors ${formData.skipTrivia ? 'bg-pink-500' : 'bg-slate-300 dark:bg-slate-700'}`}>
-                  <div className={`w-4 h-4 bg-white rounded-full transition-transform ${formData.skipTrivia ? 'translate-x-6' : 'translate-x-0'}`} />
-                </div>
-              </div>
-
-              {!formData.skipTrivia && ['q1', 'q2', 'q3', 'q4'].map((qId, index) => (
-              <div key={qId} className="p-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl space-y-6 relative group">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-lg flex items-center gap-2"><Lock className="w-5 h-5 text-pink-500" /> Trivia Question {index + 1}</h3>
-                  <div className="relative">
-                    <div className="flex bg-slate-200 dark:bg-white/10 rounded-lg p-1">
-                      <button 
-                        onClick={() => updateQuestion(qId, 'type', 'multiple_choice')}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${(!formData[qId].type || formData[qId].type === 'multiple_choice') ? 'bg-white dark:bg-black text-pink-500 shadow-sm' : 'text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'}`}
-                      >
-                        Multiple Choice
-                      </button>
-                      <button 
-                        onClick={() => updateQuestion(qId, 'type', 'open_ended')}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${formData[qId].type === 'open_ended' ? 'bg-white dark:bg-black text-pink-500 shadow-sm' : 'text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'}`}
-                      >
-                        Open Ended
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <input type="text" value={formData[qId].question} onChange={(e) => updateQuestion(qId, 'question', e.target.value)} placeholder={`e.g. ${index === 0 ? "What is my favorite thing about you?" : index === 1 ? "Where was our first date?" : "What is my biggest pet peeve?"}`} className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
-                  
-                  {formData[qId].type === "open_ended" ? (
-                    <div className="bg-slate-100 dark:bg-white/5 border border-dashed border-slate-300 dark:border-white/20 rounded-xl p-4 text-center">
-                      <p className="text-sm text-slate-500 dark:text-gray-400">The recipient will type their own answer in a text box.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <input type="text" value={formData[qId].correct} onChange={(e) => updateQuestion(qId, 'correct', e.target.value)} placeholder="Correct ✅" className="w-full bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-green-500 outline-none transition-colors" />
-                      <input type="text" value={formData[qId].wrong1} onChange={(e) => updateQuestion(qId, 'wrong1', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
-                      <input type="text" value={formData[qId].wrong2} onChange={(e) => updateQuestion(qId, 'wrong2', e.target.value)} placeholder="Wrong ❌" className="w-full bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-colors" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+              <MusicSelector 
+                formData={formData} 
+                updateForm={updateForm} 
+                previewSong={previewSong} 
+                setPreviewSong={setPreviewSong} 
+                setAudioFile={setAudioFile} 
+              />
+              <TriviaBuilder 
+                formData={formData} 
+                updateForm={updateForm} 
+                updateQuestion={updateQuestion} 
+              />
             </motion.div>
           )}
 
@@ -496,34 +353,13 @@ export default function Dashboard() {
               </div>
 
               {/* Memory Carousel Photos */}
-              <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><ImageIcon className="w-4 h-4 text-pink-400" /> Photo Gallery (Up to 10)</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {photoPreviews.map((src, i) => (
-                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 group flex flex-col bg-slate-100 dark:bg-black">
-                      <div className="relative flex-1">
-                        <img src={src} alt="Upload" className="absolute inset-0 w-full h-full object-cover" />
-                        <button onClick={() => removePhoto(i)} className="absolute top-2 right-2 bg-white dark:bg-black/50 p-1 rounded-full text-slate-900 dark:text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <input 
-                        type="text" 
-                        value={formData.photoCaptions[i] || ""} 
-                        onChange={(e) => updateCaption(i, e.target.value)}
-                        placeholder="Add caption..."
-                        className="w-full bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 text-sm px-3 py-3 border-2 border-transparent focus:border-pink-500 rounded-b-xl outline-none border-t border-slate-200 dark:border-white/10 transition-colors"
-                      />
-                    </div>
-                  ))}
-                  {photoPreviews.length < 10 && (
-                    <div className="relative aspect-square rounded-xl border-2 border-dashed border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:bg-white/10 flex flex-col items-center justify-center cursor-pointer">
-                      <input type="file" multiple accept="image/*" onChange={handlePhotoSelect} className="absolute inset-0 opacity-0 cursor-pointer" />
-                      <Plus className="w-8 h-8 text-gray-500" />
-                    </div>
-                  )}
-                </div>
-              </div>
+              <PhotoUploader 
+                formData={formData} 
+                updateCaption={updateCaption} 
+                photoPreviews={photoPreviews} 
+                handlePhotoSelect={handlePhotoSelect} 
+                removePhoto={removePhoto} 
+              />
 
               {/* Reasons Why */}
               <div className="space-y-4">
