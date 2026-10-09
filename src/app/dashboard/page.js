@@ -164,22 +164,26 @@ export default function Dashboard() {
 
                 if (photos.length > 0) {
           setPublishStatus("Compressing " + photos.length + " photos...");
-          const uploadPromises = photos.map(async (photo) => {
+          const uploadPromises = photos.map(async (photo, index) => {
             try {
-              const options = {
-                maxSizeMB: 0.8,
-                maxWidthOrHeight: 1920,
-                useWebWorker: false
-              };
-              const compressedFile = await imageCompression(photo, options);
+              setPublishStatus(`Compressing photo ${index + 1}...`);
+              
+              const compressPromise = imageCompression(photo, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: false });
+              const timeout1 = new Promise((_, reject) => setTimeout(() => reject(new Error("Compression hung")), 15000));
+              const compressedFile = await Promise.race([compressPromise, timeout1]);
+
+              setPublishStatus(`Uploading photo ${index + 1}...`);
               const photoRef = ref(storage, `gifts/${auth.currentUser.uid}/photos/${Date.now()}_${compressedFile.name}`);
-              const snapshot = await uploadBytes(photoRef, compressedFile);
+              
+              const uploadPromise = uploadBytes(photoRef, compressedFile);
+              const timeout2 = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase storage upload hung. This might be a CORS or permissions issue.")), 25000));
+              const snapshot = await Promise.race([uploadPromise, timeout2]);
+              
               return await getDownloadURL(snapshot.ref);
             } catch (error) {
-              console.error("Compression error:", error);
-              const photoRef = ref(storage, `gifts/${auth.currentUser.uid}/photos/${Date.now()}_${photo.name}`);
-              const snapshot = await uploadBytes(photoRef, photo);
-              return await getDownloadURL(snapshot.ref);
+              console.error("Error on photo", index, error);
+              setPublishStatus(`Failed on photo ${index + 1}: ${error.message}. Try again.`);
+              throw error; // Let the outer catch handle it
             }
           });
           photoUrls = await Promise.all(uploadPromises);
