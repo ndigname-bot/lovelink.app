@@ -456,13 +456,15 @@ export default function GiftViewer({ params }) {
 
   return (
     <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-1000`}>
-      {/* Background Audio (Always mounted so user tap triggers play immediately) */}
-      <audio 
-        ref={audioRef} 
-        loop 
-        playsInline
-        src={giftData?.songQuery && !giftData.songQuery.includes("youtube") ? giftData.songQuery : "/audio/romantic.mp3"} 
-      />
+      {/* Background Audio (Only plays when YouTube is not selected to prevent both songs playing together) */}
+      {!giftData?.songQuery?.includes("youtube") && (
+        <audio 
+          ref={audioRef} 
+          loop 
+          playsInline
+          src={giftData?.songQuery || "/audio/romantic.mp3"} 
+        />
+      )}
 
       {/* YouTube Background Player */}
       {giftData?.songQuery?.includes("youtube") && stage >= -1 && (
