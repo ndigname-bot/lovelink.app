@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X, Play, Pause, Check } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { auth, db, storage } from "../../lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { auth, db } from "../../lib/firebase";
+import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { PhotoUploader } from "../../components/PhotoUploader";
@@ -166,25 +165,30 @@ export default function Dashboard() {
           for (let i = 0; i < photos.length; i++) {
             const photo = photos[i];
             try {
-              let fileToUpload = photo;
+              setPublishStatus(`Processing photo ${i + 1} of ${photos.length}...`);
               
-              // Only compress if photo is larger than 1MB to save memory and avoid mobile browser freezes
-              if (photo.size > 1024 * 1024) {
-                setPublishStatus(`Compressing photo ${i + 1} of ${photos.length}...`);
-                const compressPromise = imageCompression(photo, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: false });
-                const timeout1 = new Promise((_, reject) => setTimeout(() => reject(new Error(`Photo ${i + 1} compression timed out`)), 20000));
-                fileToUpload = await Promise.race([compressPromise, timeout1]);
+              let dataUrl;
+              try {
+                // Compress image to lightweight, web-optimized size (~100KB)
+                const compressOptions = {
+                  maxSizeMB: 0.1,
+                  maxWidthOrHeight: 1000,
+                  useWebWorker: false,
+                  fileType: "image/jpeg",
+                  initialQuality: 0.75
+                };
+                const compressedBlob = await imageCompression(photo, compressOptions);
+                dataUrl = await imageCompression.getDataUrlFromFile(compressedBlob);
+              } catch (compErr) {
+                console.warn("Compression fallback to FileReader", compErr);
+                dataUrl = await new Promise((resolve) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => resolve(reader.result);
+                  reader.readAsDataURL(photo);
+                });
               }
-
-              setPublishStatus(`Uploading photo ${i + 1} of ${photos.length}...`);
-              const photoRef = ref(storage, `gifts/${auth.currentUser.uid}/photos/${Date.now()}_${fileToUpload.name}`);
               
-              const uploadPromise = uploadBytes(photoRef, fileToUpload);
-              const timeout2 = new Promise((_, reject) => setTimeout(() => reject(new Error(`Photo ${i + 1} upload timed out. Check network or storage rules.`)), 30000));
-              const snapshot = await Promise.race([uploadPromise, timeout2]);
-              
-              const downloadUrl = await getDownloadURL(snapshot.ref);
-              photoUrls.push(downloadUrl);
+              photoUrls.push(dataUrl);
             } catch (error) {
               console.error("Error on photo", i, error);
               setPublishStatus(`Failed on photo ${i + 1}: ${error.message}`);
@@ -195,39 +199,71 @@ export default function Dashboard() {
 
         let finalSongUrl = formData.songQuery;
         if (formData.songQuery === "upload" && audioFile) {
-          setPublishStatus("Uploading audio file...");
-          const audioRef = ref(storage, `gifts/${auth.currentUser.uid}/audio_${Date.now()}_${audioFile.name}`);
-          const audioUploadPromise = uploadBytes(audioRef, audioFile);
-          const audioTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Audio upload timed out")), 45000));
-          const snapshot = await Promise.race([audioUploadPromise, audioTimeout]);
-          finalSongUrl = await getDownloadURL(snapshot.ref);
+          setPublishStatus("Processing audio file...");
+          if (audioFile.size > 800 * 1024) {
+            alert("Custom audio file is too large for the database (max 800KB). Please select a preset song or paste a YouTube link instead!");
+            setIsPublishing(false);
+            return;
+          }
+          finalSongUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(audioFile);
+          });
         } else if (formData.songQuery === "upload") {
           finalSongUrl = "";
         }
 
         setPublishStatus("Saving to database...");
         let finalGiftId = editGiftId;
+        const isMultiSub = photoUrls.length > 4;
         
         if (editGiftId) {
           const docRef = doc(db, "gifts", editGiftId);
           await updateDoc(docRef, {
             ...formData,
-            ...(photoUrls.length > 0 && { photoUrls }), 
+            ...(photoUrls.length > 0 && { photoUrls: isMultiSub ? photoUrls.slice(0, 4) : photoUrls }), 
+            hasSubPhotos: isMultiSub,
+            songQuery: finalSongUrl,
             updatedAt: serverTimestamp(),
           });
+          
+          if (isMultiSub) {
+            for (let i = 0; i < photoUrls.length; i++) {
+              await setDoc(doc(db, "gifts", editGiftId, "photos", `photo_${i}`), {
+                url: photoUrls[i],
+                caption: formData.photoCaptions[i] || "",
+                order: i
+              });
+            }
+          }
+          
           setPublishStatus("Done!");
           router.push('/my-gifts');
           return;
         } else {
           const docRef = await addDoc(collection(db, "gifts"), {
             ...formData,
-            photoUrls, 
+            photoUrls: isMultiSub ? photoUrls.slice(0, 4) : photoUrls,
+            hasSubPhotos: isMultiSub,
+            songQuery: finalSongUrl,
             creatorId: auth.currentUser.uid,
             creatorEmail: auth.currentUser.email || "",
             createdAt: serverTimestamp(),
             paid: isFreePromo 
           });
           finalGiftId = docRef.id;
+          
+          if (isMultiSub) {
+            setPublishStatus("Saving photo album...");
+            for (let i = 0; i < photoUrls.length; i++) {
+              await setDoc(doc(db, "gifts", finalGiftId, "photos", `photo_${i}`), {
+                url: photoUrls[i],
+                caption: formData.photoCaptions[i] || "",
+                order: i
+              });
+            }
+          }
           
           if (isFreePromo) {
             setPublishStatus("Redirecting...");

@@ -3,9 +3,8 @@ import { useState, useEffect, use, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon, Clock, Hourglass } from "lucide-react";
 import confetti from "canvas-confetti";
-import { db, storage } from "../../../lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../../../lib/firebase";
+import { doc, getDoc, updateDoc, serverTimestamp, collection, query, orderBy, getDocs } from "firebase/firestore";
 
 const PRESET_SONGS = [
   { title: "Daniel Caesar - Get You", url: "https://www.youtube.com/watch?v=uQFVqltOXRg" },
@@ -137,9 +136,11 @@ export default function GiftViewer({ params }) {
       let finalContent = reactionText;
       
       if (type === 'voice' && blob) {
-        const audioRef = ref(storage, `reactions/${giftId}/${Date.now()}_voicenote.webm`);
-        const snapshot = await uploadBytes(audioRef, blob);
-        finalContent = await getDownloadURL(snapshot.ref);
+        const reader = new FileReader();
+        finalContent = await new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
       }
       
       // Update Firestore
@@ -228,6 +229,27 @@ export default function GiftViewer({ params }) {
         
         if (docSnap.exists()) {
           const dbData = docSnap.data();
+          
+          let loadedPhotoUrls = dbData.photoUrls || (dbData.photoUrl ? [dbData.photoUrl] : []);
+          let loadedPhotoCaptions = dbData.photoCaptions || [];
+          
+          if (dbData.hasSubPhotos) {
+            try {
+              const subSnap = await getDocs(query(collection(db, "gifts", giftId, "photos"), orderBy("order")));
+              if (!subSnap.empty) {
+                loadedPhotoUrls = [];
+                loadedPhotoCaptions = [];
+                subSnap.forEach(pDoc => {
+                  const pData = pDoc.data();
+                  loadedPhotoUrls.push(pData.url);
+                  loadedPhotoCaptions.push(pData.caption || "");
+                });
+              }
+            } catch (subErr) {
+              console.error("Error reading subcollection photos:", subErr);
+            }
+          }
+
           setGiftData({
             skipTrivia: dbData.skipTrivia || false,
             theme: dbData.theme || "blush",
@@ -236,8 +258,8 @@ export default function GiftViewer({ params }) {
             creatorName: dbData.creatorName || "Me",
             creatorEmail: dbData.creatorEmail || "",
             songQuery: dbData.songQuery || "Daniel Caesar - Get You",
-            photoUrls: dbData.photoUrls || (dbData.photoUrl ? [dbData.photoUrl] : []),
-            photoCaptions: dbData.photoCaptions || [],
+            photoUrls: loadedPhotoUrls,
+            photoCaptions: loadedPhotoCaptions,
             reasons: dbData.reasons || ["Your beautiful smile", "How you care for me", "Your incredible patience"],
             questions: [
               ...(dbData.q1?.question ? [{ question: dbData.q1.question, type: dbData.q1.type, options: [{text:dbData.q1.correct, isCorrect:true}, {text:dbData.q1.wrong1, isCorrect:false}, {text:dbData.q1.wrong2, isCorrect:false}].filter(o=>o.text).sort(()=>Math.random()-0.5) }] : []),
