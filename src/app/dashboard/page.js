@@ -163,37 +163,43 @@ export default function Dashboard() {
         let photoUrls = [];
 
                 if (photos.length > 0) {
-          setPublishStatus("Compressing " + photos.length + " photos...");
-          const uploadPromises = photos.map(async (photo, index) => {
+          for (let i = 0; i < photos.length; i++) {
+            const photo = photos[i];
             try {
-              setPublishStatus(`Compressing photo ${index + 1}...`);
+              let fileToUpload = photo;
               
-              const compressPromise = imageCompression(photo, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: false });
-              const timeout1 = new Promise((_, reject) => setTimeout(() => reject(new Error("Compression hung")), 15000));
-              const compressedFile = await Promise.race([compressPromise, timeout1]);
+              // Only compress if photo is larger than 1MB to save memory and avoid mobile browser freezes
+              if (photo.size > 1024 * 1024) {
+                setPublishStatus(`Compressing photo ${i + 1} of ${photos.length}...`);
+                const compressPromise = imageCompression(photo, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: false });
+                const timeout1 = new Promise((_, reject) => setTimeout(() => reject(new Error(`Photo ${i + 1} compression timed out`)), 20000));
+                fileToUpload = await Promise.race([compressPromise, timeout1]);
+              }
 
-              setPublishStatus(`Uploading photo ${index + 1}...`);
-              const photoRef = ref(storage, `gifts/${auth.currentUser.uid}/photos/${Date.now()}_${compressedFile.name}`);
+              setPublishStatus(`Uploading photo ${i + 1} of ${photos.length}...`);
+              const photoRef = ref(storage, `gifts/${auth.currentUser.uid}/photos/${Date.now()}_${fileToUpload.name}`);
               
-              const uploadPromise = uploadBytes(photoRef, compressedFile);
-              const timeout2 = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase storage upload hung. This might be a CORS or permissions issue.")), 25000));
+              const uploadPromise = uploadBytes(photoRef, fileToUpload);
+              const timeout2 = new Promise((_, reject) => setTimeout(() => reject(new Error(`Photo ${i + 1} upload timed out. Check network or storage rules.`)), 30000));
               const snapshot = await Promise.race([uploadPromise, timeout2]);
               
-              return await getDownloadURL(snapshot.ref);
+              const downloadUrl = await getDownloadURL(snapshot.ref);
+              photoUrls.push(downloadUrl);
             } catch (error) {
-              console.error("Error on photo", index, error);
-              setPublishStatus(`Failed on photo ${index + 1}: ${error.message}. Try again.`);
-              throw error; // Let the outer catch handle it
+              console.error("Error on photo", i, error);
+              setPublishStatus(`Failed on photo ${i + 1}: ${error.message}`);
+              throw error;
             }
-          });
-          photoUrls = await Promise.all(uploadPromises);
+          }
         }
 
         let finalSongUrl = formData.songQuery;
         if (formData.songQuery === "upload" && audioFile) {
-          setPublishStatus("Uploading audio...");
+          setPublishStatus("Uploading audio file...");
           const audioRef = ref(storage, `gifts/${auth.currentUser.uid}/audio_${Date.now()}_${audioFile.name}`);
-          const snapshot = await uploadBytes(audioRef, audioFile);
+          const audioUploadPromise = uploadBytes(audioRef, audioFile);
+          const audioTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Audio upload timed out")), 45000));
+          const snapshot = await Promise.race([audioUploadPromise, audioTimeout]);
           finalSongUrl = await getDownloadURL(snapshot.ref);
         } else if (formData.songQuery === "upload") {
           finalSongUrl = "";
