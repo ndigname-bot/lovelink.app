@@ -77,7 +77,7 @@ export default function Dashboard() {
     theme: "blush",
     recipientName: "",
     creatorName: "",
-    songQuery: "",
+    songQuery: "/audio/romantic.mp3",
     q1: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     q2: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     q3: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },

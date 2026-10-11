@@ -2,6 +2,7 @@ import { Music, Play, Pause, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 const PRESET_SONGS = [
+  { title: "Romantic Piano (Default)", url: "/audio/romantic.mp3" },
   { title: "A Thousand Years - Christina Perri", url: "https://www.youtube.com/watch?v=rtOvBOTyX00" },
   { title: "Perfect - Ed Sheeran", url: "https://www.youtube.com/watch?v=2Vv-BfVoq4g" },
   { title: "All of Me - John Legend", url: "https://www.youtube.com/watch?v=450p7goxZqg" },
@@ -113,13 +114,16 @@ export function MusicSelector({ formData, updateForm, previewSong, setPreviewSon
          </div>
       )}
       
-      {/* Invisible YouTube Player for Previews */}
+      {/* Preview Player */}
+      {previewSong && !previewSong.includes('youtube') && (
+        <audio autoPlay src={previewSong} />
+      )}
       {previewSong && previewSong.includes('youtube') && (
         <iframe 
-          width="0" height="0" 
-          src={`https://www.youtube.com/embed/${previewSong.includes("v=") ? previewSong.split("v=")[1]?.split("&")[0] : previewSong.split("youtu.be/")[1]?.split("?")[0]}?autoplay=1&loop=1&playlist=${previewSong.includes("v=") ? previewSong.split("v=")[1]?.split("&")[0] : previewSong.split("youtu.be/")[1]?.split("?")[0]}`}
-          allow="autoplay" 
-          style={{display: "none"}}
+          className="absolute pointer-events-none opacity-0 -z-50"
+          style={{ width: "1px", height: "1px", left: "-9999px", top: "-9999px" }}
+          src={`https://www.youtube.com/embed/${previewSong.includes("v=") ? previewSong.split("v=")[1]?.split("&")[0] : previewSong.split("youtu.be/")[1]?.split("?")[0]}?autoplay=1&playsinline=1&enablejsapi=1&loop=1&playlist=${previewSong.includes("v=") ? previewSong.split("v=")[1]?.split("&")[0] : previewSong.split("youtu.be/")[1]?.split("?")[0]}`}
+          allow="autoplay; encrypted-media" 
         ></iframe>
       )}
     </div>

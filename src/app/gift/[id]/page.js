@@ -88,6 +88,28 @@ export default function GiftViewer({ params }) {
   const [activePhoto, setActivePhoto] = useState(0);
   const [poppedReasons, setPoppedReasons] = useState([false, false, false]);
   const pressInterval = useRef(null);
+  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const toggleAudio = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play().then(() => setIsPlaying(true)).catch(console.error);
+      }
+    }
+  };
+
+  const handleStartExperience = () => {
+    if (audioRef.current) {
+      audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
+        console.warn("Autoplay blocked, recipient can tap music badge:", e);
+      });
+    }
+    setStage(-1);
+  };
 
   // Reaction Booth State
   const [isRecording, setIsRecording] = useState(false);
@@ -434,19 +456,36 @@ export default function GiftViewer({ params }) {
 
   return (
     <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-1000`}>
-      {((giftData?.occasion === "family" ? (typeof stage === "number" && stage >= (giftData?.questions ? giftData.questions.length : 0) + 1) : (typeof stage === "number" && stage >= -1))) && (
-        <>
-          {(!giftData?.songQuery || giftData.songQuery === "") && <audio autoPlay loop src="https://cdn.pixabay.com/download/audio/2022/05/16/audio_0cb9b119cb.mp3" />}
-          {giftData?.songQuery?.includes("youtube") && <iframe width="0" height="0" src={`https://www.youtube.com/embed/${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}?autoplay=1&loop=1&playlist=${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}`} allow="autoplay" style={{display: "none"}}></iframe>}
-          {giftData?.songQuery && !giftData.songQuery.includes("youtube") && <audio autoPlay loop src={giftData.songQuery} />}
-        </>
+      {/* Background Audio (Always mounted so user tap triggers play immediately) */}
+      <audio 
+        ref={audioRef} 
+        loop 
+        playsInline
+        src={giftData?.songQuery && !giftData.songQuery.includes("youtube") ? giftData.songQuery : "/audio/romantic.mp3"} 
+      />
+
+      {/* YouTube Background Player */}
+      {giftData?.songQuery?.includes("youtube") && stage >= -1 && (
+        <iframe 
+          className="absolute pointer-events-none opacity-0 -z-50"
+          style={{ width: "1px", height: "1px", left: "-9999px", top: "-9999px" }}
+          src={`https://www.youtube.com/embed/${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}?autoplay=1&playsinline=1&enablejsapi=1&loop=1&playlist=${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}`}
+          allow="autoplay; encrypted-media" 
+        />
       )}
 
-      
       {((giftData?.occasion === "family" ? (typeof stage === "number" && stage >= (giftData?.questions ? giftData.questions.length : 0) + 1) : (typeof stage === "number" && stage >= -1))) && (
-        <motion.div initial={{y:-50, opacity:0}} animate={{y:0, opacity:1}} className={`absolute top-6 left-1/2 -translate-x-1/2 ${styles.glass} ${styles.border} px-4 py-2 rounded-full border flex items-center gap-2 z-50`}>
-          <Music className={`w-3 h-3 ${styles.accentText} animate-pulse`} />
-          <span className="text-xs font-medium tracking-wide">Playing: {PRESET_SONGS.find(s => s.url === giftData.songQuery)?.title || (giftData.songQuery.startsWith("http") ? "Our Special Song 🎵" : giftData.songQuery)}</span>
+        <motion.div 
+          initial={{y:-50, opacity:0}} 
+          animate={{y:0, opacity:1}} 
+          onClick={toggleAudio}
+          className={`absolute top-6 left-1/2 -translate-x-1/2 ${styles.glass} ${styles.border} px-4 py-2 rounded-full border flex items-center gap-2 z-50 cursor-pointer hover:scale-105 active:scale-95 transition-transform`}
+        >
+          <Music className={`w-3 h-3 ${styles.accentText} ${isPlaying ? "animate-pulse" : "opacity-60"}`} />
+          <span className="text-xs font-medium tracking-wide">
+            {isPlaying ? "Playing: " : "Tap to Play: "}
+            {PRESET_SONGS.find(s => s.url === giftData.songQuery)?.title || (giftData.songQuery?.startsWith("http") ? "Our Special Song 🎵" : (giftData.songQuery || "Romantic Piano 🎵"))}
+          </span>
         </motion.div>
       )}
 
@@ -460,7 +499,7 @@ export default function GiftViewer({ params }) {
       <AnimatePresence mode="wait">
         
         {stage === -2 && (
-          <motion.div key="greeting" initial={{opacity:0, filter:"blur(10px)"}} animate={{opacity:1, filter:"blur(0px)"}} exit={{opacity:0, filter:"blur(10px)"}} transition={{duration:1.5}} className="text-center z-10 cursor-pointer" onClick={() => setStage(-1)}>
+          <motion.div key="greeting" initial={{opacity:0, filter:"blur(10px)"}} animate={{opacity:1, filter:"blur(0px)"}} exit={{opacity:0, filter:"blur(10px)"}} transition={{duration:1.5}} className="text-center z-10 cursor-pointer" onClick={handleStartExperience}>
             <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light mb-6`}>Hey, {giftData.recipientName}...</h1>
             <p className={`text-sm opacity-40 tracking-widest uppercase animate-pulse ${styles.font}`}>Tap anywhere to continue</p>
           </motion.div>
