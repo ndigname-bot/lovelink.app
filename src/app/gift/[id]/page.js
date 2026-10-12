@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon, Clock, Hourglass } from "lucide-react";
 import confetti from "canvas-confetti";
 import { db } from "../../../lib/firebase";
-import { doc, getDoc, updateDoc, serverTimestamp, collection, query, orderBy, getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp, collection, query, orderBy, getDocs, where, limit } from "firebase/firestore";
 
 const PRESET_SONGS = [
   { title: "Romantic Piano (Default)", url: "/audio/romantic.mp3" },
@@ -89,6 +89,7 @@ export default function GiftViewer({ params }) {
 
   const unwrappedParams = use(params);
   const giftId = unwrappedParams?.id || "demo-gift";
+  const [actualGiftId, setActualGiftId] = useState(giftId);
   
   const [giftData, setGiftData] = useState(null);
   
@@ -180,7 +181,8 @@ export default function GiftViewer({ params }) {
       }
       
       // Update Firestore directly on the gift document
-      const giftRef = doc(db, "gifts", giftId);
+      const targetGiftId = actualGiftId || giftId;
+      const giftRef = doc(db, "gifts", targetGiftId);
       await updateDoc(giftRef, {
         response: {
           type,
@@ -190,7 +192,7 @@ export default function GiftViewer({ params }) {
       });
       
       // Trigger Email Notification API (safely isolated)
-      if (giftData.creatorEmail && giftId !== "demo-gift" && giftId !== "draft") {
+      if (giftData.creatorEmail && targetGiftId !== "demo-gift" && targetGiftId !== "draft") {
         try {
           await fetch('/api/notify-reaction', {
             method: 'POST',
@@ -199,7 +201,7 @@ export default function GiftViewer({ params }) {
               creatorEmail: giftData.creatorEmail,
               creatorName: giftData.creatorName,
               recipientName: giftData.recipientName,
-              giftId: giftId,
+              giftId: targetGiftId,
               reactionType: type
             })
           });
@@ -262,10 +264,39 @@ export default function GiftViewer({ params }) {
       }
 
       try {
-        const docRef = doc(db, "gifts", giftId);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
+        let docSnap = null;
+        let resolvedDocId = giftId;
+
+        if (giftId !== "demo-gift" && giftId !== "draft") {
+          // 1. Direct document ID lookup
+          try {
+            const docRef = doc(db, "gifts", giftId);
+            const directSnap = await getDoc(docRef);
+            if (directSnap.exists()) {
+              docSnap = directSnap;
+              resolvedDocId = directSnap.id;
+            }
+          } catch (e) {
+            // Proceed to slug lookup
+          }
+
+          // 2. Friendly automatic slug lookup
+          if (!docSnap || !docSnap.exists()) {
+            try {
+              const qSlug = query(collection(db, "gifts"), where("slug", "==", giftId), limit(1));
+              const slugSnap = await getDocs(qSlug);
+              if (!slugSnap.empty) {
+                docSnap = slugSnap.docs[0];
+                resolvedDocId = docSnap.id;
+              }
+            } catch (slugErr) {
+              console.error("Error querying slug:", slugErr);
+            }
+          }
+        }
+
+        if (docSnap && docSnap.exists()) {
+          setActualGiftId(resolvedDocId);
           const dbData = docSnap.data();
           
           let loadedPhotoUrls = dbData.photoUrls || (dbData.photoUrl ? [dbData.photoUrl] : []);
@@ -273,7 +304,7 @@ export default function GiftViewer({ params }) {
           
           if (dbData.hasSubPhotos) {
             try {
-              const subSnap = await getDocs(query(collection(db, "gifts", giftId, "photos"), orderBy("order")));
+              const subSnap = await getDocs(query(collection(db, "gifts", resolvedDocId, "photos"), orderBy("order")));
               if (!subSnap.empty) {
                 loadedPhotoUrls = [];
                 loadedPhotoCaptions = [];
@@ -436,10 +467,10 @@ export default function GiftViewer({ params }) {
 
 
   const handleAnswer = async (isCorrect, text) => {
-    // Silently save their answer to the database if it's a real gift
-    if (giftId !== "demo-gift" && giftId !== "draft" && giftData.paid !== false) {
+    const targetId = actualGiftId || giftId;
+    if (targetId !== "demo-gift" && targetId !== "draft" && giftData.paid !== false) {
       try {
-        const docRef = doc(db, "gifts", giftId);
+        const docRef = doc(db, "gifts", targetId);
         await updateDoc(docRef, {
           [`partnerAnswerQ${stage}`]: text,
           lastOpened: serverTimestamp()

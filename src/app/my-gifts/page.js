@@ -2,11 +2,12 @@
 import { Logo } from "@/components/Logo";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 , Edit3, Mail, QrCode, Printer, X } from "lucide-react";
+import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 , Edit3, Mail, QrCode, Printer, X, MessageCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import Link from "next/link";
 import { db, auth } from "../../lib/firebase";
-import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit, doc, updateDoc } from "firebase/firestore";
+import { generateUniqueSlug } from "../../lib/slug";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -77,6 +78,16 @@ export default function MyGifts() {
           return dateB - dateA; // Newest first
         });
 
+        // Silently upgrade any older gifts with automatic slugs if missing
+        for (const gift of fetchedGifts) {
+          if (!gift.slug && gift.recipientName) {
+            generateUniqueSlug(db, gift.recipientName).then(newSlug => {
+              gift.slug = newSlug;
+              updateDoc(doc(db, "gifts", gift.id), { slug: newSlug }).catch(() => {});
+            }).catch(() => {});
+          }
+        }
+
         setGifts(fetchedGifts);
       } catch (error) {
         console.error("Error fetching gifts:", error);
@@ -88,10 +99,24 @@ export default function MyGifts() {
     return () => unsubscribe();
   }, [router]);
 
-  const copyToClipboard = (id) => {
-    const url = `${window.location.origin}/gift/${id}`;
+  const getGiftShareUrl = (gift) => {
+    if (!gift) return "";
+    if (gift.slug) return `${window.location.origin}/for/${gift.slug}`;
+    return `${window.location.origin}/gift/${gift.id}`;
+  };
+
+  const copyToClipboard = (gift) => {
+    const url = getGiftShareUrl(gift);
     navigator.clipboard.writeText(url);
-    alert("Link copied to clipboard! Send it to your partner.");
+    alert("Romantic personalized link copied! Send it to your partner.");
+  };
+
+  const shareToWhatsApp = (gift) => {
+    const url = getGiftShareUrl(gift);
+    const recipient = gift.recipientName || "Cutie";
+    const message = `Hey ${recipient} ❤️ I made a special digital surprise just for you. Open it here: ${url}`;
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank");
   };
 
   const IS_LAUNCH_PROMO = false;
@@ -226,7 +251,12 @@ export default function MyGifts() {
                     >
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="text-xl font-bold">For {gift.recipientName}</h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-xl font-bold">For {gift.recipientName}</h3>
+                            <span className="text-xs font-mono text-pink-500 bg-pink-500/10 border border-pink-500/20 px-2 py-0.5 rounded-full">
+                              /for/{gift.slug || gift.id}
+                            </span>
+                          </div>
                           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400 mt-1">
                             <Clock className="w-4 h-4" />
                             {gift.createdAt ? new Date(gift.createdAt.toMillis()).toLocaleDateString() : 'Just now'}
@@ -259,25 +289,28 @@ export default function MyGifts() {
                         </div>
                       )}
 
-                      <div className="pt-4 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-4">
+                      <div className="pt-4 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-2 sm:gap-3 flex-wrap">
                         {gift.paid ? (
                           <>
-                            <button onClick={() => copyToClipboard(gift.id)} className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors" title="Copy Link">
-                              <LinkIcon className="w-4 h-4" /> <span className="hidden sm:inline">Copy</span>
+                            <button onClick={() => copyToClipboard(gift)} className="flex-1 min-w-[70px] flex items-center justify-center gap-1.5 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors" title="Copy Personalized Link">
+                              <LinkIcon className="w-4 h-4" /> <span>Copy</span>
                             </button>
-                            <Link href={`/dashboard?edit=${gift.id}`} className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors" title="Edit Gift">
-                              <Edit3 className="w-4 h-4" /> <span className="hidden sm:inline">Edit</span>
+                            <button onClick={() => shareToWhatsApp(gift)} className="flex-1 min-w-[90px] flex items-center justify-center gap-1.5 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors" title="Share via WhatsApp with Safe Romantic Note">
+                              <MessageCircle className="w-4 h-4" /> <span>WhatsApp</span>
+                            </button>
+                            <Link href={`/dashboard?edit=${gift.id}`} className="flex-1 min-w-[60px] flex items-center justify-center gap-1.5 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-xs sm:text-sm font-medium transition-colors" title="Edit Gift">
+                              <Edit3 className="w-4 h-4" /> <span>Edit</span>
                             </Link>
-                            <button onClick={() => setActiveLovecard(gift)} className="flex-1 flex items-center justify-center gap-2 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 py-2 rounded-xl text-sm font-bold transition-colors" title="Print Lovecard">
-                              <QrCode className="w-4 h-4" /> <span className="hidden sm:inline">Card</span>
+                            <button onClick={() => setActiveLovecard(gift)} className="flex-1 min-w-[60px] flex items-center justify-center gap-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors" title="Print Lovecard">
+                              <QrCode className="w-4 h-4" /> <span>Card</span>
                             </button>
-                            <Link href={`/gift/${gift.id}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-pink-500 hover:bg-pink-600 py-2 rounded-xl text-sm font-bold transition-colors shadow-lg shadow-pink-500/20 text-white" title="View Live">
-                              <ExternalLink className="w-4 h-4" /> <span className="hidden sm:inline">View</span>
+                            <Link href={gift.slug ? `/for/${gift.slug}` : `/gift/${gift.id}`} target="_blank" className="flex-1 min-w-[60px] flex items-center justify-center gap-1.5 bg-pink-500 hover:bg-pink-600 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-lg shadow-pink-500/20 text-white" title="View Live">
+                              <ExternalLink className="w-4 h-4" /> <span>View</span>
                             </Link>
                           </>
                         ) : (
                           <>
-                            <Link href={`/gift/${gift.id}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors text-slate-500 dark:text-gray-400">
+                            <Link href={gift.slug ? `/for/${gift.slug}` : `/gift/${gift.id}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors text-slate-500 dark:text-gray-400">
                               <Lock className="w-4 h-4" /> Locked
                             </Link>
                             <button onClick={() => handlePayNow(gift.id, gift.recipientName)} className="flex-1 flex items-center justify-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-black hover:bg-gray-200 py-2 rounded-xl text-sm font-bold transition-colors">
@@ -420,7 +453,7 @@ export default function MyGifts() {
                 
                 <div className="bg-white p-4 rounded-2xl shadow-lg border border-slate-100 dark:border-none">
                   <QRCodeSVG 
-                    value={`https://lovelink-app-beta.vercel.app/gift/${activeLovecard.id}`} 
+                    value={`${typeof window !== "undefined" ? window.location.origin : "https://lovelink-app-beta.vercel.app"}${activeLovecard.slug ? `/for/${activeLovecard.slug}` : `/gift/${activeLovecard.id}`}`} 
                     size={160}
                     level="H"
                     fgColor="#000000"

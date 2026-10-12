@@ -2,8 +2,8 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { db } from "../../lib/firebase";
-import { doc, updateDoc } from "firebase/firestore";
-import { Sparkles, Link as LinkIcon, CheckCircle2 } from "lucide-react";
+import { doc, getDoc } from "firebase/firestore";
+import { Sparkles, Link as LinkIcon, CheckCircle2, MessageCircle } from "lucide-react";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -12,6 +12,7 @@ function SuccessContent() {
   
   const [loading, setLoading] = useState(true);
   const [publishedLink, setPublishedLink] = useState("");
+  const [recipientName, setRecipientName] = useState("Cutie");
 
   useEffect(() => {
     if (!giftId) {
@@ -21,9 +22,24 @@ function SuccessContent() {
 
     const verifyPaymentAndActivate = async () => {
       try {
-        // The Webhook handles marking the gift as paid securely in the background.
-        // We just display the success screen to the user.
-        setPublishedLink(`${window.location.origin}/gift/${giftId}`);
+        let slug = null;
+        let recipient = "Cutie";
+        try {
+          const snap = await getDoc(doc(db, "gifts", giftId));
+          if (snap.exists()) {
+            const data = snap.data();
+            slug = data.slug;
+            recipient = data.recipientName || "Cutie";
+          }
+        } catch (e) {
+          console.error("Error reading gift details:", e);
+        }
+
+        setRecipientName(recipient);
+        const finalUrl = slug 
+          ? `${window.location.origin}/for/${slug}` 
+          : `${window.location.origin}/gift/${giftId}`;
+        setPublishedLink(finalUrl);
         setLoading(false);
       } catch (err) {
         console.error("Error activating gift:", err);
@@ -32,6 +48,11 @@ function SuccessContent() {
 
     verifyPaymentAndActivate();
   }, [giftId, router]);
+
+  const shareToWhatsApp = () => {
+    const message = `Hey ${recipientName} ❤️ I made a special digital surprise just for you. Open it here: ${publishedLink}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, "_blank");
+  };
 
   if (loading) {
     return (
@@ -54,7 +75,7 @@ function SuccessContent() {
         <h1 className="text-3xl md:text-4xl font-bold mb-4 text-white">Payment Successful! 🎉</h1>
         <p className="text-gray-300 mb-8 text-lg">Your cinematic love letter is officially unlocked and ready to share forever.</p>
         
-        <div className="flex items-center gap-3 w-full bg-black/50 p-4 rounded-xl border border-white/10 mb-8">
+        <div className="flex items-center gap-3 w-full bg-black/50 p-4 rounded-xl border border-white/10 mb-6">
           <LinkIcon className="w-5 h-5 text-pink-400 shrink-0" />
           <input 
             type="text" 
@@ -65,7 +86,7 @@ function SuccessContent() {
           <button 
             onClick={() => {
               navigator.clipboard.writeText(publishedLink);
-              alert("Copied to clipboard!");
+              alert("Personalized link copied to clipboard!");
             }}
             className="bg-white text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-200 transition-colors shrink-0"
           >
@@ -73,12 +94,21 @@ function SuccessContent() {
           </button>
         </div>
 
-        <button 
-          onClick={() => window.open(publishedLink, "_blank")} 
-          className="w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white px-8 py-4 rounded-full font-bold shadow-[0_0_30px_rgba(236,72,153,0.3)] hover:scale-[1.02] transition-all text-lg"
-        >
-          View Live Gift
-        </button>
+        <div className="flex flex-col gap-3">
+          <button 
+            onClick={shareToWhatsApp}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-full font-bold shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:scale-[1.02] transition-all text-lg flex items-center justify-center gap-2"
+          >
+            <MessageCircle className="w-5 h-5" /> Share on WhatsApp
+          </button>
+          
+          <button 
+            onClick={() => window.open(publishedLink, "_blank")} 
+            className="w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white px-8 py-4 rounded-full font-bold shadow-[0_0_30px_rgba(236,72,153,0.3)] hover:scale-[1.02] transition-all text-lg"
+          >
+            View Live Gift
+          </button>
+        </div>
       </div>
     </div>
   );

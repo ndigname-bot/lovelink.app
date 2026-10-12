@@ -5,12 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X, Play, Pause, Check } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { auth, db } from "../../lib/firebase";
-import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { PhotoUploader } from "../../components/PhotoUploader";
 import { TriviaBuilder } from "../../components/TriviaBuilder";
 import { MusicSelector } from "../../components/MusicSelector";
+import { generateUniqueSlug } from "../../lib/slug";
 
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -220,11 +221,17 @@ export default function Dashboard() {
         
         if (editGiftId) {
           const docRef = doc(db, "gifts", editGiftId);
+          const existingSnap = await getDoc(docRef);
+          let currentSlug = existingSnap.exists() ? existingSnap.data().slug : null;
+          if (!currentSlug) {
+            currentSlug = await generateUniqueSlug(db, formData.recipientName);
+          }
           await updateDoc(docRef, {
             ...formData,
             ...(photoUrls.length > 0 && { photoUrls: isMultiSub ? photoUrls.slice(0, 4) : photoUrls }), 
             hasSubPhotos: isMultiSub,
             songQuery: finalSongUrl,
+            slug: currentSlug,
             updatedAt: serverTimestamp(),
           });
           
@@ -242,11 +249,13 @@ export default function Dashboard() {
           router.push('/my-gifts');
           return;
         } else {
+          const autoSlug = await generateUniqueSlug(db, formData.recipientName);
           const docRef = await addDoc(collection(db, "gifts"), {
             ...formData,
             photoUrls: isMultiSub ? photoUrls.slice(0, 4) : photoUrls,
             hasSubPhotos: isMultiSub,
             songQuery: finalSongUrl,
+            slug: autoSlug,
             creatorId: auth.currentUser.uid,
             creatorEmail: auth.currentUser.email || "",
             createdAt: serverTimestamp(),
