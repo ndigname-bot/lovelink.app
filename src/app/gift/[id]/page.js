@@ -31,7 +31,10 @@ const getThemeStyles = (theme) => {
         glass: 'bg-indigo-950/30 backdrop-blur-2xl',
         border: 'border-indigo-500/20',
         font: 'font-sans',
-        particles: ['#4f46e5', '#3b82f6', '#8b5cf6']
+        particles: ['#4f46e5', '#3b82f6', '#8b5cf6'],
+        option: 'border-indigo-500/30 bg-black/40 hover:border-indigo-400 hover:bg-indigo-900/30 hover:shadow-[0_0_25px_rgba(99,102,241,0.25)] text-indigo-50',
+        optionDot: 'group-hover:border-indigo-400 group-hover:bg-indigo-500',
+        optionHoverText: 'group-hover:text-indigo-200'
       };
     case 'ocean':
       return {
@@ -43,7 +46,10 @@ const getThemeStyles = (theme) => {
         glass: 'bg-cyan-950/20 backdrop-blur-3xl',
         border: 'border-cyan-500/30',
         font: 'font-sans',
-        particles: ['#06b6d4', '#14b8a6', '#3b82f6']
+        particles: ['#06b6d4', '#14b8a6', '#3b82f6'],
+        option: 'border-cyan-500/30 bg-black/40 hover:border-cyan-400 hover:bg-cyan-900/30 hover:shadow-[0_0_25px_rgba(6,182,212,0.25)] text-cyan-50',
+        optionDot: 'group-hover:border-cyan-400 group-hover:bg-cyan-400',
+        optionHoverText: 'group-hover:text-cyan-200'
       };
     case 'blush':
     default:
@@ -56,7 +62,10 @@ const getThemeStyles = (theme) => {
         glass: 'bg-slate-200 dark:bg-white/10 backdrop-blur-2xl',
         border: 'border-slate-300 dark:border-white/20',
         font: 'font-serif',
-        particles: ['#ec4899', '#f43f5e', '#ffffff']
+        particles: ['#ec4899', '#f43f5e', '#ffffff'],
+        option: 'border-slate-200 dark:border-white/10 bg-slate-100/80 dark:bg-black/40 hover:border-pink-500 dark:hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-500/20 hover:shadow-[0_0_25px_rgba(244,63,94,0.3)] text-slate-800 dark:text-white',
+        optionDot: 'group-hover:border-pink-500 group-hover:bg-pink-500',
+        optionHoverText: 'group-hover:text-pink-600 dark:group-hover:text-pink-200'
       };
   }
 };
@@ -613,9 +622,17 @@ export default function GiftViewer({ params }) {
                 </div>
               ) : (
                 giftData.questions[stage-1].options.map((opt, i) => (
-                  <button key={i} onClick={() => handleAnswer(opt.isCorrect, opt.text)} className={`w-full p-5 bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-2xl hover:bg-slate-200 dark:bg-white/10 hover:${styles.border} transition-all text-left font-medium flex items-center justify-between group`}>
-                    <span className="text-lg opacity-90 group-hover:opacity-100">{opt.text}</span>
-                    <div className={`w-6 h-6 rounded-full border border-slate-300 dark:border-white/20 group-hover:bg-slate-300 dark:bg-white/20 transition-colors`} />
+                  <button 
+                    key={i} 
+                    onClick={() => handleAnswer(opt.isCorrect, opt.text)} 
+                    className={`w-full p-5 border rounded-2xl transition-all duration-200 text-left font-medium flex items-center justify-between group active:scale-[0.98] ${styles.option || 'border-slate-200 dark:border-white/10 bg-slate-100/80 dark:bg-black/40 hover:border-pink-500 dark:hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-500/20 hover:shadow-[0_0_25px_rgba(244,63,94,0.3)] text-slate-800 dark:text-white'}`}
+                  >
+                    <span className={`text-lg font-medium transition-colors ${styles.optionHoverText || 'group-hover:text-pink-600 dark:group-hover:text-pink-200'} group-hover:translate-x-1 transition-transform`}>
+                      {opt.text}
+                    </span>
+                    <div className={`w-6 h-6 rounded-full border border-slate-300 dark:border-white/20 flex items-center justify-center transition-all ${styles.optionDot || 'group-hover:border-pink-500 group-hover:bg-pink-500'}`}>
+                      <div className="w-2 h-2 rounded-full bg-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
                   </button>
                 ))
               )}
