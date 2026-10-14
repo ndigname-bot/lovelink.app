@@ -2,7 +2,7 @@
 import imageCompression from "browser-image-compression";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X, Play, Pause, Check } from "lucide-react";
+import { ChevronDown, Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X, Play, Pause, Check, Video } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { auth, db } from "../../lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
@@ -42,6 +42,7 @@ export default function Dashboard() {
                 recipientName: data.recipientName || "",
                 creatorName: data.creatorName || "",
                 songQuery: data.songQuery || "",
+                videoUrl: data.videoUrl || "",
                 photoCaptions: data.photoCaptions || [],
                 reasons: data.reasons || ["", "", ""],
                 q1: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q1 },
@@ -79,6 +80,7 @@ export default function Dashboard() {
     recipientName: "",
     creatorName: "",
     songQuery: "/audio/romantic.mp3",
+    videoUrl: "",
     q1: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     q2: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     q3: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
@@ -415,6 +417,27 @@ export default function Dashboard() {
                 handlePhotoSelect={handlePhotoSelect} 
                 removePhoto={removePhoto} 
               />
+
+              {/* Special Video Memory (Optional) */}
+              <div className="space-y-3 p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                <div className="flex items-center gap-2">
+                  <Video className="w-4 h-4 text-pink-500" />
+                  <label className="text-sm font-semibold text-slate-800 dark:text-white">
+                    Special Video Memory (Optional)
+                  </label>
+                  <span className="text-[10px] uppercase font-bold text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full border border-pink-500/20">Optional</span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-gray-400">
+                  Paste a link to a YouTube Shorts, YouTube, or direct video clip to play in Memory Lane alongside your photos.
+                </p>
+                <input 
+                  type="text" 
+                  value={formData.videoUrl || ""} 
+                  onChange={(e) => updateForm('videoUrl', e.target.value)} 
+                  placeholder="e.g. https://www.youtube.com/shorts/... or https://youtube.com/watch?v=..." 
+                  className="w-full bg-white dark:bg-black/50 border border-slate-300 dark:border-white/20 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-pink-500 transition-colors" 
+                />
+              </div>
 
               {/* Reasons Why */}
               <div className="space-y-4">

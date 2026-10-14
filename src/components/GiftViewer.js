@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect, use, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon, Clock, Hourglass } from "lucide-react";
+import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon, Clock, Hourglass, Video } from "lucide-react";
 import confetti from "canvas-confetti";
 import { db } from "../lib/firebase";
 import { doc, getDoc, updateDoc, serverTimestamp, collection, query, orderBy, getDocs, where, limit } from "firebase/firestore";
 import { PRESET_SONGS } from "./MusicSelector";
+import { parseVideoUrl } from "../lib/videoEmbed";
 
 const getThemeStyles = (theme) => {
   switch (theme) {
@@ -87,10 +88,19 @@ export default function GiftViewer({ params }) {
   const [openEndedText, setOpenEndedText] = useState("");
   const [pressProgress, setPressProgress] = useState(0);
   const [activePhoto, setActivePhoto] = useState(0);
+  const [mediaTab, setMediaTab] = useState("photos");
   const [poppedReasons, setPoppedReasons] = useState([false, false, false]);
   const pressInterval = useRef(null);
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const handleMediaTabChange = (tab) => {
+    setMediaTab(tab);
+    if (tab === "video" && audioRef.current && isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
 
   const toggleAudio = () => {
     if (audioRef.current) {
@@ -235,6 +245,7 @@ export default function GiftViewer({ params }) {
               songQuery: draftData.songQuery || "Daniel Caesar - Get You",
               photoUrls: draftData.photoUrls || [], 
               photoCaptions: draftData.photoCaptions || [],
+              videoUrl: draftData.videoUrl || "",
               reasons: draftData.reasons || ["Your smile", "Your laugh", "Your kindness"],
               questions: [
                 ...(draftData.q1?.question ? [{ question: draftData.q1.question, type: draftData.q1.type, options: [{text:draftData.q1.correct, isCorrect:true}, {text:draftData.q1.wrong1, isCorrect:false}, {text:draftData.q1.wrong2, isCorrect:false}].filter(o=>o.text).sort(()=>Math.random()-0.5) }] : []),
@@ -317,6 +328,7 @@ export default function GiftViewer({ params }) {
             songQuery: dbData.songQuery || "Daniel Caesar - Get You",
             photoUrls: loadedPhotoUrls,
             photoCaptions: loadedPhotoCaptions,
+            videoUrl: dbData.videoUrl || "",
             reasons: dbData.reasons || ["Your beautiful smile", "How you care for me", "Your incredible patience"],
             questions: [
               ...(dbData.q1?.question ? [{ question: dbData.q1.question, type: dbData.q1.type, options: [{text:dbData.q1.correct, isCorrect:true}, {text:dbData.q1.wrong1, isCorrect:false}, {text:dbData.q1.wrong2, isCorrect:false}].filter(o=>o.text).sort(()=>Math.random()-0.5) }] : []),
@@ -356,7 +368,12 @@ export default function GiftViewer({ params }) {
   useEffect(() => {
     const qLen = giftData?.questions ? giftData.questions.length : 0;
     if (stage === qLen + 1) {
+      if (mediaTab === "video") return; // Do not auto-advance when watching video
       if (!giftData?.photoUrls || giftData.photoUrls.length === 0) {
+        if (giftData?.videoUrl) {
+          handleMediaTabChange("video");
+          return;
+        }
         setStage(prev => prev + 1);
         return;
       }
@@ -368,6 +385,11 @@ export default function GiftViewer({ params }) {
           setActivePhoto(currentPhoto);
           activeTimer = setTimeout(runSequence, 3000);
         } else {
+          // If video exists, transition gracefully to the video memory!
+          if (giftData?.videoUrl) {
+            handleMediaTabChange("video");
+            return;
+          }
           activeTimer = setTimeout(() => {
             setIsSpinningOut(true);
             setTimeout(() => {
@@ -380,7 +402,7 @@ export default function GiftViewer({ params }) {
       activeTimer = setTimeout(runSequence, 3000);
       return () => clearTimeout(activeTimer);
     }
-  }, [stage, giftData?.photoUrls?.length]);
+  }, [stage, giftData?.photoUrls?.length, mediaTab, giftData?.videoUrl]);
 
   // Time Capsule Sequence Logic
   const [tick, setTick] = useState(0);
@@ -685,9 +707,63 @@ export default function GiftViewer({ params }) {
             <AnimatePresence mode="wait">
               {!isSpinningOut ? (
                 <motion.div key="normal-photos" exit={{ opacity: 0, scale: 0.5 }} className="w-full flex flex-col items-center">
-                  <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light leading-relaxed mb-8`}>Memory Lane...</h1>
+                  <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light leading-relaxed mb-4`}>Memory Lane...</h1>
                   
-                  {giftData.photoUrls && giftData.photoUrls.length > 0 && (
+                  {/* Media Switcher Tabs if both photos and video exist */}
+                  {giftData.photoUrls && giftData.photoUrls.length > 0 && giftData.videoUrl && (
+                    <div className="flex items-center gap-2 mb-6 z-20">
+                      <button 
+                        type="button" 
+                        onClick={() => handleMediaTabChange("photos")} 
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${mediaTab === "photos" ? "bg-pink-500 text-white shadow-lg shadow-pink-500/40" : "bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-300 dark:hover:bg-white/20"}`}
+                      >
+                        <ImageIcon className="w-3.5 h-3.5" /> Photos ({giftData.photoUrls.length})
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => handleMediaTabChange("video")} 
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${mediaTab === "video" ? "bg-pink-500 text-white shadow-lg shadow-pink-500/40" : "bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-300 dark:hover:bg-white/20"}`}
+                      >
+                        <Video className="w-3.5 h-3.5" /> Video Clip 🎬
+                      </button>
+                    </div>
+                  )}
+
+                  {/* SPECIAL VIDEO MEMORY */}
+                  {mediaTab === "video" && giftData.videoUrl && (() => {
+                    const videoInfo = parseVideoUrl(giftData.videoUrl);
+                    if (!videoInfo) return null;
+                    return (
+                      <div className={`relative w-72 h-96 md:w-96 md:h-[30rem] rounded-[2rem] overflow-hidden border-4 ${styles.border} shadow-[0_0_80px_rgba(255,255,255,0.2)] mb-8 bg-black flex items-center justify-center`}>
+                        {videoInfo.type === "youtube" ? (
+                          <iframe 
+                            src={videoInfo.embedUrl} 
+                            className="w-full h-full border-0" 
+                            allow="autoplay; encrypted-media; fullscreen; picture-in-picture" 
+                            allowFullScreen 
+                          />
+                        ) : videoInfo.type === "vimeo" ? (
+                          <iframe 
+                            src={videoInfo.embedUrl} 
+                            className="w-full h-full border-0" 
+                            allow="autoplay; fullscreen" 
+                            allowFullScreen 
+                          />
+                        ) : (
+                          <video 
+                            src={videoInfo.url} 
+                            controls 
+                            autoPlay 
+                            playsInline 
+                            className="w-full h-full object-cover" 
+                          />
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* PHOTOS CAROUSEL */}
+                  {mediaTab === "photos" && giftData.photoUrls && giftData.photoUrls.length > 0 && (
                     <div className={`relative w-72 h-96 md:w-96 md:h-[30rem] rounded-[2rem] overflow-hidden border-4 ${styles.border} shadow-[0_0_80px_rgba(255,255,255,0.1)] mb-10`}>
                       <AnimatePresence initial={false}>
                         <motion.div 
@@ -718,8 +794,8 @@ export default function GiftViewer({ params }) {
                     </div>
                   )}
                   
-                  <motion.button onClick={() => setStage(prev => prev + 1)} className={`px-8 py-4 bg-gradient-to-r ${styles.accentGradient} rounded-2xl font-bold shadow-lg hover:scale-105 transition-transform text-slate-900 dark:text-white text-lg flex items-center justify-center gap-2 opacity-50 hover:opacity-100`}>
-                    Skip <ArrowRight className="w-5 h-5" />
+                  <motion.button onClick={() => setStage(prev => prev + 1)} className={`px-8 py-4 bg-gradient-to-r ${styles.accentGradient} rounded-2xl font-bold shadow-lg hover:scale-105 transition-transform text-slate-900 dark:text-white text-lg flex items-center justify-center gap-2 opacity-70 hover:opacity-100`}>
+                    {mediaTab === "video" ? "Continue" : "Skip"} <ArrowRight className="w-5 h-5" />
                   </motion.button>
                 </motion.div>
               ) : (
