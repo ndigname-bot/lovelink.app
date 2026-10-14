@@ -5,19 +5,7 @@ import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon, C
 import confetti from "canvas-confetti";
 import { db } from "../../../lib/firebase";
 import { doc, getDoc, updateDoc, serverTimestamp, collection, query, orderBy, getDocs, where, limit } from "firebase/firestore";
-
-const PRESET_SONGS = [
-  { title: "Romantic Piano (Default)", url: "/audio/romantic.mp3" },
-  { title: "A Thousand Years - Christina Perri", url: "/audio/a-thousand-years.mp3" },
-  { title: "Perfect - Ed Sheeran", url: "/audio/perfect.mp3" },
-  { title: "All of Me - John Legend", url: "/audio/all-of-me.mp3" },
-  { title: "No One Like You - P-Square", url: "/audio/no-one-like-you.mp3" },
-  { title: "African Queen - 2Baba", url: "/audio/african-queen.mp3" },
-  { title: "Thinking Out Loud - Ed Sheeran", url: "/audio/thinking-out-loud.mp3" },
-  { title: "Best Part - H.E.R. ft. Daniel Caesar", url: "/audio/best-part.mp3" },
-  { title: "Just The Way You Are - Bruno Mars", url: "/audio/just-the-way-you-are.mp3" },
-  { title: "Can't Help Falling In Love - Elvis Presley", url: "/audio/cant-help-falling-in-love.mp3" },
-];
+import { PRESET_SONGS } from "../../../components/MusicSelector";
 
 const getThemeStyles = (theme) => {
   switch (theme) {
