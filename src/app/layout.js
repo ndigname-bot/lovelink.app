@@ -14,8 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://lovelink-app-beta.vercel.app"),
   title: "LoveLink | Unforgettable Digital Gifts",
   description: "Create a highly personalized, interactive digital love letter in minutes.",
+  openGraph: {
+    siteName: "LoveLink",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }) {
