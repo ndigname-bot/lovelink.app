@@ -18,8 +18,10 @@ import { onAuthStateChanged } from "firebase/auth";
 export default function Dashboard() {
   const router = useRouter();
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  const editGiftId = searchParams?.get("edit");
-  const [isEditing, setIsEditing] = useState(false);
+  const initialEditId = searchParams?.get("edit") || null;
+  const [editGiftId, setEditGiftId] = useState(initialEditId);
+  const [isEditing, setIsEditing] = useState(Boolean(initialEditId));
+  const [isLoadingGift, setIsLoadingGift] = useState(Boolean(initialEditId));
   const [step, setStep] = useState(1);
   const [isPublishing, setIsPublishing] = useState(false);
   const [previewSong, setPreviewSong] = useState(null);
@@ -27,45 +29,71 @@ export default function Dashboard() {
   const [publishedLink, setPublishedLink] = useState(null);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("edit");
+      if (id && id !== editGiftId) {
+        setEditGiftId(id);
+        setIsEditing(true);
+        setIsLoadingGift(true);
+      }
+    }
+  }, [editGiftId]);
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user && editGiftId) {
         const fetchGift = async () => {
-          setIsEditing(true);
+          setIsLoadingGift(true);
           try {
             const docRef = doc(db, "gifts", editGiftId);
             const docSnap = await getDoc(docRef);
-            if (docSnap.exists() && docSnap.data().creatorId === user.uid) {
-              const data = docSnap.data();
-              const loadedData = {
-                theme: data.theme || "blush",
-                occasion: data.occasion || "standard",
-                recipientName: data.recipientName || "",
-                creatorName: data.creatorName || "",
-                songQuery: data.songQuery || "",
-                videoUrl: data.videoUrl || "",
-                photoCaptions: data.photoCaptions || [],
-                reasons: data.reasons || ["", "", ""],
-                q1: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q1 },
-                q2: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q2 },
-                q3: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q3 },
-                skipTrivia: data.skipTrivia || false,
-                q4: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q4 },
-                letter: data.letter || "",
-              };
-              setFormData(loadedData);
-              if (data.photoUrls) setPhotoPreviews(data.photoUrls);
-              
-              // Automatically jump to Step 2 if editing
-              setStep(2);
+            if (!docSnap.exists()) {
+              alert("Gift not found.");
+              router.push("/my-gifts");
+              return;
             }
-          } catch(e) { console.error(e); }
-          setIsEditing(false);
+            if (docSnap.data().creatorId !== user.uid) {
+              alert("You are not authorized to edit this gift.");
+              router.push("/my-gifts");
+              return;
+            }
+            const data = docSnap.data();
+            const loadedData = {
+              theme: data.theme || "blush",
+              occasion: data.occasion || "standard",
+              recipientName: data.recipientName || "",
+              creatorName: data.creatorName || "",
+              songQuery: data.songQuery || "",
+              videoUrl: data.videoUrl || "",
+              photoCaptions: data.photoCaptions || [],
+              reasons: data.reasons || ["", "", ""],
+              q1: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q1 },
+              q2: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q2 },
+              q3: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q3 },
+              skipTrivia: data.skipTrivia || false,
+              q4: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q4 },
+              letter: data.letter || "",
+            };
+            setFormData(loadedData);
+            if (data.photoUrls) setPhotoPreviews(data.photoUrls);
+            
+            // Automatically jump to Step 2 if editing
+            setStep(2);
+          } catch(e) { 
+            console.error("Error fetching gift to edit:", e); 
+            alert("Could not load gift details.");
+            router.push("/my-gifts");
+          } finally {
+            setIsLoadingGift(false);
+            // CRITICAL: isEditing remains true! Never reset to false while editing!
+          }
         };
         fetchGift();
       }
     });
     return () => unsubscribe();
-  }, [editGiftId]);
+  }, [editGiftId, router]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -145,7 +173,7 @@ export default function Dashboard() {
 
   const handlePreview = () => {
     localStorage.setItem("lovelink_draft", JSON.stringify({ ...formData,
-        songQuery: finalSongUrl, photoUrls: photoPreviews }));
+        songQuery: formData.songQuery, photoUrls: photoPreviews }));
     window.open("/gift/draft", "_blank");
   };
 
@@ -222,22 +250,40 @@ export default function Dashboard() {
         const isMultiSub = photoUrls.length > 4;
         
         if (editGiftId) {
+          setPublishStatus("Updating gift...");
           const docRef = doc(db, "gifts", editGiftId);
           const existingSnap = await getDoc(docRef);
-          let currentSlug = existingSnap.exists() ? existingSnap.data().slug : null;
-          if (!currentSlug) {
-            currentSlug = await generateUniqueSlug(db, formData.recipientName);
+          if (!existingSnap.exists()) {
+            throw new Error("Gift not found.");
           }
+          const existingData = existingSnap.data();
+          if (existingData.creatorId !== auth.currentUser.uid) {
+            throw new Error("You are not authorized to edit this gift.");
+          }
+
+          // STRICT SECURITY & ANTI-FRAUD:
+          // Permanently lock recipientName, slug, and occasion so this paid gift cannot be transferred or reused for other people!
+          const lockedRecipientName = existingData.recipientName;
+          const lockedSlug = existingData.slug || await generateUniqueSlug(db, lockedRecipientName);
+          const lockedOccasion = existingData.occasion || formData.occasion;
+          const existingHasSubPhotos = existingData.hasSubPhotos ?? false;
+
+          // Strip recipientName and occasion from formData before updating
+          const { recipientName: _ignoreRecip, occasion: _ignoreOcc, ...safeFormData } = formData;
+
           await updateDoc(docRef, {
-            ...formData,
+            ...safeFormData,
+            recipientName: lockedRecipientName, // Enforce original recipient name
+            slug: lockedSlug, // Enforce original slug
+            occasion: lockedOccasion, // Enforce original occasion
             ...(photoUrls.length > 0 && { photoUrls: isMultiSub ? photoUrls.slice(0, 4) : photoUrls }), 
-            hasSubPhotos: isMultiSub,
+            hasSubPhotos: photoUrls.length > 0 ? isMultiSub : existingHasSubPhotos,
             songQuery: finalSongUrl,
-            slug: currentSlug,
             updatedAt: serverTimestamp(),
           });
           
-          if (isMultiSub) {
+          if (photoUrls.length > 0 && isMultiSub) {
+            setPublishStatus("Updating photo album...");
             for (let i = 0; i < photoUrls.length; i++) {
               await setDoc(doc(db, "gifts", editGiftId, "photos", `photo_${i}`), {
                 url: photoUrls[i],
@@ -247,7 +293,7 @@ export default function Dashboard() {
             }
           }
           
-          setPublishStatus("Done!");
+          setPublishStatus("Saved!");
           router.push('/my-gifts');
           return;
         } else {
@@ -313,7 +359,12 @@ export default function Dashboard() {
               <span className="font-bold text-xl tracking-tight hidden sm:block">LoveLink Builder</span>
             </div>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 sm:gap-6">
+            {isEditing && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-500 dark:text-pink-400 text-xs font-semibold">
+                Editing: {formData.recipientName || "Gift"}
+              </span>
+            )}
             <div className="text-sm text-slate-500 dark:text-gray-400 font-medium tracking-wide">Step {step} of 3</div>
             <a href="/my-gifts" className="text-sm font-semibold text-slate-900 dark:text-white/70 hover:text-slate-900 dark:text-white transition-colors">My Gifts</a>
           </div>
@@ -321,12 +372,29 @@ export default function Dashboard() {
       </nav>
 
       <main className="max-w-4xl mx-auto px-6 pt-12">
+        {isLoadingGift ? (
+          <div className="py-24 flex flex-col items-center justify-center gap-4 text-center">
+            <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
+            <p className="text-sm text-slate-500 dark:text-gray-400 font-medium">Loading your gift details...</p>
+          </div>
+        ) : (
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0, x:-20}} className="space-y-10">
+              {isEditing && (
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-3 text-sm text-amber-700 dark:text-amber-300">
+                  <Lock className="w-5 h-5 shrink-0 mt-0.5 text-amber-500" />
+                  <div>
+                    <p className="font-semibold">Editing Mode Active</p>
+                    <p className="text-xs opacity-85 mt-0.5">
+                      To prevent gift link reuse and protect your unique URL, the recipient name and occasion are locked for this gift. You can update your memories, photos, video clip, music, and love letter.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div>
-                <h1 className="text-3xl font-bold mb-2">Let's set the mood.</h1>
-                <p className="text-slate-500 dark:text-gray-400">Choose a theme and tell us who this is for.</p>
+                <h1 className="text-3xl font-bold mb-2">{isEditing ? "Edit Gift Details" : "Let's set the mood."}</h1>
+                <p className="text-slate-500 dark:text-gray-400">{isEditing ? "Update your theme and personal nickname." : "Choose a theme and tell us who this is for."}</p>
               </div>
               <div className="flex flex-row items-center justify-start gap-8 pt-2">
                 {[
@@ -346,7 +414,14 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-white/10">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300">What is the occasion?</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-600 dark:text-gray-300">What is the occasion?</label>
+                  {isEditing && (
+                    <span className="text-[11px] font-semibold text-slate-400 bg-slate-200/50 dark:bg-white/10 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <Lock className="w-3 h-3" /> Locked
+                    </span>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   {[
                     { id: 'standard', name: 'Just Because', emoji: '💌' },
@@ -357,12 +432,22 @@ export default function Dashboard() {
                   ].map(occ => (
                     <button 
                       key={occ.id} 
-                      onClick={() => { updateForm('occasion', occ.id); if (occ.id === 'family' || occ.id === 'birthday') { updateForm('skipTrivia', true); } else { updateForm('skipTrivia', false); } }} disabled={isEditing}
-                      className={`relative p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${formData.occasion === occ.id ? 'border-pink-500 bg-pink-500/10 text-pink-600 dark:text-pink-400 shadow-md' : 'border-slate-200 dark:border-white/10 hover:border-pink-500/50 bg-white dark:bg-white/5 text-slate-600 dark:text-gray-300'} ${isEditing && formData.occasion !== occ.id ? 'opacity-30 cursor-not-allowed hidden md:flex' : ''}`}
+                      type="button"
+                      onClick={() => { 
+                        if (isEditing) return;
+                        updateForm('occasion', occ.id); 
+                        if (occ.id === 'family' || occ.id === 'birthday') { 
+                          updateForm('skipTrivia', true); 
+                        } else { 
+                          updateForm('skipTrivia', false); 
+                        } 
+                      }} 
+                      disabled={isEditing}
+                      className={`relative p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${formData.occasion === occ.id ? 'border-pink-500 bg-pink-500/10 text-pink-600 dark:text-pink-400 shadow-md' : 'border-slate-200 dark:border-white/10 hover:border-pink-500/50 bg-white dark:bg-white/5 text-slate-600 dark:text-gray-300'} ${isEditing && formData.occasion !== occ.id ? 'opacity-30 cursor-not-allowed hidden md:flex' : ''} ${isEditing && formData.occasion === occ.id ? 'cursor-default' : ''}`}
                     >
                       <span className="text-2xl">{occ.emoji}</span>
                       <span className="text-xs font-bold uppercase tracking-wider text-center">{occ.name}</span>
-                      {occ.id === "family" && <span className="absolute -top-3 bg-pink-500 text-white text-[9px] px-2 py-1 rounded-full animate-bounce shadow-lg shadow-pink-500/50">Recommended</span>}
+                      {occ.id === "family" && !isEditing && <span className="absolute -top-3 bg-pink-500 text-white text-[9px] px-2 py-1 rounded-full animate-bounce shadow-lg shadow-pink-500/50">Recommended</span>}
                     </button>
                   ))}
                 </div>
@@ -370,8 +455,35 @@ export default function Dashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-slate-600 dark:text-gray-300">Who is this for?</label>
-                  <input type="text" value={formData.recipientName} onChange={(e) => updateForm('recipientName', e.target.value)} disabled={isEditing} placeholder="e.g. Sarah" className={`w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none ${isEditing ? "opacity-60 cursor-not-allowed" : ""}`} />
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-slate-600 dark:text-gray-300">Who is this for?</label>
+                    {isEditing && (
+                      <span className="text-[11px] font-semibold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1">
+                        <Lock className="w-3 h-3" /> Locked
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      value={formData.recipientName} 
+                      onChange={(e) => {
+                        if (!isEditing) updateForm('recipientName', e.target.value);
+                      }} 
+                      disabled={isEditing} 
+                      readOnly={isEditing}
+                      placeholder="e.g. Sarah" 
+                      className={`w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-all ${isEditing ? "opacity-60 cursor-not-allowed bg-slate-200/50 dark:bg-white/[0.03] select-none pr-10" : ""}`} 
+                    />
+                    {isEditing && (
+                      <Lock className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    )}
+                  </div>
+                  {isEditing && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 font-medium">
+                      <span>🔒 Recipient name cannot be changed to prevent link reuse.</span>
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-slate-600 dark:text-gray-300">Your Name / Nickname</label>
@@ -457,6 +569,7 @@ export default function Dashboard() {
             </motion.div>
           )}
         </AnimatePresence>
+        )}
       </main>
 
       <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-black/80 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 py-4 px-8 z-50">
@@ -471,8 +584,14 @@ export default function Dashboard() {
           ) : (
             <div className="flex gap-4">
               <button onClick={handlePreview} className="hidden md:flex items-center gap-2 text-slate-900 dark:text-white/70 hover:text-slate-900 dark:text-white px-6 py-3 font-medium">Preview</button>
-              <button onClick={handlePublish} disabled={isPublishing} className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 text-slate-900 dark:text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 disabled:opacity-50">
-                {isPublishing ? <><Loader2 className="w-5 h-5 animate-spin" /> {publishStatus}</> : <><Sparkles className="w-5 h-5" /> Generate Link</>}
+              <button onClick={handlePublish} disabled={isPublishing || isLoadingGift} className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 disabled:opacity-50 transition-all">
+                {isPublishing ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> {publishStatus}</>
+                ) : isEditing ? (
+                  <><Check className="w-5 h-5" /> Save Changes</>
+                ) : (
+                  <><Sparkles className="w-5 h-5" /> Generate Link</>
+                )}
               </button>
             </div>
           )}
