@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, use, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon, Clock, Hourglass, Video } from "lucide-react";
+import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon, Clock, Hourglass, Video, Mail, Volume2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { db } from "../lib/firebase";
 import { doc, getDoc, updateDoc, serverTimestamp, collection, query, orderBy, getDocs, where, limit } from "firebase/firestore";
@@ -90,6 +90,7 @@ export default function GiftViewer({ params }) {
   const [activePhoto, setActivePhoto] = useState(0);
   const [mediaTab, setMediaTab] = useState("photos");
   const [poppedReasons, setPoppedReasons] = useState([false, false, false]);
+  const [isOpeningEnvelope, setIsOpeningEnvelope] = useState(false);
   const pressInterval = useRef(null);
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -113,14 +114,35 @@ export default function GiftViewer({ params }) {
     }
   };
 
-  const handleStartExperience = () => {
+  const handleOpenEnvelope = (e) => {
+    if (e) e.stopPropagation();
+    if (isOpeningEnvelope) return;
+    setIsOpeningEnvelope(true);
+
+    try {
+      confetti({
+        particleCount: 50,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#ec4899', '#f43f5e', '#fbbf24', '#ffffff']
+      });
+    } catch (err) {
+      console.warn("Confetti error:", err);
+    }
+
     if (audioRef.current) {
       audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
         console.warn("Autoplay blocked, recipient can tap music badge:", e);
       });
     }
-    setStage(-1);
+
+    setTimeout(() => {
+      setStage(-1);
+      setIsOpeningEnvelope(false);
+    }, 600);
   };
+
+  const handleStartExperience = handleOpenEnvelope;
 
   // Reaction Booth State
   const [isRecording, setIsRecording] = useState(false);
@@ -558,9 +580,115 @@ export default function GiftViewer({ params }) {
       <AnimatePresence mode="wait">
         
         {stage === -2 && (
-          <motion.div key="greeting" initial={{opacity:0, filter:"blur(10px)"}} animate={{opacity:1, filter:"blur(0px)"}} exit={{opacity:0, filter:"blur(10px)"}} transition={{duration:1.5}} className="text-center z-10 cursor-pointer" onClick={handleStartExperience}>
-            <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light mb-6`}>Hey, {giftData.recipientName}...</h1>
-            <p className={`text-sm opacity-40 tracking-widest uppercase animate-pulse ${styles.font}`}>Tap anywhere to continue</p>
+          <motion.div
+            key="envelope-card"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={
+              isOpeningEnvelope
+                ? { opacity: 0, scale: 1.08, filter: "blur(12px)", transition: { duration: 0.55 } }
+                : { opacity: 1, scale: 1, y: [0, -6, 0], filter: "blur(0px)" }
+            }
+            exit={{ opacity: 0, scale: 1.05, filter: "blur(10px)" }}
+            transition={{
+              opacity: { duration: 0.8 },
+              scale: { duration: 0.8 },
+              y: { duration: 4.5, repeat: Infinity, ease: "easeInOut" }
+            }}
+            className="z-10 w-full max-w-sm sm:max-w-md mx-auto cursor-pointer select-none px-2"
+            onClick={handleOpenEnvelope}
+          >
+            {/* Ambient Back Glow */}
+            <div className={`absolute -inset-1.5 rounded-[2.5rem] bg-gradient-to-r ${styles.accentGradient} opacity-30 blur-2xl pointer-events-none`} />
+
+            {/* Envelope Card Shell */}
+            <div className={`relative rounded-[2rem] border ${styles.border} ${styles.glass} p-6 sm:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col items-center text-center backdrop-blur-2xl transition-all`}>
+              
+              {/* Envelope Flap Triangular Fold (Authentic envelope visual crease) */}
+              <div className="absolute top-0 left-0 right-0 h-28 pointer-events-none overflow-hidden">
+                <div className={`w-full h-full border-b ${styles.border} bg-white/5 dark:bg-white/[0.03] [clip-path:polygon(0_0,100%_0,50%_100%)] shadow-sm`} />
+              </div>
+
+              {/* Envelope Header: Stamp & Delivery Badge */}
+              <div className="w-full flex items-center justify-between mb-5 relative z-10">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-500 dark:text-pink-400 text-[10px] tracking-wider uppercase font-semibold">
+                  <Mail className="w-3 h-3" />
+                  <span>Confidential</span>
+                </div>
+
+                {/* Postage Stamp */}
+                <div className="border-2 border-dashed border-pink-400/50 dark:border-pink-400/40 px-2.5 py-1 rounded-sm bg-pink-500/10 rotate-3 shadow-inner flex flex-col items-center">
+                  <div className="flex items-center gap-1 text-[8px] font-mono font-bold tracking-widest text-pink-500 dark:text-pink-300">
+                    <span>LOVE</span>
+                    <Heart className="w-2.5 h-2.5 fill-pink-500 text-pink-500" />
+                    <span>POST</span>
+                  </div>
+                  <span className="text-[6.5px] font-mono tracking-widest opacity-60">FIRST CLASS</span>
+                </div>
+              </div>
+
+              {/* Address / Recipient Presentation */}
+              <div className="space-y-1.5 mb-6 relative z-10 mt-2">
+                <p className="text-[11px] tracking-[0.25em] uppercase opacity-50 font-sans font-medium">
+                  Delivered Exclusively To
+                </p>
+                <h1 className={`text-3xl sm:text-4xl md:text-5xl ${styles.font} italic font-light tracking-wide text-transparent bg-clip-text bg-gradient-to-r ${styles.accentGradient} drop-shadow-sm py-1`}>
+                  {giftData.recipientName}
+                </h1>
+                <p className="text-xs sm:text-sm opacity-75 font-sans flex items-center justify-center gap-1.5 pt-0.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>From</span>
+                  <span className="font-semibold text-rose-500 dark:text-rose-300">{giftData.creatorName}</span>
+                </p>
+              </div>
+
+              {/* Occasion / Note Cue */}
+              <p className="text-xs opacity-50 italic font-serif max-w-xs mb-7 relative z-10">
+                {giftData.occasion === 'family' 
+                  ? "A private digital time capsule waiting to be opened." 
+                  : giftData.occasion === 'birthday' 
+                  ? "A secret celebration package crafted specially for you."
+                  : "A private digital love letter sealed with sweet memories."}
+              </p>
+
+              {/* Center Wax Seal (Interactive focal point) */}
+              <div className="relative flex flex-col items-center z-10 pt-1">
+                {/* Pulsing Ripple Aura */}
+                <motion.div 
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.1, 0.5] }} 
+                  transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
+                  className="absolute -inset-3 rounded-full bg-rose-500/30 blur-md pointer-events-none" 
+                />
+
+                {/* 3D Wax Seal Stamp */}
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.93 }}
+                  animate={isOpeningEnvelope ? { scale: [1, 1.35, 0], rotate: [0, 15, 30], opacity: 0 } : {}}
+                  transition={{ duration: 0.4 }}
+                  className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-gradient-to-br from-rose-500 via-red-600 to-rose-800 shadow-[0_12px_30px_rgba(225,29,72,0.5),inset_0_2px_4px_rgba(255,255,255,0.45),inset_0_-3px_5px_rgba(0,0,0,0.55)] border-4 border-rose-300/40 flex items-center justify-center cursor-pointer transition-transform group"
+                  aria-label="Break Seal to Open"
+                >
+                  {/* Embossed Internal Ring */}
+                  <div className="w-14 h-14 rounded-full border border-dashed border-rose-200/40 flex items-center justify-center">
+                    <Heart className="w-7 h-7 text-rose-100 fill-rose-100/30 drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)] group-hover:scale-110 transition-transform" />
+                  </div>
+                </motion.button>
+
+                {/* Action CTA Pill */}
+                <div className="mt-4 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-rose-500/20 to-pink-500/20 border border-rose-500/30 text-rose-500 dark:text-rose-300 text-xs font-semibold tracking-wider uppercase shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isOpeningEnvelope ? "Opening..." : "Break Seal to Open"}</span>
+                </div>
+
+                {/* Sound Hint */}
+                <p className="text-[11px] opacity-50 tracking-wider uppercase mt-2.5 flex items-center gap-1.5 font-sans">
+                  <Volume2 className="w-3 h-3 text-pink-400" />
+                  <span>Turn sound on for music 🎵</span>
+                </p>
+              </div>
+
+            </div>
           </motion.div>
         )}
 
