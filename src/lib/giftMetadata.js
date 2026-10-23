@@ -12,19 +12,27 @@ function formatName(raw) {
 
 export async function getGiftMetadata(rawId) {
   let recipientName = "";
+  let creatorName = "";
+  let occasion = "standard";
   
   if (rawId && rawId !== "demo-gift" && rawId !== "draft") {
     try {
       // 1. Try direct doc ID
       const directSnap = await getDoc(doc(db, "gifts", rawId));
       if (directSnap.exists()) {
-        recipientName = directSnap.data().recipientName;
+        const data = directSnap.data();
+        recipientName = data.recipientName || "";
+        creatorName = data.creatorName || "";
+        occasion = data.occasion || "standard";
       } else {
         // 2. Try slug query
         const q = query(collection(db, "gifts"), where("slug", "==", rawId), limit(1));
         const slugSnap = await getDocs(q);
         if (!slugSnap.empty) {
-          recipientName = slugSnap.docs[0].data().recipientName;
+          const data = slugSnap.docs[0].data();
+          recipientName = data.recipientName || "";
+          creatorName = data.creatorName || "";
+          occasion = data.occasion || "standard";
         }
       }
     } catch (e) {
@@ -34,9 +42,33 @@ export async function getGiftMetadata(rawId) {
 
   // Fallback to formatted slug or default name
   const displayName = recipientName ? recipientName.trim() : formatName(rawId);
-  const title = `💌 A special surprise for ${displayName} ❤️`;
-  const description = `Someone made an unforgettable digital gift just for you on LoveLink. Tap to open and experience your surprise!`;
-  const ogImageUrl = `/api/og?name=${encodeURIComponent(displayName)}`;
+  const formattedCreator = creatorName ? creatorName.trim() : "";
+
+  // Dynamic occasion-specific preview text for WhatsApp / Social
+  let title = `A private surprise for ${displayName} 💌`;
+  let description = formattedCreator
+    ? `${formattedCreator} crafted a special digital experience with music and memories for ${displayName}. Tap to open!`
+    : `Someone special sealed an unforgettable digital gift just for you on LoveLink. Tap to open and experience your surprise!`;
+
+  if (occasion === "family") {
+    title = `A Private Time Capsule for ${displayName} ⏳`;
+    description = formattedCreator
+      ? `${formattedCreator} sealed a family memory capsule for ${displayName} with photos, music, and an appreciation letter. Tap to open!`
+      : `A private family digital time capsule with cherished photos and a special letter. Tap to open!`;
+  } else if (occasion === "birthday") {
+    title = `Happy Birthday, ${displayName}! 🎂 A special gift awaits`;
+    description = formattedCreator
+      ? `${formattedCreator} created a private birthday celebration package for ${displayName}. Tap to open your surprise!`
+      : `A private birthday surprise sealed with sweet memories and music. Tap to open!`;
+  } else if (occasion === "proposal") {
+    title = `A Very Special Message for ${displayName} 💍`;
+    description = formattedCreator
+      ? `A private digital journey through our most precious moments, sealed by ${formattedCreator}. Tap to open!`
+      : `An unforgettable question and love story crafted just for you. Tap to open!`;
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://lovelink-app-beta.vercel.app";
+  const ogImageUrl = `${baseUrl}/api/og?name=${encodeURIComponent(displayName)}&creator=${encodeURIComponent(formattedCreator)}&occasion=${encodeURIComponent(occasion)}`;
 
   return {
     title,
