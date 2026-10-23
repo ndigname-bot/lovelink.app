@@ -426,7 +426,13 @@ export default function GiftViewer({ params }) {
     }
   }, [stage, giftData?.photoUrls?.length, mediaTab, giftData?.videoUrl]);
 
-  // Time Capsule Sequence Logic
+  // Synchronize poppedReasons with actual reasons count
+  useEffect(() => {
+    if (giftData?.reasons?.length) {
+      setPoppedReasons(new Array(giftData.reasons.length).fill(false));
+    }
+  }, [giftData?.reasons?.length]);
+
   const [tick, setTick] = useState(0);
   useEffect(() => {
     if (stage === 'tc_1') {
@@ -436,23 +442,24 @@ export default function GiftViewer({ params }) {
         setTick(t);
         if (t === 2) {
           clearInterval(interval);
-          setTimeout(() => setStage('tc_2'), 1500);
+          setTimeout(() => setStage('tc_2'), 1000);
         }
-      }, 1000);
+      }, 800);
       return () => clearInterval(interval);
     } else if (stage === 'tc_2') {
-      setTimeout(() => setStage('tc_3'), 5000);
+      const timer = setTimeout(() => setStage('tc_3'), 4000);
+      return () => clearTimeout(timer);
     } else if (stage === 'tc_3') {
       let t = 0;
       setTick(0);
       const interval = setInterval(() => {
         t++;
         setTick(t);
-        if (t === 3) {
+        if (t === 2) {
           clearInterval(interval);
-          setTimeout(() => setStage((giftData?.questions ? giftData.questions.length : 0) + 1), 1500);
+          setTimeout(() => setStage((giftData?.questions ? giftData.questions.length : 0) + 1), 1000);
         }
-      }, 1000);
+      }, 800);
       return () => clearInterval(interval);
     }
   }, [stage, giftData]);
@@ -527,9 +534,11 @@ export default function GiftViewer({ params }) {
   };
 
   const popReason = (index) => {
-    const newPopped = [...poppedReasons];
-    newPopped[index] = true;
-    setPoppedReasons(newPopped);
+    setPoppedReasons(prev => {
+      const next = [...prev];
+      next[index] = true;
+      return next;
+    });
     confetti({ particleCount: 30, spread: 50, origin: { y: 0.5 }, colors: styles.particles });
   };
 
@@ -693,12 +702,20 @@ export default function GiftViewer({ params }) {
         )}
 
         {stage === -1 && (
-          <motion.div key="buildup" initial={{opacity:0, filter:"blur(10px)"}} animate={{opacity:1, filter:"blur(0px)"}} exit={{opacity:0, filter:"blur(10px)"}} transition={{duration:1.5}} className="text-center z-10 cursor-pointer" onClick={() => setStage(0)}>
-            <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light leading-relaxed mb-6`}>
-              {INTROS[(giftId?.length || 0) % INTROS.length]} <span className={`${styles.accentText} font-semibold`}>{giftData.creatorName}</span>.
-            </h1>
-            <p className="text-lg opacity-80 mb-8 font-medium">But before you can open it, you must prove your identity.</p>
-            <p className={`text-sm opacity-40 tracking-widest uppercase animate-pulse ${styles.font}`}>Tap anywhere to continue</p>
+          <motion.div key="buildup" initial={{opacity:0, filter:"blur(10px)"}} animate={{opacity:1, filter:"blur(0px)"}} exit={{opacity:0, filter:"blur(10px)"}} transition={{duration:1.5}} className="fixed inset-0 z-20 flex flex-col items-center justify-center cursor-pointer select-none px-6 text-center" onClick={() => setStage(0)}>
+            <div className="max-w-xl mx-auto">
+              <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light leading-relaxed mb-6`}>
+                {giftData.occasion === 'family' 
+                  ? <>A walk down memory lane, crafted with love by <span className={`${styles.accentText} font-semibold`}>{giftData.creatorName}</span>.</>
+                  : <>{INTROS[(giftId?.length || 0) % INTROS.length]} <span className={`${styles.accentText} font-semibold`}>{giftData.creatorName}</span>.</>}
+              </h1>
+              <p className="text-lg opacity-80 mb-8 font-medium">
+                {giftData.occasion === 'family'
+                  ? "A journey back through our most cherished moments together."
+                  : "But before you can open it, you must prove your identity."}
+              </p>
+              <p className={`text-sm opacity-40 tracking-widest uppercase animate-pulse ${styles.font}`}>Tap anywhere to continue</p>
+            </div>
           </motion.div>
         )}
 
@@ -739,6 +756,7 @@ export default function GiftViewer({ params }) {
             >
               <Clock className={`w-20 h-20 ${styles.accentText}`} />
             </motion.div>
+            <p className="mt-8 text-sm md:text-base tracking-widest uppercase opacity-60 font-medium">Rewinding the clock...</p>
           </motion.div>
         )}
 
@@ -759,6 +777,7 @@ export default function GiftViewer({ params }) {
             >
               <Hourglass className={`w-24 h-24 ${styles.accentText}`} />
             </motion.div>
+            <p className="mt-8 text-sm md:text-base tracking-widest uppercase opacity-60 font-medium">Unlocking precious moments...</p>
           </motion.div>
         )}
 
@@ -948,7 +967,12 @@ export default function GiftViewer({ params }) {
         {/* STAGE 4: REASONS WHY (Floating Bubbles) */}
         {stage === (giftData?.questions ? giftData.questions.length : 0) + 2 && (
           <motion.div key="reasons" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:1}} className="w-full h-full flex flex-col items-center justify-center z-10 min-h-[60vh]">
-            <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light mb-16 text-center`}>{giftData?.occasion === "proposal" ? "My Promises to You..." : giftData?.occasion === "birthday" ? "My Birthday Wishes..." : giftData?.occasion === "family" ? "Things I Appreciate About You..." : "Why I love you..."}</h1>
+            <h1 className={`text-3xl md:text-5xl ${styles.font} italic opacity-90 font-light mb-3 text-center`}>
+              {giftData?.occasion === "proposal" ? "My Promises to You..." : giftData?.occasion === "birthday" ? "My Birthday Wishes..." : giftData?.occasion === "family" ? "Things I Appreciate About You..." : "Why I love you..."}
+            </h1>
+            <p className="text-xs md:text-sm opacity-60 mb-10 text-center font-sans tracking-wide">
+              Tap each bubble to reveal, or skip straight to the letter 💌
+            </p>
             
             <div className="relative w-full max-w-md h-64 flex flex-col items-center justify-center">
               {giftData.reasons.map((reason, idx) => {
@@ -957,27 +981,30 @@ export default function GiftViewer({ params }) {
                   { x: 80, y: 20, delay: 0.3 },
                   { x: 0, y: -100, delay: 0.6 }
                 ];
+                const pos = positions[idx % positions.length];
+                const isPopped = Boolean(poppedReasons[idx]);
                 
                 return (
                   <motion.button
                     key={idx}
+                    type="button"
                     initial={{ scale: 0, opacity: 0, x: 0, y: 0 }}
                     animate={{ 
-                      scale: poppedReasons[idx] ? 1.5 : [1, 1.1, 1],
-                      opacity: poppedReasons[idx] ? 0 : 1,
-                      x: poppedReasons[idx] ? positions[idx].x : [positions[idx].x, positions[idx].x + 30, positions[idx].x - 20, positions[idx].x], 
-                      y: poppedReasons[idx] ? positions[idx].y : [positions[idx].y, positions[idx].y - 40, positions[idx].y + 30, positions[idx].y],
-                      backgroundColor: poppedReasons[idx] ? "transparent" : ["rgba(255,255,255,0.05)", "rgba(236,72,153,0.2)", "rgba(56,189,248,0.2)", "rgba(255,255,255,0.05)"]
+                      scale: isPopped ? 1.5 : [1, 1.1, 1],
+                      opacity: isPopped ? 0 : 1,
+                      x: isPopped ? pos.x : [pos.x, pos.x + 30, pos.x - 20, pos.x], 
+                      y: isPopped ? pos.y : [pos.y, pos.y - 40, pos.y + 30, pos.y],
+                      backgroundColor: isPopped ? "transparent" : ["rgba(255,255,255,0.05)", "rgba(236,72,153,0.2)", "rgba(56,189,248,0.2)", "rgba(255,255,255,0.05)"]
                     }}
                     transition={{
-                      scale: { duration: poppedReasons[idx] ? 0.3 : 2, repeat: poppedReasons[idx] ? 0 : Infinity, ease: "easeInOut" },
+                      scale: { duration: isPopped ? 0.3 : 2, repeat: isPopped ? 0 : Infinity, ease: "easeInOut" },
                       opacity: { duration: 0.3 },
-                      x: { duration: 5 + idx, repeat: poppedReasons[idx] ? 0 : Infinity, ease: "easeInOut" },
-                      y: { duration: 6 + idx, repeat: poppedReasons[idx] ? 0 : Infinity, ease: "easeInOut" },
-                      backgroundColor: { duration: 4, repeat: poppedReasons[idx] ? 0 : Infinity, ease: "linear" }
+                      x: { duration: 5 + idx, repeat: isPopped ? 0 : Infinity, ease: "easeInOut" },
+                      y: { duration: 6 + idx, repeat: isPopped ? 0 : Infinity, ease: "easeInOut" },
+                      backgroundColor: { duration: 4, repeat: isPopped ? 0 : Infinity, ease: "linear" }
                     }}
                     onClick={() => popReason(idx)}
-                    className={`absolute w-32 h-32 rounded-full backdrop-blur-xl border ${styles.border} flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:border-pink-400 transition-colors p-4 z-20`}
+                    className={`absolute w-32 h-32 rounded-full backdrop-blur-xl border ${styles.border} flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:border-pink-400 transition-colors p-4 z-20 ${isPopped ? 'pointer-events-none' : 'cursor-pointer active:scale-95'}`}
                   >
                     <span className="text-sm font-bold text-center line-clamp-3 tracking-wider uppercase text-slate-900 dark:text-white/80">Tap Me</span>
                   </motion.button>
@@ -998,13 +1025,26 @@ export default function GiftViewer({ params }) {
               </div>
             </div>
 
-            <AnimatePresence>
-              {poppedReasons.every(Boolean) && (
-                <motion.button initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} onClick={() => setStage(prev => prev + 1)} className={`mt-16 px-8 py-3 bg-gradient-to-r ${styles.accentGradient} rounded-full font-bold shadow-lg hover:scale-105 transition-transform text-slate-900 dark:text-white text-lg flex items-center gap-2`}>
+            <div className="mt-14 flex flex-col items-center gap-3 z-30">
+              {giftData.reasons.length > 0 && giftData.reasons.every((_, i) => poppedReasons[i]) ? (
+                <motion.button 
+                  initial={{opacity:0, scale:0.9, y:15}} 
+                  animate={{opacity:1, scale:1, y:0}} 
+                  onClick={() => setStage(prev => prev + 1)} 
+                  className={`px-8 py-3.5 bg-gradient-to-r ${styles.accentGradient} rounded-full font-bold shadow-xl hover:scale-105 active:scale-95 transition-all text-slate-900 dark:text-white text-lg flex items-center gap-2`}
+                >
                   Read My Letter <ArrowRight className="w-5 h-5" />
                 </motion.button>
+              ) : (
+                <button 
+                  type="button"
+                  onClick={() => setStage(prev => prev + 1)} 
+                  className="px-6 py-2.5 rounded-full border border-slate-300 dark:border-white/20 hover:border-pink-500/50 text-xs sm:text-sm font-medium opacity-75 hover:opacity-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 backdrop-blur-sm"
+                >
+                  Skip to Letter 💌 <ArrowRight className="w-4 h-4" />
+                </button>
               )}
-            </AnimatePresence>
+            </div>
           </motion.div>
         )}
 

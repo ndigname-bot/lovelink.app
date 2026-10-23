@@ -24,6 +24,7 @@ export default function MyGifts() {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [activeLovecard, setActiveLovecard] = useState(null);
+  const [previewLetterGift, setPreviewLetterGift] = useState(null);
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -270,8 +271,13 @@ export default function MyGifts() {
                         )}
                       </div>
 
-                      <div className="text-slate-600 dark:text-gray-300 text-sm mb-4 flex-grow line-clamp-2 italic">
-                        "{gift.letter || 'No letter content...'}"
+                      <div 
+                        onClick={() => setPreviewLetterGift(gift)}
+                        className="text-slate-600 dark:text-gray-300 text-sm mb-4 flex-grow line-clamp-2 italic cursor-pointer hover:text-pink-500 transition-colors group flex items-start gap-1"
+                        title="Click to preview full letter"
+                      >
+                        <span className="flex-1">"{gift.letter || 'No letter content...'}"</span>
+                        <span className="text-[10px] font-semibold text-pink-500 dark:text-pink-400 opacity-60 group-hover:opacity-100 transition-opacity bg-pink-500/10 px-2 py-0.5 rounded-full shrink-0">Preview Letter</span>
                       </div>
 
                       {(gift.partnerAnswerQ1 || gift.partnerAnswerQ2) && (
@@ -485,6 +491,47 @@ export default function MyGifts() {
               >
                 <Printer className="w-5 h-5" /> Print or Save as PDF
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* INSTANT LETTER PREVIEW MODAL */}
+      <AnimatePresence>
+        {previewLetterGift && (
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="absolute inset-0" onClick={() => setPreviewLetterGift(null)} />
+            
+            <motion.div initial={{scale:0.95, y:20}} animate={{scale:1, y:0}} exit={{scale:0.95, y:20}} className="relative bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+              <button onClick={() => setPreviewLetterGift(null)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-full bg-slate-100 dark:bg-white/5 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-2 mb-4">
+                <Heart className="w-5 h-5 text-pink-500 fill-pink-500/20" />
+                <h2 className="text-xl font-bold">Letter for {previewLetterGift.recipientName}</h2>
+              </div>
+
+              <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar bg-slate-50 dark:bg-black/40 p-5 rounded-2xl border border-slate-200 dark:border-white/5 text-sm sm:text-base leading-relaxed whitespace-pre-wrap font-serif italic text-slate-800 dark:text-gray-200">
+                {previewLetterGift.letter || "No letter content written yet."}
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 dark:border-white/10 mt-4 flex items-center justify-between gap-3">
+                <Link 
+                  href={`/dashboard?edit=${previewLetterGift.id}`} 
+                  onClick={() => setPreviewLetterGift(null)}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-xs sm:text-sm font-semibold text-center transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Edit3 className="w-4 h-4" /> Edit Letter
+                </Link>
+                <Link 
+                  href={previewLetterGift.slug ? `/for/${previewLetterGift.slug}` : `/gift/${previewLetterGift.id}`} 
+                  target="_blank" 
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-pink-500 hover:bg-pink-600 text-white text-xs sm:text-sm font-bold text-center transition-colors shadow-lg shadow-pink-500/20 flex items-center justify-center gap-1.5"
+                >
+                  <ExternalLink className="w-4 h-4" /> View Live Gift
+                </Link>
+              </div>
             </motion.div>
           </motion.div>
         )}
