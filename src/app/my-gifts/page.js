@@ -38,7 +38,7 @@ export default function MyGifts() {
           setReviews(fetchedReviews);
         } else {
           setReviews([
-            { id: '1', text: "She cried within 5 minutes. Best $15 I've spent.", name: "David T.", stars: 5 },
+            { id: '1', text: "She cried within 5 minutes. Best $9.99 I've spent.", name: "David T.", stars: 5 },
             { id: '2', text: "The UI is stunning. So easy to build on my phone.", name: "Sarah J.", stars: 5 },
             { id: '3', text: "Literally saved my anniversary.", name: "Michael R.", stars: 5 },
           ]);
@@ -46,7 +46,7 @@ export default function MyGifts() {
       } catch (e) {
         console.error("Error fetching reviews", e);
         setReviews([
-          { id: '1', text: "She cried within 5 minutes. Best $15 I've spent.", name: "David T.", stars: 5 },
+          { id: '1', text: "She cried within 5 minutes. Best $9.99 I've spent.", name: "David T.", stars: 5 },
           { id: '2', text: "The UI is stunning. So easy to build on my phone.", name: "Sarah J.", stars: 5 }
         ]);
       }
@@ -320,7 +320,7 @@ export default function MyGifts() {
                               <Lock className="w-4 h-4" /> Locked
                             </Link>
                             <button onClick={() => handlePayNow(gift.id, gift.recipientName)} className="flex-1 flex items-center justify-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-black hover:bg-gray-200 py-2 rounded-xl text-sm font-bold transition-colors">
-                              Pay $15 to Unlock
+                              Pay $9.99 to Unlock
                             </button>
                           </>
                         )}

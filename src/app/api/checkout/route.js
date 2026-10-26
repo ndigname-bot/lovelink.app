@@ -25,7 +25,7 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         email: email || "customer@lovelink.app", // Paystack requires an email
-        amount: 15000, // 150 GHS in pesewas (approx $15)
+        amount: 9900, // 99 GHS in pesewas (approx $9.99)
         currency: "GHS",
         metadata: {
           giftId: giftId,

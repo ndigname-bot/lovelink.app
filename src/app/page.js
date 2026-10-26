@@ -202,6 +202,89 @@ export default function Home() {
         </div>
       </section>
 
+      {/* COMPARISON / DEAD FLOWERS MATRIX */}
+      <section className="py-20 max-w-5xl mx-auto px-6 relative z-10">
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/10 text-rose-500 dark:text-rose-400 font-bold text-xs uppercase tracking-wider mb-3 border border-rose-500/20">
+            Why LoveLink Means More
+          </div>
+          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4">
+            Traditional Gifts vs. A LoveLink
+          </h2>
+          <p className="text-slate-500 dark:text-gray-400 text-base md:text-lg max-w-xl mx-auto">
+            A bouquet of roses costs $75 and withers in 72 hours. A LoveLink costs $9.99 and stays in their heart forever.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+          {/* Traditional Flowers / Paper Card */}
+          <div className="bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-3xl p-8 flex flex-col justify-between">
+            <div>
+              <div className="text-4xl mb-4">🥀</div>
+              <h3 className="text-xl font-bold mb-1 text-slate-800 dark:text-slate-200">Fresh Flowers & Paper Card</h3>
+              <div className="text-2xl font-extrabold text-slate-400 mb-6">$65 – $90+</div>
+              
+              <div className="space-y-3.5 text-sm text-slate-500 dark:text-gray-400">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-rose-500 font-bold">✕</span> Withers and dies within 3 to 5 days
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="text-rose-500 font-bold">✕</span> Paper card gets stored in a drawer or thrown away
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="text-rose-500 font-bold">✕</span> Generic bouquet with no personal song or voice
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="text-rose-500 font-bold">✕</span> Expensive delivery markups & courier delays
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-4 border-t border-slate-200 dark:border-white/10 text-xs text-slate-400 font-medium italic">
+              Temporary gesture with zero long-term keepsake value.
+            </div>
+          </div>
+
+          {/* LoveLink */}
+          <div className="bg-gradient-to-br from-rose-500/10 via-pink-500/5 to-transparent border-2 border-rose-500/40 rounded-3xl p-8 flex flex-col justify-between relative shadow-[0_0_50px_rgba(244,63,94,0.15)]">
+            <div className="absolute top-4 right-4 bg-rose-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
+              Unforgettable
+            </div>
+
+            <div>
+              <div className="text-4xl mb-4">💌</div>
+              <h3 className="text-xl font-bold mb-1 text-white">Your LoveLink Capsule</h3>
+              <div className="flex items-baseline gap-2 mb-6">
+                <span className="text-3xl font-extrabold text-white">$9.99</span>
+                <span className="text-xs uppercase font-bold text-rose-400">One-time • Forever</span>
+              </div>
+              
+              <div className="space-y-3.5 text-sm text-slate-700 dark:text-gray-200">
+                <div className="flex items-center gap-2.5 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> Kept and re-read for years on hard days
+                </div>
+                <div className="flex items-center gap-2.5 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> Plays your special couple / family song
+                </div>
+                <div className="flex items-center gap-2.5 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> Authentic 3D wax seal opening experience
+                </div>
+                <div className="flex items-center gap-2.5 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> Includes your photos, trivia, and final love letter
+                </div>
+                <div className="flex items-center gap-2.5 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> Instant 1-tap delivery on WhatsApp or print card
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-4 border-t border-rose-500/20 text-xs text-rose-500 dark:text-rose-300 font-bold">
+              10x more personal than flowers, at a fraction of the cost.
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* PRICING SECTION */}
       <section className="py-24 bg-white/[0.02] border-y border-slate-200 dark:border-white/5 relative z-10">
         <div className="max-w-4xl mx-auto px-8">
@@ -220,7 +303,7 @@ export default function Home() {
                 <h3 className="text-4xl font-bold">The LoveLink</h3>
                 <div className="flex items-baseline justify-center md:justify-start gap-3">
                    <span className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-400">FREE</span>
-                   <span className="text-2xl text-slate-400 line-through decoration-pink-500/50 decoration-2">$15</span>
+                   <span className="text-2xl text-slate-400 line-through decoration-pink-500/50 decoration-2">$9.99</span>
                 </div>
                 <p className="text-pink-500 font-bold uppercase tracking-wider text-sm mb-2">🎉 Launch Week Promo</p>
                 <p className="text-slate-600 dark:text-gray-300">Everything you need to create a permanent, cinematic memory.</p>
@@ -253,7 +336,7 @@ export default function Home() {
         <h2 className="text-3xl font-bold mb-12 text-center">Don't just take our word for it.</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { name: "David T.", text: "I sent this to my girlfriend while I was deployed overseas. She called me crying within 5 minutes. Best $15 I've ever spent." },
+            { name: "David T.", text: "I sent this to my girlfriend while I was deployed overseas. She called me crying within 5 minutes. Best $9.99 I've ever spent." },
             { name: "Sarah J.", text: "I made one for my husband for our anniversary. The UI is stunning and the music feature just pushed it over the edge." },
             { name: "Michael R.", text: "I forgot our anniversary and had to scramble. Built this in 10 minutes on my phone and she thought I spent weeks coding it. 10/10." }
           ].map((review, i) => (
@@ -278,7 +361,7 @@ export default function Home() {
            </div>
            <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-8">
               <h3 className="text-xl font-bold mb-2 text-pink-400">Does the link ever expire?</h3>
-              <p className="text-slate-500 dark:text-gray-400 leading-relaxed">No! When you pay the one-time $15 fee, your LoveLink is hosted permanently. You can look back on it years from now.</p>
+              <p className="text-slate-500 dark:text-gray-400 leading-relaxed">No! When you pay the one-time $9.99 fee, your LoveLink is hosted permanently. You can look back on it years from now.</p>
            </div>
            <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-8">
               <h3 className="text-xl font-bold mb-2 text-pink-400">Can I edit it after paying?</h3>

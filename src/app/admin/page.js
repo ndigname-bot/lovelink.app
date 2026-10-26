@@ -203,8 +203,8 @@ export default function AdminDashboard() {
   const unpaidGifts = totalGifts - paidGifts;
   const totalReactions = gifts.filter(g => g.response).length;
   const totalOpened = gifts.filter(g => g.lastOpened).length;
-  const totalRevenueGHS = paidGifts * 150;
-  const totalRevenueUSD = paidGifts * 15;
+  const totalRevenueGHS = paidGifts * 99;
+  const totalRevenueUSD = (paidGifts * 9.99).toFixed(2);
   const conversionRate = totalGifts > 0 ? ((paidGifts / totalGifts) * 100).toFixed(1) : 0;
 
   // Filtered Gifts
@@ -675,10 +675,10 @@ export default function AdminDashboard() {
             <div>
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-rose-400" />
-                4 Psychological Pricing Tricks to Make $15 Feel Like a Steal
+                4 Psychological Pricing Tricks to Make $9.99 Feel Like a Steal
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                How to eliminate price resistance for high-emotion digital products without lowering your price.
+                How to eliminate price resistance for high-emotion digital products without compromising value.
               </p>
             </div>
 
@@ -691,15 +691,15 @@ export default function AdminDashboard() {
                 </div>
                 <h3 className="text-base font-bold text-white">The "Dead Flowers" Anchor Contrast</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  The human brain cannot judge absolute value—it only judges value relative to an anchor. When compared to a free WhatsApp text, $15 sounds high. But when compared to what people actually buy:
+                  The human brain cannot judge absolute value—it only judges value relative to an anchor. When compared to a free WhatsApp text, $9.99 sounds like a purchase. But when anchored against what people actually buy:
                 </p>
                 <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-1.5 font-mono">
                   <div className="text-slate-400">• Fresh Flowers: <span className="line-through text-slate-500">$75</span> (Dies in 3 days)</div>
                   <div className="text-slate-400">• Paper Greeting Card: <span className="line-through text-slate-500">$9</span> (Gets thrown away)</div>
-                  <div className="text-emerald-400 font-bold">• LoveLink: $15 (Permanent digital keepsake forever)</div>
+                  <div className="text-emerald-400 font-bold">• LoveLink: $9.99 (Permanent digital keepsake forever)</div>
                 </div>
                 <p className="text-[11px] text-slate-400 italic">
-                  <strong>Copy to use on Paywall:</strong> "A bouquet of roses costs $75 and withers in 72 hours. LoveLink costs $15 and stays in their heart forever."
+                  <strong>Copy to use on Paywall:</strong> "A bouquet of roses costs $75 and withers in 72 hours. LoveLink costs $9.99 and stays in their heart forever."
                 </p>
               </div>
 
@@ -709,17 +709,17 @@ export default function AdminDashboard() {
                   <span className="text-xs font-bold uppercase tracking-wider text-pink-400">Trick #2</span>
                   <span className="text-[10px] font-bold bg-pink-500/10 text-pink-300 border border-pink-500/20 px-2 py-0.5 rounded-full">Temporal Discounting</span>
                 </div>
-                <h3 className="text-base font-bold text-white">The "Permanent Hosting" Framing</h3>
+                <h3 className="text-base font-bold text-white">The "Permanent Ownership" Framing</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Lump sums trigger the "pain of paying". But in a world of annoying $9.99/month recurring subscriptions, people love <strong>permanent ownership</strong>.
+                  Lump sums trigger the "pain of paying". But in a world of annoying $9.99/month recurring subscriptions, people love <strong>permanent single-payment ownership</strong>.
                 </p>
                 <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-1 font-mono">
-                  <div className="text-emerald-400">✓ One-time $15 fee</div>
+                  <div className="text-emerald-400">✓ One-time $9.99 fee</div>
                   <div className="text-emerald-400">✓ 0 subscriptions or hidden renewals</div>
                   <div className="text-emerald-400">✓ Guaranteed hosted forever</div>
                 </div>
                 <p className="text-[11px] text-slate-400 italic">
-                  <strong>Copy to use on Paywall:</strong> "No monthly subscription. Pay $15 once, and your love letter is hosted permanently forever."
+                  <strong>Copy to use on Paywall:</strong> "No monthly subscription. Pay $9.99 once, and your love letter is hosted permanently forever."
                 </p>
               </div>
 
@@ -734,7 +734,7 @@ export default function AdminDashboard() {
                   When a customer spends 5 minutes selecting their favorite photos, writing a letter that makes them tear up, and choosing their special song, they feel profound emotional ownership over the creation.
                 </p>
                 <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed">
-                  Abandoning checkout now feels like deleting their own heartfelt love letter. Paying $15 to send it is an easy emotional decision.
+                  Abandoning checkout now feels like deleting their own heartfelt love letter. Paying $9.99 to send it is an easy emotional decision.
                 </div>
                 <p className="text-[11px] text-slate-400 italic">
                   <strong>Rule:</strong> Never ask for payment upfront. Always let them complete the entire masterpiece before the unlock step.
@@ -745,17 +745,17 @@ export default function AdminDashboard() {
               <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">Trick #4</span>
-                  <span className="text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-2 py-0.5 rounded-full">Loss Aversion</span>
+                  <span className="text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-2 py-0.5 rounded-full">Emotional Assurance</span>
                 </div>
-                <h3 className="text-base font-bold text-white">The "Reaction Guarantee" Risk Reversal</h3>
+                <h3 className="text-base font-bold text-white">The "Goosebumps Keepsake" Value</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  The biggest hesitation is social risk: *"What if they don't like it?"* Removing this risk converts fence-sitters into buyers immediately.
+                  Remove hesitation by reminding users of the emotional payoff. It's not about software; it's about making someone cry happy tears.
                 </p>
                 <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed font-sans">
-                  "Our 100% Tear-Jerker Guarantee: If your recipient doesn't smile, laugh, or cry happy tears, email us within 7 days for a full 100% refund."
+                  "Every LoveLink is permanently preserved in our vault so your partner or parent can re-open it whenever they need a reminder of how much they are loved."
                 </div>
                 <p className="text-[11px] text-slate-400 italic">
-                  <strong>Stats:</strong> Guarantees like this increase conversion by 35% while refund requests remain below 1.5%.
+                  <strong>Value:</strong> Focus 100% on emotional impact and permanent memories rather than warranties or returns.
                 </p>
               </div>
             </div>
