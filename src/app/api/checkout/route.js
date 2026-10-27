@@ -11,7 +11,38 @@ export async function POST(req) {
 
     const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "https://lovelink-app-beta.vercel.app";
 
-    // 1. Prioritize Stripe if STRIPE_SECRET_KEY is configured
+    // 1. PRIMARY GATEWAY: Paystack (Direct Settlement to Ghana Bank / MoMo + Global Cards)
+    // Works 100% without needing a US registered company or US bank account!
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
+    if (paystackSecretKey) {
+      const response = await fetch("https://api.paystack.co/transaction/initialize", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${paystackSecretKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email || "customer@lovelink.app",
+          amount: 9900, // 99 GHS in pesewas (~$9.99 USD)
+          currency: "GHS",
+          channels: ["card", "mobile_money", "apple_pay"],
+          metadata: {
+            giftId: giftId,
+            recipientName: recipientName || "Special Someone",
+          },
+          callback_url: `${origin}/success?giftId=${giftId}`,
+        }),
+      });
+
+      const data = await response.json();
+      if (!data.status) {
+        throw new Error(data.message || "Failed to initialize Paystack transaction");
+      }
+
+      return NextResponse.json({ url: data.data.authorization_url });
+    }
+
+    // 2. SECONDARY GATEWAY: Stripe (Only if US/International entity exists)
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
     if (stripeSecretKey) {
       const stripeParams = new URLSearchParams();
@@ -46,36 +77,8 @@ export async function POST(req) {
       return NextResponse.json({ url: stripeData.url });
     }
 
-    // 2. Paystack Gateway (for GHS / African payment channels)
-    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
-    if (paystackSecretKey) {
-      const response = await fetch("https://api.paystack.co/transaction/initialize", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${paystackSecretKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email || "customer@lovelink.app",
-          amount: 9900, // 99 GHS in pesewas (~$9.99)
-          currency: "GHS",
-          metadata: {
-            giftId: giftId,
-          },
-          callback_url: `${origin}/success?giftId=${giftId}`,
-        }),
-      });
-
-      const data = await response.json();
-      if (!data.status) {
-        throw new Error(data.message || "Failed to initialize Paystack transaction");
-      }
-
-      return NextResponse.json({ url: data.data.authorization_url });
-    }
-
     // 3. Fallback Development Bypass Mode
-    console.warn("Using Payment Bypass Mode because neither STRIPE_SECRET_KEY nor PAYSTACK_SECRET_KEY is configured.");
+    console.warn("Using Payment Bypass Mode because neither PAYSTACK_SECRET_KEY nor STRIPE_SECRET_KEY is configured.");
     return NextResponse.json({ url: `${origin}/success?giftId=${giftId}` });
 
   } catch (error) {

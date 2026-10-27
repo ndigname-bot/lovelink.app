@@ -29,7 +29,18 @@ import {
   Flag,
   ShieldAlert,
   Ban,
-  CheckCircle2
+  CheckCircle2,
+  Sliders,
+  Volume2,
+  Mic,
+  Activity,
+  Coffee,
+  Layers,
+  ChevronDown,
+  ChevronRight,
+  Zap,
+  ArrowRight,
+  Radio
 } from "lucide-react";
 import Link from "next/link";
 import { db, auth } from "../../lib/firebase";
@@ -44,7 +55,7 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
-// Allowed admin emails list (Can be extended via NEXT_PUBLIC_ADMIN_EMAILS)
+// Allowed admin emails list
 const DEFAULT_ADMIN_EMAILS = [
   "admin@lovelink.app",
   "emmanuel@lovelink.app",
@@ -63,7 +74,8 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [occasionFilter, setOccasionFilter] = useState("all");
-  const [activeTab, setActiveTab] = useState("gifts"); // 'gifts' | 'reactions' | 'strategy'
+  const [activeTab, setActiveTab] = useState("cockpit"); // 'cockpit' | 'gifts' | 'reactions' | 'strategy'
+  const [selectedGiftId, setSelectedGiftId] = useState(null);
   
   // Modals
   const [activeLetterModal, setActiveLetterModal] = useState(null);
@@ -72,19 +84,22 @@ export default function AdminDashboard() {
   const [copiedId, setCopiedId] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Audio player for reactions
+  // Audio player for reactions & ambience
   const audioRef = useRef(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [currentAudioUrl, setCurrentAudioUrl] = useState(null);
+  const [audioVolume, setAudioVolume] = useState(80);
+  const [rainAmbience, setRainAmbience] = useState(65);
+  const [noiseAmbience, setNoiseAmbience] = useState(40);
+  const [lofiActive, setLofiActive] = useState(false);
 
   // Verify Admin Access
   useEffect(() => {
-    // 1. Check session storage passcode
     const sessionAuth = sessionStorage.getItem("lovelink_admin_auth");
-    if (sessionAuth === "true") {
+    if (sessionAuth) {
       setIsAdminAuthenticated(true);
     }
 
-    // 2. Check Firebase user email
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user?.email) {
         setCurrentUserEmail(user.email);
@@ -155,6 +170,9 @@ export default function AdminDashboard() {
       });
 
       setGifts(list);
+      if (list.length > 0 && !selectedGiftId) {
+        setSelectedGiftId(list[0].id);
+      }
     } catch (err) {
       console.error("Error loading gifts for admin:", err);
     } finally {
@@ -233,11 +251,13 @@ export default function AdminDashboard() {
 
   const playVoiceNote = (base64Audio) => {
     if (audioRef.current) {
-      if (isPlayingAudio) {
+      if (isPlayingAudio && currentAudioUrl === base64Audio) {
         audioRef.current.pause();
         setIsPlayingAudio(false);
       } else {
         audioRef.current.src = base64Audio;
+        setCurrentAudioUrl(base64Audio);
+        audioRef.current.volume = audioVolume / 100;
         audioRef.current.play();
         setIsPlayingAudio(true);
       }
@@ -255,6 +275,15 @@ export default function AdminDashboard() {
   const totalRevenueGHS = paidGifts * 99;
   const totalRevenueUSD = (paidGifts * 9.99).toFixed(2);
   const conversionRate = totalGifts > 0 ? ((paidGifts / totalGifts) * 100).toFixed(1) : 0;
+
+  // Selected Gift
+  const selectedGift = gifts.find(g => g.id === selectedGiftId) || gifts[0] || null;
+
+  // Occasion counts
+  const romanticCount = gifts.filter(g => (g.occasion || "standard") === "standard").length;
+  const familyCount = gifts.filter(g => g.occasion === "family").length;
+  const proposalCount = gifts.filter(g => g.occasion === "proposal").length;
+  const birthdayCount = gifts.filter(g => g.occasion === "birthday").length;
 
   // Filtered Gifts
   const filteredGifts = gifts.filter(gift => {
@@ -293,24 +322,24 @@ export default function AdminDashboard() {
   // Render Gate if not authenticated
   if (!isAdminAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-white selection:bg-pink-500/30">
-        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-          <div className="w-16 h-16 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mx-auto mb-6 text-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.25)]">
-            <ShieldCheck className="w-8 h-8" />
+      <div className="min-h-screen bg-[#070b13] flex items-center justify-center p-6 text-white selection:bg-blue-500/30">
+        <div className="w-full max-w-md bg-[#0d131f] border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+          <div className="w-16 h-16 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center mx-auto mb-6 text-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.25)]">
+            <Radio className="w-8 h-8" />
           </div>
 
-          <h1 className="text-2xl font-bold text-center mb-1">LoveLink Admin Portal</h1>
-          <p className="text-xs text-slate-400 text-center mb-6">Restricted to authorized team members</p>
+          <h1 className="text-2xl font-bold text-center mb-1">LoveLink Cockpit</h1>
+          <p className="text-xs text-slate-400 text-center mb-6">Sequence-Grade Founder Command Workspace</p>
 
           <form onSubmit={handlePasscodeLogin} className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-slate-400 block mb-1.5 uppercase tracking-wider">Master Admin Passcode</label>
+              <label className="text-xs font-semibold text-slate-400 block mb-1.5 uppercase tracking-wider">Master Founder Passcode</label>
               <input 
                 type="password" 
                 value={passcodeInput} 
                 onChange={e => setPasscodeInput(e.target.value)} 
                 placeholder="Enter admin passcode..." 
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-rose-500 transition-colors"
+                className="w-full bg-[#070b13] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 transition-colors"
               />
             </div>
 
@@ -323,14 +352,14 @@ export default function AdminDashboard() {
             <button 
               type="submit" 
               disabled={isVerifying}
-              className="w-full py-3 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-rose-500/25 active:scale-95 transition-all disabled:opacity-50"
+              className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/25 active:scale-95 transition-all disabled:opacity-50"
             >
-              {isVerifying ? "Verifying..." : "Access Dashboard"}
+              {isVerifying ? "Verifying..." : "Access Studio"}
             </button>
           </form>
 
           <div className="mt-6 pt-4 border-t border-slate-800 text-center text-[11px] text-slate-500">
-            {currentUserEmail ? `Logged in as: ${currentUserEmail}` : "Not signed into Firebase"}
+            {currentUserEmail ? `Signed in as: ${currentUserEmail}` : "Restricted to authorized founders"}
           </div>
         </div>
       </div>
@@ -338,545 +367,725 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-pink-500/30 pb-24">
+    <div className="min-h-screen bg-[#070b13] text-slate-100 flex flex-col font-sans selection:bg-blue-500/30 overflow-x-hidden">
       {/* Hidden audio element for voice note review */}
       <audio ref={audioRef} onEnded={() => setIsPlayingAudio(false)} className="hidden" />
 
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center shadow-lg shadow-rose-500/30 text-white font-black text-lg">
-              ❤️
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg text-white tracking-tight">LoveLink</span>
-                <span className="text-[10px] font-bold tracking-widest uppercase bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded-full">
-                  Admin Panel
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400">Platform Management & Growth Operations</p>
-            </div>
+      {/* TOP HEADER: Sequence Style */}
+      <header className="h-14 border-b border-slate-800/80 bg-[#070b13]/90 backdrop-blur-md px-4 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center gap-3">
+          {/* Brand Waveform Icon */}
+          <div className="flex items-center gap-1.5 text-blue-500">
+            <span className="w-1 h-4 bg-blue-500 rounded-full animate-pulse"></span>
+            <span className="w-1 h-6 bg-blue-400 rounded-full"></span>
+            <span className="w-1 h-3 bg-blue-500 rounded-full"></span>
+          </div>
+          <span className="font-bold text-sm tracking-tight text-white">LoveLink</span>
+
+          <div className="h-4 w-[1px] bg-slate-800 mx-1"></div>
+
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <span>Workspace</span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
+            <span className="text-white font-medium">Focus room</span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={fetchAllGifts} 
-              disabled={loading} 
-              className="p-2 text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-800 rounded-xl transition-colors border border-slate-700" 
-              title="Refresh Data"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-rose-400' : ''}`} />
-            </button>
-            <Link 
-              href="/dashboard" 
-              className="text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700 transition-colors"
-            >
-              Builder
-            </Link>
-            <button 
-              onClick={handleLogout} 
-              className="text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-2 rounded-xl border border-rose-500/20 transition-colors"
-            >
-              Sign Out
-            </button>
+          <div className="hidden sm:flex items-center gap-1.5 ml-3 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            All systems live
           </div>
+        </div>
+
+        {/* Right Top Actions */}
+        <div className="flex items-center gap-3">
+          <div className="relative hidden md:block w-64">
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input 
+              type="text" 
+              value={searchQuery} 
+              onChange={e => setSearchQuery(e.target.value)} 
+              placeholder="Quick find ⌘ K" 
+              className="w-full bg-[#0d131f] border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500 transition-colors"
+            />
+          </div>
+
+          <button 
+            onClick={fetchAllGifts} 
+            disabled={loading} 
+            className="p-1.5 text-slate-400 hover:text-white bg-[#0d131f] hover:bg-slate-800 rounded-lg border border-slate-800 transition-colors"
+            title="Refresh database"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-400' : ''}`} />
+          </button>
+
+          <Link 
+            href="/dashboard" 
+            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-blue-600/20 transition-all"
+          >
+            <span>+ New keepsake</span>
+          </Link>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 pt-8 space-y-8">
-        
-        {/* KPI Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {/* Total Gifts */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-              Total Gifts <Users className="w-4 h-4 text-slate-500" />
-            </span>
-            <span className="text-3xl font-extrabold text-white mt-2">{totalGifts}</span>
-            <span className="text-[11px] text-slate-500 mt-1">All created links</span>
-          </div>
+      {/* 3-COLUMN WORKSPACE: SEQUENCE COCKPIT */}
+      <div className="flex-1 flex flex-col lg:flex-row">
 
-          {/* Paid Gifts */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center justify-between">
-              Paid Gifts <Check className="w-4 h-4 text-emerald-500" />
-            </span>
-            <span className="text-3xl font-extrabold text-emerald-400 mt-2">{paidGifts}</span>
-            <span className="text-[11px] text-slate-500 mt-1">{conversionRate}% conversion</span>
-          </div>
-
-          {/* Unpaid Gifts */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center justify-between">
-              Unpaid Drafts <Lock className="w-4 h-4 text-amber-500" />
-            </span>
-            <span className="text-3xl font-extrabold text-amber-400 mt-2">{unpaidGifts}</span>
-            <span className="text-[11px] text-slate-500 mt-1">Ready for re-targeting</span>
-          </div>
-
-          {/* Revenue */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center justify-between">
-              Est. Revenue <DollarSign className="w-4 h-4 text-rose-500" />
-            </span>
-            <span className="text-2xl font-extrabold text-white mt-2">${totalRevenueUSD}</span>
-            <span className="text-[11px] text-slate-500 mt-1">{totalRevenueGHS} GHS</span>
-          </div>
-
-          {/* Opened Count */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center justify-between">
-              Recipients Opened <Eye className="w-4 h-4 text-cyan-500" />
-            </span>
-            <span className="text-3xl font-extrabold text-cyan-400 mt-2">{totalOpened}</span>
-            <span className="text-[11px] text-slate-500 mt-1">Link engagement</span>
-          </div>
-
-          {/* Reactions */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-pink-400 flex items-center justify-between">
-              Reactions <Heart className="w-4 h-4 text-pink-500" />
-            </span>
-            <span className="text-3xl font-extrabold text-pink-400 mt-2">{totalReactions}</span>
-            <span className="text-[11px] text-slate-500 mt-1">Audio & text replies</span>
-          </div>
-        </div>
-
-        {/* Active Safety Reports Banner */}
-        {reportedGifts > 0 && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-red-300 shadow-[0_0_25px_rgba(239,68,68,0.15)]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
-                <ShieldAlert className="w-5 h-5" />
+        {/* COLUMN 1: LEFT SIDEBAR (Sequence Style) */}
+        <aside className="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-slate-800/80 bg-[#090d16] p-4 flex flex-col justify-between shrink-0">
+          <div className="space-y-6">
+            
+            {/* Workspace Selector */}
+            <div className="p-2.5 rounded-xl bg-[#0f172a]/60 border border-slate-800 flex items-center justify-between cursor-pointer hover:border-slate-700 transition-colors">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center text-xs font-bold">
+                  LL
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-white">Emmanuel's studio</div>
+                  <div className="text-[10px] text-slate-400">Founder workspace</div>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-sm text-red-200">
-                  {reportedGifts} Content {reportedGifts === 1 ? "Report" : "Reports"} Pending Safety Review
-                </h4>
-                <p className="text-xs text-red-400/80">
-                  Recipients have flagged gifts for harassment, non-consensual media, or acceptable use policy violations.
-                </p>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+            </div>
+
+            {/* Main Navigation Items */}
+            <nav className="space-y-1">
+              <button 
+                onClick={() => { setActiveTab("cockpit"); setStatusFilter("all"); setOccasionFilter("all"); }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === "cockpit" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30" : "text-slate-400 hover:text-white hover:bg-[#0f172a]"}`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Radio className="w-4 h-4" />
+                  <span>Focus room</span>
+                </div>
+              </button>
+
+              <button 
+                onClick={() => { setActiveTab("gifts"); setStatusFilter("all"); }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === "gifts" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30" : "text-slate-400 hover:text-white hover:bg-[#0f172a]"}`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Layers className="w-4 h-4" />
+                  <span>All keepsakes</span>
+                </div>
+                <span className="text-[10px] font-mono opacity-60 bg-black/30 px-1.5 py-0.5 rounded">
+                  {totalGifts < 10 ? `0${totalGifts}` : totalGifts}
+                </span>
+              </button>
+
+              <button 
+                onClick={() => setActiveTab("reactions")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === "reactions" ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30" : "text-slate-400 hover:text-white hover:bg-[#0f172a]"}`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Mic className="w-4 h-4 text-pink-400" />
+                  <span>Voice reactions</span>
+                </div>
+                <span className="text-[10px] font-mono opacity-60 bg-black/30 px-1.5 py-0.5 rounded">
+                  {totalReactions < 10 ? `0${totalReactions}` : totalReactions}
+                </span>
+              </button>
+
+              <button 
+                onClick={() => { setActiveTab("gifts"); setStatusFilter("reported"); }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${statusFilter === "reported" ? "bg-red-600 text-white" : "text-slate-400 hover:text-white hover:bg-[#0f172a]"}`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <ShieldAlert className={`w-4 h-4 ${reportedGifts > 0 ? 'text-red-400 animate-pulse' : 'text-slate-400'}`} />
+                  <span>Trust & Safety</span>
+                </div>
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${reportedGifts > 0 ? 'bg-red-500/20 text-red-300 border border-red-500/40' : 'bg-black/30 opacity-60'}`}>
+                  {reportedGifts < 10 ? `0${reportedGifts}` : reportedGifts}
+                </span>
+              </button>
+
+              <button 
+                onClick={() => setActiveTab("strategy")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === "strategy" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white hover:bg-[#0f172a]"}`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <BookOpen className="w-4 h-4 text-amber-400" />
+                  <span>Psychology Matrix</span>
+                </div>
+                <span className="text-[10px] font-mono opacity-60 bg-black/30 px-1.5 py-0.5 rounded">
+                  $9.99
+                </span>
+              </button>
+            </nav>
+
+            {/* Projects / Occasions Group (Sequence Style) */}
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3">
+                <span>OCCASIONS</span>
+                <span className="text-slate-600">04</span>
+              </div>
+
+              <div className="space-y-1">
+                <button 
+                  onClick={() => { setOccasionFilter("standard"); setActiveTab("cockpit"); }}
+                  className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition-colors ${occasionFilter === "standard" ? "text-blue-400 font-bold bg-[#0f172a]" : "text-slate-400 hover:text-white"}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                    <span>Romantic Keepsake</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-500">{romanticCount < 10 ? `0${romanticCount}` : romanticCount}</span>
+                </button>
+
+                <button 
+                  onClick={() => { setOccasionFilter("family"); setActiveTab("cockpit"); }}
+                  className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition-colors ${occasionFilter === "family" ? "text-cyan-400 font-bold bg-[#0f172a]" : "text-slate-400 hover:text-white"}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                    <span>Family Time Capsule</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-500">{familyCount < 10 ? `0${familyCount}` : familyCount}</span>
+                </button>
+
+                <button 
+                  onClick={() => { setOccasionFilter("proposal"); setActiveTab("cockpit"); }}
+                  className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition-colors ${occasionFilter === "proposal" ? "text-purple-400 font-bold bg-[#0f172a]" : "text-slate-400 hover:text-white"}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                    <span>Proposals (💍)</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-500">{proposalCount < 10 ? `0${proposalCount}` : proposalCount}</span>
+                </button>
+
+                <button 
+                  onClick={() => { setOccasionFilter("birthday"); setActiveTab("cockpit"); }}
+                  className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition-colors ${occasionFilter === "birthday" ? "text-rose-400 font-bold bg-[#0f172a]" : "text-slate-400 hover:text-white"}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    <span>Birthdays</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-500">{birthdayCount < 10 ? `0${birthdayCount}` : birthdayCount}</span>
+                </button>
               </div>
             </div>
-            <button
-              onClick={() => { setActiveTab("gifts"); setStatusFilter("reported"); }}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl transition-colors shrink-0 shadow-lg"
-            >
-              Review {reportedGifts} {reportedGifts === 1 ? "Report" : "Reports"}
-            </button>
+
           </div>
-        )}
 
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
-          <button 
-            onClick={() => setActiveTab("gifts")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${activeTab === "gifts" ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25" : "text-slate-400 hover:text-white hover:bg-slate-900"}`}
-          >
-            <Sparkles className="w-4 h-4" /> All Gifts ({filteredGifts.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab("reactions")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${activeTab === "reactions" ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25" : "text-slate-400 hover:text-white hover:bg-slate-900"}`}
-          >
-            <MessageSquare className="w-4 h-4" /> Reactions Feed ({reactionsList.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab("strategy")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${activeTab === "strategy" ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25" : "text-slate-400 hover:text-white hover:bg-slate-900"}`}
-          >
-            <BookOpen className="w-4 h-4" /> 4 Psychological Pricing Tricks
-          </button>
-        </div>
+          {/* Bottom Card & Profile */}
+          <div className="space-y-4 pt-4 border-t border-slate-800/80 mt-6">
+            {/* Sequence Style Quote Box */}
+            <div className="p-3 rounded-2xl bg-[#0d131f] border border-slate-800/80 text-[11px] space-y-1.5">
+              <div className="flex items-center gap-1.5 text-blue-400 font-bold">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>LoveLink Vault</span>
+              </div>
+              <p className="text-slate-400 leading-relaxed text-[10px]">
+                Less switching. More permanent memories. 99 GHS single ownership forever.
+              </p>
+            </div>
 
-        {/* TAB 1: ALL GIFTS MANAGEMENT TABLE */}
-        {activeTab === "gifts" && (
-          <div className="space-y-4">
-            {/* Search and Filters */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/60 border border-slate-800 p-4 rounded-2xl">
-              <div className="relative w-full md:w-96">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input 
-                  type="text" 
-                  value={searchQuery} 
-                  onChange={e => setSearchQuery(e.target.value)} 
-                  placeholder="Search recipient, creator, email, slug..." 
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white outline-none focus:border-rose-500 transition-colors"
-                />
+            {/* User Profile */}
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-[10px]">
+                  EM
+                </div>
+                <div>
+                  <div className="font-bold text-white text-xs">Emmanuel</div>
+                  <div className="text-[10px] text-slate-500 truncate max-w-[110px]">emmanuel@lovelink</div>
+                </div>
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="text-slate-500 hover:text-rose-400 p-1.5 transition-colors"
+                title="Sign out"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* COLUMN 2: CENTER COMMAND CANVAS (Sequence Style) */}
+        <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto">
+
+          {/* Greeting & Date Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-800/60 pb-6">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+                Find your flow.
+              </h1>
+              <p className="text-xs text-slate-400 mt-1">
+                One keepsake at a time. You're delivering space for what truly matters.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-400 px-3 py-1 rounded-lg bg-[#0d131f] border border-slate-800 self-start sm:self-auto">
+              <Calendar className="w-3.5 h-3.5 text-blue-400" />
+              <span>{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}</span>
+            </div>
+          </div>
+
+          {/* ACTIVE SAFETY ALERT IF PRESENT */}
+          {reportedGifts > 0 && (
+            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-between text-red-200">
+              <div className="flex items-center gap-3">
+                <ShieldAlert className="w-5 h-5 text-red-400 animate-pulse" />
+                <div>
+                  <div className="text-xs font-bold">{reportedGifts} Content Report Pending Review</div>
+                  <div className="text-[11px] text-red-400/80">Recipients have flagged content under acceptable use policy.</div>
+                </div>
+              </div>
+              <button 
+                onClick={() => { setActiveTab("gifts"); setStatusFilter("reported"); }}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all"
+              >
+                Review Flagged
+              </button>
+            </div>
+          )}
+
+          {/* HERO CARD: SEQUENCE STYLE "IN THE MOMENT" HERO CARD */}
+          <div className="relative rounded-3xl bg-[#0c121e] border border-slate-800 p-6 md:p-8 overflow-hidden shadow-2xl">
+            {/* Subtle glow background */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
+              
+              {/* Left Side: Active Session Meta */}
+              <div className="space-y-4 max-w-xl">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-bold">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                    Focus Keepsake
+                  </div>
+                  <span className="text-xs font-mono text-slate-500">
+                    KEEPSAKE {selectedGift ? `#${selectedGift.id.slice(0, 6)}` : "01 / 01"}
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-[10px] uppercase font-bold tracking-widest text-slate-400">IN THE MOMENT</div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+                    {selectedGift ? `For ${selectedGift.recipientName}` : "Create your first digital keepsake"}
+                  </h2>
+                  <p className="text-xs text-slate-400 flex items-center gap-2">
+                    <span className="capitalize">{selectedGift?.occasion || "romantic"} keepsake</span>
+                    <span>•</span>
+                    <span className="font-mono text-blue-400">/for/{selectedGift?.slug || selectedGift?.id || "demo"}</span>
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  {selectedGift && (
+                    <button 
+                      onClick={() => togglePaidStatus(selectedGift.id, selectedGift.paid)}
+                      disabled={isUpdating}
+                      className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition-all ${selectedGift.paid ? 'bg-slate-800 text-slate-300 hover:text-amber-400' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/25'}`}
+                    >
+                      {selectedGift.paid ? <Lock className="w-3.5 h-3.5 text-amber-400" /> : <Unlock className="w-3.5 h-3.5" />}
+                      <span>{selectedGift.paid ? "Mark Unpaid" : "Unlock Keepsake"}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/30 font-mono ml-1">SPACE</span>
+                    </button>
+                  )}
+
+                  {selectedGift && (
+                    <Link 
+                      href={selectedGift.slug ? `/for/${selectedGift.slug}` : `/gift/${selectedGift.id}`} 
+                      target="_blank"
+                      className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-[#111927] hover:bg-slate-800 text-slate-300 border border-slate-800 flex items-center gap-2 transition-colors"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Live Reveal Experience</span>
+                    </Link>
+                  )}
+
+                  {selectedGift && (
+                    <button 
+                      onClick={() => handleCopy(selectedGift)}
+                      className="p-2.5 rounded-xl bg-[#111927] hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors"
+                      title="Copy link"
+                    >
+                      {copiedId === selectedGift.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                {/* Status Filter */}
+              {/* Right Side: Circular Countdown Graphic (Sequence Style) */}
+              <div className="flex flex-col items-center justify-center shrink-0">
+                <div className="relative w-44 h-44 rounded-full border-4 border-slate-800/80 flex flex-col items-center justify-center bg-[#070b13]/80 shadow-[0_0_50px_rgba(59,130,246,0.15)]">
+                  {/* Subtle active circle overlay */}
+                  <svg className="absolute inset-0 w-full h-full -rotate-90">
+                    <circle 
+                      cx="88" cy="88" r="82" 
+                      className="text-blue-500 stroke-current" 
+                      strokeWidth="4" 
+                      fill="transparent" 
+                      strokeDasharray="515" 
+                      strokeDashoffset={selectedGift?.paid ? "0" : "250"}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+
+                  <div className="text-2xl font-black text-white font-mono tracking-tight">
+                    {selectedGift?.paid ? "PAID" : "99 GHS"}
+                  </div>
+                  <div className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">
+                    {selectedGift?.paid ? "HOSTED FOREVER" : "$9.99 USD"}
+                  </div>
+
+                  {/* 4 dots under timer like in Sequence screenshot */}
+                  <div className="flex items-center gap-1.5 mt-3">
+                    <span className="w-3 h-1 rounded-full bg-blue-500"></span>
+                    <span className="w-3 h-1 rounded-full bg-blue-500"></span>
+                    <span className="w-3 h-1 rounded-full bg-blue-500"></span>
+                    <span className={`w-3 h-1 rounded-full ${selectedGift?.paid ? 'bg-blue-500' : 'bg-slate-700'}`}></span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* "YOUR ATMOSPHERE" LIVE AUDIO BOOTH (Sequence Style) */}
+          <div className="p-5 rounded-2xl bg-[#0c121e] border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center shrink-0">
+                <Volume2 className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-white flex items-center gap-2">
+                  <span>Your atmosphere</span>
+                  <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full">
+                    {reactionsList.length} Voice Notes Ready
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-400">
+                  {selectedGift?.response?.type === "voice" 
+                    ? `Voice note recorded by ${selectedGift.recipientName}` 
+                    : "Ambient Keepsake audio vault & voice booth"}
+                </div>
+              </div>
+            </div>
+
+            {/* Audio Sliders & Toggles matching Sequence */}
+            <div className="flex flex-wrap items-center gap-4 text-xs w-full md:w-auto">
+              {/* Voice Note Player if selected gift has voice note */}
+              {selectedGift?.response?.type === "voice" && (
+                <button 
+                  onClick={() => playVoiceNote(selectedGift.response.content)}
+                  className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-bold flex items-center gap-2 transition-colors shadow-lg shadow-pink-500/20"
+                >
+                  {isPlayingAudio ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                  <span>{isPlayingAudio ? "Pause Voice Note" : "Play Voice Note"}</span>
+                </button>
+              )}
+
+              {/* Rain Ambience Slider */}
+              <div className="flex items-center gap-2 bg-[#070b13] px-3 py-1.5 rounded-xl border border-slate-800">
+                <span className="text-slate-400 text-[11px]">Rain</span>
+                <input 
+                  type="range" 
+                  min="0" max="100" 
+                  value={rainAmbience} 
+                  onChange={e => setRainAmbience(e.target.value)}
+                  className="w-16 accent-blue-500" 
+                />
+                <span className="font-mono text-[10px] text-slate-400">{rainAmbience}%</span>
+              </div>
+
+              {/* Brown Noise Slider */}
+              <div className="flex items-center gap-2 bg-[#070b13] px-3 py-1.5 rounded-xl border border-slate-800">
+                <span className="text-slate-400 text-[11px]">Noise</span>
+                <input 
+                  type="range" 
+                  min="0" max="100" 
+                  value={noiseAmbience} 
+                  onChange={e => setNoiseAmbience(e.target.value)}
+                  className="w-16 accent-blue-500" 
+                />
+                <span className="font-mono text-[10px] text-slate-400">{noiseAmbience}%</span>
+              </div>
+
+              {/* Lo-fi Toggle */}
+              <button 
+                onClick={() => setLofiActive(!lofiActive)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-semibold transition-colors ${lofiActive ? 'bg-blue-600 text-white border-blue-500' : 'bg-[#070b13] text-slate-400 border-slate-800 hover:text-white'}`}
+              >
+                <Music className="w-3.5 h-3.5" />
+                <span>Lo-fi {lofiActive ? "ON" : "OFF"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* "YOUR SEQUENCE" TABLE (Sequence Style) */}
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-white">Your sequence</h3>
+                <span className="text-[10px] font-mono text-slate-400 bg-[#0d131f] border border-slate-800 px-2 py-0.5 rounded-full">
+                  {filteredGifts.length < 10 ? `0${filteredGifts.length}` : filteredGifts.length}
+                </span>
+              </div>
+
+              {/* Filter controls */}
+              <div className="flex items-center gap-2">
                 <select 
                   value={statusFilter} 
                   onChange={e => setStatusFilter(e.target.value)}
-                  className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-rose-500"
+                  className="bg-[#0c121e] border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 outline-none focus:border-blue-500"
                 >
                   <option value="all">Status: All</option>
+                  <option value="paid">Paid (Live)</option>
+                  <option value="unpaid">Unpaid Drafts</option>
                   <option value="reported">Reported ⚠️ ({reportedGifts})</option>
                   <option value="disabled">Disabled 🚫 ({disabledGifts})</option>
-                  <option value="paid">Paid Only</option>
-                  <option value="unpaid">Unpaid Only</option>
                 </select>
 
-                {/* Occasion Filter */}
                 <select 
                   value={occasionFilter} 
                   onChange={e => setOccasionFilter(e.target.value)}
-                  className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-rose-500"
+                  className="bg-[#0c121e] border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 outline-none focus:border-blue-500"
                 >
                   <option value="all">Occasion: All</option>
-                  <option value="family">Family (Time Capsule)</option>
                   <option value="standard">Romantic</option>
-                  <option value="birthday">Birthday</option>
+                  <option value="family">Family Capsule</option>
                   <option value="proposal">Proposal</option>
+                  <option value="birthday">Birthday</option>
                 </select>
               </div>
             </div>
 
-            {/* Gifts Table */}
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase tracking-wider font-semibold">
-                    <tr>
-                      <th className="px-5 py-3.5">Recipient & URL</th>
-                      <th className="px-5 py-3.5">Creator Details</th>
-                      <th className="px-5 py-3.5">Occasion</th>
-                      <th className="px-5 py-3.5">Status</th>
-                      <th className="px-5 py-3.5">Response</th>
-                      <th className="px-5 py-3.5">Created</th>
-                      <th className="px-5 py-3.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {filteredGifts.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="text-center py-12 text-slate-500">
-                          No gifts match your search criteria.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredGifts.map(gift => (
-                        <tr key={gift.id} className="hover:bg-slate-800/30 transition-colors">
-                          {/* Recipient & URL */}
-                          <td className="px-5 py-3.5 font-medium">
-                            <div className="text-white font-bold text-sm">{gift.recipientName || "Untitled"}</div>
-                            <div className="text-[11px] font-mono text-rose-400 mt-0.5">
-                              /for/{gift.slug || gift.id}
-                            </div>
-                          </td>
-
-                          {/* Creator Details */}
-                          <td className="px-5 py-3.5">
-                            <div className="text-slate-200">{gift.creatorName || "Anonymous"}</div>
-                            <div className="text-[11px] text-slate-400 truncate max-w-[160px]">
-                              {gift.creatorEmail || "No email"}
-                            </div>
-                          </td>
-
-                          {/* Occasion */}
-                          <td className="px-5 py-3.5">
-                            <span className="capitalize px-2 py-0.5 rounded-md text-[10px] font-bold border border-slate-700 bg-slate-800 text-slate-300">
-                              {gift.occasion || "standard"}
-                            </span>
-                          </td>
-
-                          {/* Status */}
-                          <td className="px-5 py-3.5 space-y-1.5">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              {gift.paid ? (
-                                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
-                                  <Check className="w-3 h-3" /> Paid
-                                </span>
-                              ) : (
-                                <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
-                                  <Lock className="w-3 h-3" /> Unpaid
-                                </span>
-                              )}
-
-                              {gift.disabled && (
-                                <span className="bg-red-500/15 text-red-400 border border-red-500/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
-                                  <Ban className="w-3 h-3" /> Disabled
-                                </span>
-                              )}
-                            </div>
-
-                            {gift.reported && (
-                              <div>
-                                <button 
-                                  onClick={() => setActiveReportModal(gift)}
-                                  className="bg-red-500/25 text-red-300 hover:bg-red-500/35 border border-red-500/40 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-colors animate-pulse"
-                                >
-                                  <Flag className="w-3 h-3 text-red-400" /> Reported: {gift.reportReason || "Abuse"}
-                                </button>
-                              </div>
-                            )}
-                          </td>
-
-                          {/* Response */}
-                          <td className="px-5 py-3.5">
-                            {gift.response ? (
-                              <button 
-                                onClick={() => setActiveReactionModal(gift)}
-                                className="bg-pink-500/15 text-pink-400 border border-pink-500/30 hover:bg-pink-500/25 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1"
-                              >
-                                {gift.response.type === "voice" ? "🎤 Voice Note" : "✍️ Message"}
-                              </button>
-                            ) : (
-                              <span className="text-slate-600 text-[11px] italic">None yet</span>
-                            )}
-                          </td>
-
-                          {/* Created Date */}
-                          <td className="px-5 py-3.5 text-slate-400 text-[11px]">
-                            {gift.createdAt?.toMillis 
-                              ? new Date(gift.createdAt.toMillis()).toLocaleDateString() 
-                              : "Recent"}
-                          </td>
-
-                          {/* Actions */}
-                          <td className="px-5 py-3.5 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              {/* Quick Unlock Toggle */}
-                              <button 
-                                onClick={() => togglePaidStatus(gift.id, gift.paid)} 
-                                disabled={isUpdating}
-                                className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-colors ${gift.paid ? 'bg-slate-800 text-slate-400 hover:text-amber-400' : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30'}`}
-                                title={gift.paid ? "Mark as Unpaid" : "Unlock & Mark as Paid"}
-                              >
-                                {gift.paid ? "Lock" : "Unlock"}
-                              </button>
-
-                              {/* Read Letter */}
-                              <button 
-                                onClick={() => setActiveLetterModal(gift)}
-                                className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
-                                title="Read Letter"
-                              >
-                                <BookOpen className="w-3.5 h-3.5" />
-                              </button>
-
-                              {/* Copy Link */}
-                              <button 
-                                onClick={() => handleCopy(gift)}
-                                className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
-                                title="Copy Gift Link"
-                              >
-                                {copiedId === gift.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                              </button>
-
-                              {/* View Live */}
-                              <Link 
-                                href={gift.slug ? `/for/${gift.slug}` : `/gift/${gift.id}`} 
-                                target="_blank"
-                                className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 transition-colors"
-                                title="View Live Gift"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </Link>
-
-                              {/* Disable / Ban Toggle */}
-                              <button 
-                                onClick={() => toggleDisabledStatus(gift.id, gift.disabled)} 
-                                disabled={isUpdating}
-                                className={`p-1.5 rounded-lg transition-colors ${gift.disabled ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-slate-800 text-slate-400 hover:text-red-400 hover:bg-slate-700'}`}
-                                title={gift.disabled ? "Enable Public Access" : "Disable / Ban Link"}
-                              >
-                                <Ban className="w-3.5 h-3.5" />
-                              </button>
-
-                              {/* Delete Gift */}
-                              <button 
-                                onClick={() => handleDeleteGift(gift.id, gift.recipientName)}
-                                className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-rose-400 hover:bg-slate-700 transition-colors"
-                                title="Delete Gift"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 2: GLOBAL REACTIONS FEED */}
-        {activeTab === "reactions" && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-pink-400" />
-              Recipient Emotional Reaction Feed
-            </h2>
-            <p className="text-xs text-slate-400 mb-6">
-              All voice notes and heartfelt messages sent back to creators after opening their gifts.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {reactionsList.length === 0 ? (
-                <div className="col-span-full py-16 text-center text-slate-500 bg-slate-900/60 border border-slate-800 rounded-2xl">
-                  No recipient reactions submitted yet.
+            {/* Sequence Rows */}
+            <div className="rounded-2xl bg-[#0c121e] border border-slate-800 overflow-hidden divide-y divide-slate-850">
+              {filteredGifts.length === 0 ? (
+                <div className="p-12 text-center text-xs text-slate-500">
+                  No keepsakes match the current filters.
                 </div>
               ) : (
-                reactionsList.map((item, idx) => (
-                  <div key={idx} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold text-white">
-                          From: {item.recipientName}
-                        </span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">
-                          {item.response.type === "voice" ? "🎤 Voice Note" : "✍️ Written"}
-                        </span>
+                filteredGifts.map((gift, index) => (
+                  <div 
+                    key={gift.id}
+                    onClick={() => setSelectedGiftId(gift.id)}
+                    className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer transition-colors ${selectedGiftId === gift.id ? 'bg-blue-950/20 border-l-2 border-l-blue-500' : 'hover:bg-slate-800/30'}`}
+                  >
+                    {/* Left: Row Indicator & Title */}
+                    <div className="flex items-center gap-3">
+                      {/* Drag / Index handle */}
+                      <span className="text-[10px] font-mono text-slate-600 w-4">
+                        {index < 9 ? `0${index + 1}` : index + 1}
+                      </span>
+
+                      {/* Icon */}
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${gift.paid ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
+                        {gift.paid ? <CheckCircle2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                       </div>
 
-                      <div className="text-xs text-slate-400 mb-4">
-                        To Creator: <strong className="text-slate-200">{item.creatorName}</strong> ({item.creatorEmail || "No email"})
+                      {/* Title & Details */}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white">{gift.recipientName || "Untitled"}</span>
+                          <span className="text-[10px] font-mono text-blue-400">/for/{gift.slug || gift.id}</span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                          <span>By {gift.creatorName || "Anonymous"}</span>
+                          <span>•</span>
+                          <span className="capitalize">{gift.occasion || "standard"}</span>
+                        </div>
                       </div>
-
-                      {item.response.type === "voice" ? (
-                        <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
-                          <span className="text-xs text-slate-300 font-mono">Voice Recording</span>
-                          <button 
-                            onClick={() => playVoiceNote(item.response.content)}
-                            className="p-2 rounded-full bg-pink-500 text-white hover:bg-pink-600 transition-colors"
-                          >
-                            <Play className="w-4 h-4 fill-current" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 italic whitespace-pre-wrap leading-relaxed max-h-36 overflow-y-auto">
-                          "{item.response.content}"
-                        </div>
-                      )}
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500 font-mono">
-                        {item.response.createdAt ? new Date(item.response.createdAt).toLocaleDateString() : "Recent"}
-                      </span>
-                      <Link 
-                        href={`/for/${item.slug || item.giftId}`} 
-                        target="_blank"
-                        className="text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold"
-                      >
-                        Open Gift <ExternalLink className="w-3 h-3" />
-                      </Link>
+                    {/* Right: Status Pill & Row Actions */}
+                    <div className="flex items-center gap-3 self-end sm:self-auto">
+                      {/* Status Badges */}
+                      <div className="flex items-center gap-1.5">
+                        {gift.paid ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            Live
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            Unpaid
+                          </span>
+                        )}
+
+                        {gift.disabled && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500/15 text-red-400 border border-red-500/30">
+                            Disabled
+                          </span>
+                        )}
+
+                        {gift.reported && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setActiveReportModal(gift); }}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-500/25 text-red-300 border border-red-500/40 hover:bg-red-500/35 transition-colors animate-pulse flex items-center gap-1"
+                          >
+                            <Flag className="w-3 h-3 text-red-400" /> Flagged
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Response Indicator */}
+                      {gift.response ? (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setActiveReactionModal(gift); }}
+                          className="px-2 py-1 rounded-lg bg-pink-500/15 text-pink-400 border border-pink-500/20 text-[10px] font-bold flex items-center gap-1 hover:bg-pink-500/25"
+                        >
+                          <Mic className="w-3 h-3" /> Reaction
+                        </button>
+                      ) : null}
+
+                      {/* Row Quick Actions */}
+                      <div className="flex items-center gap-1">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setActiveLetterModal(gift); }}
+                          className="p-1.5 rounded-lg bg-[#070b13] hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                          title="Read letter transcript"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleCopy(gift); }}
+                          className="p-1.5 rounded-lg bg-[#070b13] hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                          title="Copy link"
+                        >
+                          {copiedId === gift.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); toggleDisabledStatus(gift.id, gift.disabled); }}
+                          className={`p-1.5 rounded-lg transition-colors ${gift.disabled ? 'bg-red-500 text-white' : 'bg-[#070b13] hover:bg-slate-700 text-slate-400 hover:text-red-400'}`}
+                          title={gift.disabled ? "Enable Public Access" : "Disable / Ban Link"}
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteGift(gift.id, gift.recipientName); }}
+                          className="p-1.5 rounded-lg bg-[#070b13] hover:bg-rose-950 text-slate-500 hover:text-rose-400 transition-colors"
+                          title="Delete keepsake"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
               )}
             </div>
           </div>
-        )}
 
-        {/* TAB 3: 4 PSYCHOLOGICAL PRICING TRICKS STRATEGY */}
-        {activeTab === "strategy" && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-rose-400" />
-                4 Psychological Pricing Tricks to Make $9.99 Feel Like a Steal
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                How to eliminate price resistance for high-emotion digital products without compromising value.
-              </p>
+        </main>
+
+        {/* COLUMN 3: RIGHT INTELLIGENCE RAIL (Sequence Style) */}
+        <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-slate-800/80 bg-[#090d16] p-6 space-y-6 shrink-0">
+          
+          {/* Header: TODAY'S MOMENTUM */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <span>TODAY'S MOMENTUM</span>
+              <Activity className="w-4 h-4 text-blue-400" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* TRICK 1 */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-rose-400">Trick #1</span>
-                  <span className="text-[10px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/20 px-2 py-0.5 rounded-full">Relativity Bias</span>
-                </div>
-                <h3 className="text-base font-bold text-white">The "Dead Flowers" Anchor Contrast</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  The human brain cannot judge absolute value—it only judges value relative to an anchor. When compared to a free WhatsApp text, $9.99 sounds like a purchase. But when anchored against what people actually buy:
-                </p>
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-1.5 font-mono">
-                  <div className="text-slate-400">• Fresh Flowers: <span className="line-through text-slate-500">$75</span> (Dies in 3 days)</div>
-                  <div className="text-slate-400">• Paper Greeting Card: <span className="line-through text-slate-500">$9</span> (Gets thrown away)</div>
-                  <div className="text-emerald-400 font-bold">• LoveLink: $9.99 (Permanent digital keepsake forever)</div>
-                </div>
-                <p className="text-[11px] text-slate-400 italic">
-                  <strong>Copy to use on Paywall:</strong> "A bouquet of roses costs $75 and withers in 72 hours. LoveLink costs $9.99 and stays in their heart forever."
-                </p>
+            <div>
+              <div className="text-2xl font-black text-white font-mono">
+                {totalRevenueGHS} GHS <span className="text-xs text-slate-500 font-sans font-normal">/ ~$9.99 per gift</span>
               </div>
-
-              {/* TRICK 2 */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-pink-400">Trick #2</span>
-                  <span className="text-[10px] font-bold bg-pink-500/10 text-pink-300 border border-pink-500/20 px-2 py-0.5 rounded-full">Temporal Discounting</span>
-                </div>
-                <h3 className="text-base font-bold text-white">The "Permanent Ownership" Framing</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Lump sums trigger the "pain of paying". But in a world of annoying $9.99/month recurring subscriptions, people love <strong>permanent single-payment ownership</strong>.
-                </p>
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-1 font-mono">
-                  <div className="text-emerald-400">✓ One-time $9.99 fee</div>
-                  <div className="text-emerald-400">✓ 0 subscriptions or hidden renewals</div>
-                  <div className="text-emerald-400">✓ Guaranteed hosted forever</div>
-                </div>
-                <p className="text-[11px] text-slate-400 italic">
-                  <strong>Copy to use on Paywall:</strong> "No monthly subscription. Pay $9.99 once, and your love letter is hosted permanently forever."
-                </p>
+              <div className="text-[11px] text-slate-400 mt-0.5">
+                ${totalRevenueUSD} USD estimated revenue
               </div>
+            </div>
 
-              {/* TRICK 3 */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Trick #3</span>
-                  <span className="text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-full">The IKEA Effect</span>
+            {/* Segmented Progress Bar (Sequence style) */}
+            <div className="flex items-center gap-1.5">
+              {[...Array(12)].map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`h-2 flex-1 rounded-sm ${i < Math.min(paidGifts, 12) ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-slate-800'}`}
+                />
+              ))}
+            </div>
+
+            {/* 3 Metric Counters matching Sequence */}
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/60 text-center">
+              <div>
+                <div className="text-lg font-bold text-white font-mono">
+                  {paidGifts < 10 ? `0${paidGifts}` : paidGifts}
                 </div>
-                <h3 className="text-base font-bold text-white">Build First, Pay Last (Labor Investment)</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  When a customer spends 5 minutes selecting their favorite photos, writing a letter that makes them tear up, and choosing their special song, they feel profound emotional ownership over the creation.
-                </p>
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed">
-                  Abandoning checkout now feels like deleting their own heartfelt love letter. Paying $9.99 to send it is an easy emotional decision.
-                </div>
-                <p className="text-[11px] text-slate-400 italic">
-                  <strong>Rule:</strong> Never ask for payment upfront. Always let them complete the entire masterpiece before the unlock step.
-                </p>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Unlocked</div>
               </div>
-
-              {/* TRICK 4 */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">Trick #4</span>
-                  <span className="text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-2 py-0.5 rounded-full">Emotional Assurance</span>
+              <div>
+                <div className="text-lg font-bold text-white font-mono">
+                  {totalReactions < 10 ? `0${totalReactions}` : totalReactions}
                 </div>
-                <h3 className="text-base font-bold text-white">The "Goosebumps Keepsake" Value</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Remove hesitation by reminding users of the emotional payoff. It's not about software; it's about making someone cry happy tears.
-                </p>
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed font-sans">
-                  "Every LoveLink is permanently preserved in our vault so your partner or parent can re-open it whenever they need a reminder of how much they are loved."
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Reactions</div>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-emerald-400 font-mono">
+                  100%
                 </div>
-                <p className="text-[11px] text-slate-400 italic">
-                  <strong>Value:</strong> Focus 100% on emotional impact and permanent memories rather than warranties or returns.
-                </p>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Hosted</div>
               </div>
             </div>
           </div>
-        )}
 
-      </main>
+          {/* "Your sprints" Card (Sequence Style) */}
+          <div className="p-4 rounded-2xl bg-[#0c121e] border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-slate-400">Conversion Sprint</span>
+              <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                ACTIVE
+              </span>
+            </div>
 
-      {/* LETTER PREVIEW MODAL */}
+            <div>
+              <div className="text-xs font-bold text-white">Emotional Paywall Performance</div>
+              <div className="text-[10px] text-slate-400">Dead Flowers comparison vs $9.99</div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-[10px] font-mono text-slate-400">
+                <span>{paidGifts} OF {totalGifts} CONVERTED</span>
+                <span>{conversionRate}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500" 
+                  style={{ width: `${Math.min(conversionRate, 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* "AFTER THIS FOCUS" Break Card (Sequence Style) */}
+          <div className="p-4 rounded-2xl bg-[#0c121e] border border-slate-800 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+              <Coffee className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white">A little room to breathe</div>
+              <div className="text-[10px] text-slate-400 leading-relaxed mt-0.5">
+                Every LoveLink is hosted permanently. No servers to maintain or recurring bills to chase.
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Security / Distractions Card (Sequence Style) */}
+          <div className="p-3.5 rounded-2xl bg-[#070b13] border border-slate-800 flex items-center gap-2.5 text-xs text-slate-400">
+            <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
+            <div className="text-[11px] leading-tight">
+              Distractions, on hold. Safety filters active.
+            </div>
+            <span className="w-2 h-2 rounded-full bg-blue-500 ml-auto shrink-0 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
+          </div>
+
+        </aside>
+
+      </div>
+
+      {/* MODAL 1: LETTER TRANSCRIPT PREVIEW */}
       {activeLetterModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="absolute inset-0" onClick={() => setActiveLetterModal(null)} />
-          <div className="relative bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl max-h-[85vh] flex flex-col">
+          <div className="relative bg-[#0d131f] border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl max-h-[85vh] flex flex-col">
             <button 
               onClick={() => setActiveLetterModal(null)} 
               className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white"
@@ -885,11 +1094,11 @@ export default function AdminDashboard() {
             </button>
 
             <div className="flex items-center gap-2 mb-4">
-              <Heart className="w-5 h-5 text-rose-500 fill-rose-500/20" />
+              <Heart className="w-5 h-5 text-pink-500 fill-pink-500/20" />
               <h3 className="text-lg font-bold text-white">Letter for {activeLetterModal.recipientName}</h3>
             </div>
 
-            <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar bg-slate-950 p-5 rounded-2xl border border-slate-800 text-sm leading-relaxed whitespace-pre-wrap font-serif italic text-slate-200">
+            <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar bg-[#070b13] p-5 rounded-2xl border border-slate-800 text-sm leading-relaxed whitespace-pre-wrap font-serif italic text-slate-200">
               {activeLetterModal.letter || "No letter content written."}
             </div>
 
@@ -898,7 +1107,7 @@ export default function AdminDashboard() {
               <Link 
                 href={activeLetterModal.slug ? `/for/${activeLetterModal.slug}` : `/gift/${activeLetterModal.id}`} 
                 target="_blank" 
-                className="text-rose-400 font-bold hover:underline flex items-center gap-1"
+                className="text-blue-400 font-bold hover:underline flex items-center gap-1"
               >
                 Open Recipient Experience <ExternalLink className="w-3.5 h-3.5" />
               </Link>
@@ -907,11 +1116,11 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* REACTION PREVIEW MODAL */}
+      {/* MODAL 2: REACTION MODAL */}
       {activeReactionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="absolute inset-0" onClick={() => setActiveReactionModal(null)} />
-          <div className="relative bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl">
+          <div className="relative bg-[#0d131f] border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl">
             <button 
               onClick={() => setActiveReactionModal(null)} 
               className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white"
@@ -923,7 +1132,7 @@ export default function AdminDashboard() {
             <p className="text-xs text-slate-400 mb-6">Sent to {activeReactionModal.creatorName} ({activeReactionModal.creatorEmail})</p>
 
             {activeReactionModal.response?.type === "voice" ? (
-              <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 flex flex-col items-center gap-4">
+              <div className="bg-[#070b13] p-6 rounded-2xl border border-slate-800 flex flex-col items-center gap-4">
                 <span className="text-sm font-semibold text-white">Voice Note from {activeReactionModal.recipientName}</span>
                 <button 
                   onClick={() => playVoiceNote(activeReactionModal.response.content)} 
@@ -933,7 +1142,7 @@ export default function AdminDashboard() {
                 </button>
               </div>
             ) : (
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-sm text-slate-200 italic leading-relaxed whitespace-pre-wrap">
+              <div className="bg-[#070b13] p-4 rounded-2xl border border-slate-800 text-sm text-slate-200 italic leading-relaxed whitespace-pre-wrap">
                 "{activeReactionModal.response?.content || "No message content."}"
               </div>
             )}
@@ -941,11 +1150,11 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* ABUSE REPORT DETAILS MODAL */}
+      {/* MODAL 3: ABUSE REPORT DETAILS MODAL */}
       {activeReportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="absolute inset-0" onClick={() => setActiveReportModal(null)} />
-          <div className="relative bg-slate-900 border border-red-500/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl">
+          <div className="relative bg-[#0d131f] border border-red-500/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl">
             <button 
               onClick={() => setActiveReportModal(null)} 
               className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white"
@@ -961,7 +1170,7 @@ export default function AdminDashboard() {
               Flagged gift: <span className="text-white font-mono font-semibold">/for/{activeReportModal.slug || activeReportModal.id}</span>
             </p>
 
-            <div className="space-y-4 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs">
+            <div className="space-y-4 bg-[#070b13] border border-slate-800 rounded-2xl p-4 text-xs">
               <div>
                 <span className="text-slate-500 block uppercase font-bold text-[10px] tracking-wider mb-1">Reason</span>
                 <span className="text-red-300 font-semibold text-sm">{activeReportModal.reportReason || "Policy Violation"}</span>
