@@ -51,12 +51,11 @@ const DEFAULT_ADMIN_EMAILS = [
   "ndigname@gmail.com"
 ];
 
-const MASTER_PASSCODE = process.env.NEXT_PUBLIC_ADMIN_PASSCODE || "lovelink2026!";
-
 export default function AdminDashboard() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [passcodeInput, setPasscodeInput] = useState("");
   const [authError, setAuthError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState("");
 
   const [gifts, setGifts] = useState([]);
@@ -105,14 +104,30 @@ export default function AdminDashboard() {
     return () => unsubscribe();
   }, []);
 
-  const handlePasscodeLogin = (e) => {
+  const handlePasscodeLogin = async (e) => {
     e.preventDefault();
-    if (passcodeInput.trim() === MASTER_PASSCODE) {
+    setAuthError("");
+    setIsVerifying(true);
+
+    try {
+      const res = await fetch("/api/admin/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passcode: passcodeInput.trim() })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Incorrect admin credentials.");
+      }
+
       setIsAdminAuthenticated(true);
-      sessionStorage.setItem("lovelink_admin_auth", "true");
+      sessionStorage.setItem("lovelink_admin_auth", data.token || "true");
       setAuthError("");
-    } else {
-      setAuthError("Incorrect admin passcode. Please try again.");
+    } catch (err) {
+      setAuthError(err.message || "Authentication error.");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -307,9 +322,10 @@ export default function AdminDashboard() {
 
             <button 
               type="submit" 
-              className="w-full py-3 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-rose-500/25 active:scale-95 transition-all"
+              disabled={isVerifying}
+              className="w-full py-3 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-rose-500/25 active:scale-95 transition-all disabled:opacity-50"
             >
-              Access Dashboard
+              {isVerifying ? "Verifying..." : "Access Dashboard"}
             </button>
           </form>
 

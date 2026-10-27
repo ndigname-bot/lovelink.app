@@ -240,16 +240,13 @@ export default function GiftViewer({ params }) {
         }
       });
       
-      // Trigger Email Notification API (safely isolated)
-      if (giftData.creatorEmail && targetGiftId !== "demo-gift" && targetGiftId !== "draft") {
+      // Trigger Email Notification API (safely isolated on backend)
+      if (targetGiftId !== "demo-gift" && targetGiftId !== "draft") {
         try {
           await fetch('/api/notify-reaction', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              creatorEmail: giftData.creatorEmail,
-              creatorName: giftData.creatorName,
-              recipientName: giftData.recipientName,
               giftId: targetGiftId,
               reactionType: type
             })
@@ -375,7 +372,6 @@ export default function GiftViewer({ params }) {
             occasion: dbData.occasion || "standard",
             recipientName: dbData.recipientName || "Cutie",
             creatorName: dbData.creatorName || "Me",
-            creatorEmail: dbData.creatorEmail || "",
             songQuery: dbData.songQuery || "Daniel Caesar - Get You",
             photoUrls: loadedPhotoUrls,
             photoCaptions: loadedPhotoCaptions,

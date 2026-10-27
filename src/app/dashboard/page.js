@@ -188,7 +188,7 @@ export default function Dashboard() {
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Upload timed out. If you added large photos, try connecting to a faster network.")), 180000));
       
       const publishTask = async () => {
-        const isFreePromo = true; 
+        const isFreePromo = false; 
 
         let photoUrls = [];
 

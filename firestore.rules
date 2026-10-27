@@ -10,6 +10,7 @@ service cloud.firestore {
     function isOwner(resourceData) {
       return isAuthenticated() && (
         resourceData.creatorEmail == request.auth.token.email ||
+        resourceData.creatorId == request.auth.uid ||
         resourceData.userId == request.auth.uid
       );
     }
