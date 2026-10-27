@@ -25,7 +25,11 @@ import {
   AlertCircle,
   TrendingUp,
   X,
-  BookOpen
+  BookOpen,
+  Flag,
+  ShieldAlert,
+  Ban,
+  CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import { db, auth } from "../../lib/firebase";
@@ -65,6 +69,7 @@ export default function AdminDashboard() {
   // Modals
   const [activeLetterModal, setActiveLetterModal] = useState(null);
   const [activeReactionModal, setActiveReactionModal] = useState(null);
+  const [activeReportModal, setActiveReportModal] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -162,6 +167,33 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleDisabledStatus = async (giftId, currentStatus) => {
+    setIsUpdating(true);
+    try {
+      const docRef = doc(db, "gifts", giftId);
+      await updateDoc(docRef, { disabled: !currentStatus });
+      setGifts(prev => prev.map(g => g.id === giftId ? { ...g, disabled: !currentStatus } : g));
+    } catch (e) {
+      alert("Failed to update disabled status: " + e.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const dismissReport = async (giftId) => {
+    setIsUpdating(true);
+    try {
+      const docRef = doc(db, "gifts", giftId);
+      await updateDoc(docRef, { reported: false });
+      setGifts(prev => prev.map(g => g.id === giftId ? { ...g, reported: false } : g));
+      setActiveReportModal(null);
+    } catch (e) {
+      alert("Failed to dismiss report: " + e.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleDeleteGift = async (giftId, recipientName) => {
     if (!confirm(`Are you sure you want to permanently delete the gift for "${recipientName}"? This cannot be undone.`)) {
       return;
@@ -203,6 +235,8 @@ export default function AdminDashboard() {
   const unpaidGifts = totalGifts - paidGifts;
   const totalReactions = gifts.filter(g => g.response).length;
   const totalOpened = gifts.filter(g => g.lastOpened).length;
+  const reportedGifts = gifts.filter(g => g.reported).length;
+  const disabledGifts = gifts.filter(g => g.disabled).length;
   const totalRevenueGHS = paidGifts * 99;
   const totalRevenueUSD = (paidGifts * 9.99).toFixed(2);
   const conversionRate = totalGifts > 0 ? ((paidGifts / totalGifts) * 100).toFixed(1) : 0;
@@ -217,6 +251,8 @@ export default function AdminDashboard() {
 
     const matchesStatus = 
       statusFilter === "all" ? true :
+      statusFilter === "reported" ? gift.reported === true :
+      statusFilter === "disabled" ? gift.disabled === true :
       statusFilter === "paid" ? gift.paid === true :
       gift.paid !== true;
 
@@ -392,6 +428,31 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Active Safety Reports Banner */}
+        {reportedGifts > 0 && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-red-300 shadow-[0_0_25px_rgba(239,68,68,0.15)]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-red-200">
+                  {reportedGifts} Content {reportedGifts === 1 ? "Report" : "Reports"} Pending Safety Review
+                </h4>
+                <p className="text-xs text-red-400/80">
+                  Recipients have flagged gifts for harassment, non-consensual media, or acceptable use policy violations.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => { setActiveTab("gifts"); setStatusFilter("reported"); }}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl transition-colors shrink-0 shadow-lg"
+            >
+              Review {reportedGifts} {reportedGifts === 1 ? "Report" : "Reports"}
+            </button>
+          </div>
+        )}
+
         {/* Tab Navigation */}
         <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
           <button 
@@ -438,6 +499,8 @@ export default function AdminDashboard() {
                   className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-rose-500"
                 >
                   <option value="all">Status: All</option>
+                  <option value="reported">Reported ⚠️ ({reportedGifts})</option>
+                  <option value="disabled">Disabled 🚫 ({disabledGifts})</option>
                   <option value="paid">Paid Only</option>
                   <option value="unpaid">Unpaid Only</option>
                 </select>
@@ -506,15 +569,34 @@ export default function AdminDashboard() {
                           </td>
 
                           {/* Status */}
-                          <td className="px-5 py-3.5">
-                            {gift.paid ? (
-                              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
-                                <Check className="w-3 h-3" /> Paid
-                              </span>
-                            ) : (
-                              <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
-                                <Lock className="w-3 h-3" /> Unpaid
-                              </span>
+                          <td className="px-5 py-3.5 space-y-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {gift.paid ? (
+                                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
+                                  <Check className="w-3 h-3" /> Paid
+                                </span>
+                              ) : (
+                                <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
+                                  <Lock className="w-3 h-3" /> Unpaid
+                                </span>
+                              )}
+
+                              {gift.disabled && (
+                                <span className="bg-red-500/15 text-red-400 border border-red-500/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
+                                  <Ban className="w-3 h-3" /> Disabled
+                                </span>
+                              )}
+                            </div>
+
+                            {gift.reported && (
+                              <div>
+                                <button 
+                                  onClick={() => setActiveReportModal(gift)}
+                                  className="bg-red-500/25 text-red-300 hover:bg-red-500/35 border border-red-500/40 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-colors animate-pulse"
+                                >
+                                  <Flag className="w-3 h-3 text-red-400" /> Reported: {gift.reportReason || "Abuse"}
+                                </button>
+                              </div>
                             )}
                           </td>
 
@@ -579,6 +661,16 @@ export default function AdminDashboard() {
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
                               </Link>
+
+                              {/* Disable / Ban Toggle */}
+                              <button 
+                                onClick={() => toggleDisabledStatus(gift.id, gift.disabled)} 
+                                disabled={isUpdating}
+                                className={`p-1.5 rounded-lg transition-colors ${gift.disabled ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-slate-800 text-slate-400 hover:text-red-400 hover:bg-slate-700'}`}
+                                title={gift.disabled ? "Enable Public Access" : "Disable / Ban Link"}
+                              >
+                                <Ban className="w-3.5 h-3.5" />
+                              </button>
 
                               {/* Delete Gift */}
                               <button 
@@ -829,6 +921,87 @@ export default function AdminDashboard() {
                 "{activeReactionModal.response?.content || "No message content."}"
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ABUSE REPORT DETAILS MODAL */}
+      {activeReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setActiveReportModal(null)} />
+          <div className="relative bg-slate-900 border border-red-500/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl">
+            <button 
+              onClick={() => setActiveReportModal(null)} 
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2.5 text-red-400 mb-2">
+              <ShieldAlert className="w-6 h-6" />
+              <h3 className="text-lg font-bold text-white">Abuse Report Details</h3>
+            </div>
+            <p className="text-xs text-slate-400 mb-6">
+              Flagged gift: <span className="text-white font-mono font-semibold">/for/{activeReportModal.slug || activeReportModal.id}</span>
+            </p>
+
+            <div className="space-y-4 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs">
+              <div>
+                <span className="text-slate-500 block uppercase font-bold text-[10px] tracking-wider mb-1">Reason</span>
+                <span className="text-red-300 font-semibold text-sm">{activeReportModal.reportReason || "Policy Violation"}</span>
+              </div>
+
+              <div>
+                <span className="text-slate-500 block uppercase font-bold text-[10px] tracking-wider mb-1">Details Provided</span>
+                <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
+                  {activeReportModal.reportDetails || "No additional comments provided."}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Creator</span>
+                  <span className="text-slate-300">{activeReportModal.creatorName} ({activeReportModal.creatorEmail || "No email"})</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Recipient</span>
+                  <span className="text-slate-300">{activeReportModal.recipientName}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t border-slate-800">
+              <button
+                onClick={() => dismissReport(activeReportModal.id)}
+                disabled={isUpdating}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold"
+              >
+                Dismiss Report
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    toggleDisabledStatus(activeReportModal.id, activeReportModal.disabled);
+                    setActiveReportModal(null);
+                  }}
+                  disabled={isUpdating}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${activeReportModal.disabled ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}`}
+                >
+                  {activeReportModal.disabled ? "Re-enable Link" : "Disable Link Now"}
+                </button>
+                <button
+                  onClick={() => {
+                    handleDeleteGift(activeReportModal.id, activeReportModal.recipientName);
+                    setActiveReportModal(null);
+                  }}
+                  disabled={isUpdating}
+                  className="px-4 py-2 rounded-xl bg-red-950 text-red-400 hover:bg-red-900 border border-red-800/50 text-xs font-bold"
+                >
+                  Delete Gift
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -369,6 +369,40 @@ export default function Home() {
            </div>
         </div>
       </section>
+
+      {/* FOOTER */}
+      <footer className="border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/60 relative z-10 py-16 px-8">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex flex-col items-center md:items-start space-y-2">
+            <div className="flex items-center gap-2">
+              <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
+              <span className="font-serif italic font-bold text-xl text-slate-900 dark:text-white">LoveLink</span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-gray-400 text-center md:text-left max-w-sm leading-relaxed">
+              Permanent digital keepsakes crafted for moments that words alone cannot capture. Protected by 256-bit encryption.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600 dark:text-gray-400">
+            <Link href="/dashboard" className="hover:text-rose-500 transition-colors font-medium">Create a Gift</Link>
+            <Link href="/my-gifts" className="hover:text-rose-500 transition-colors font-medium">My Keepsakes</Link>
+            <Link href="/terms" className="hover:text-rose-500 transition-colors font-medium">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-rose-500 transition-colors font-medium">Privacy Policy</Link>
+            <Link href="/terms#abuse" className="hover:text-rose-500 transition-colors font-medium">Acceptable Use</Link>
+            <Link href="/admin" className="hover:text-rose-500 transition-colors font-medium text-slate-400 dark:text-slate-500">Admin</Link>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-slate-200 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
+          <div>© {new Date().getFullYear()} LoveLink. All rights reserved. Zero recurring subscriptions.</div>
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center gap-1 text-emerald-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 100% Encrypted &amp; Private
+            </span>
+            <span>Single-Payment $9.99</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

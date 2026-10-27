@@ -6,6 +6,11 @@ export function parseVideoUrl(url) {
   const trimmed = url.trim();
   if (!trimmed) return null;
 
+  // Security check: Only allow safe HTTP/HTTPS URLs
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+    return null;
+  }
+
   // 1. YouTube Shorts: e.g. https://www.youtube.com/shorts/5j_8V1f9d-o
   const shortsMatch = trimmed.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/i);
   if (shortsMatch && shortsMatch[1]) {

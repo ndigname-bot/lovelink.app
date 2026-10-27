@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, use, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon, Clock, Hourglass, Video, Mail, Volume2 } from "lucide-react";
+import { Heart, Sparkles, Music, Lock, Unlock, ArrowRight, Image as ImageIcon, Clock, Hourglass, Video, Mail, Volume2, Flag, ShieldAlert, X, Check } from "lucide-react";
 import confetti from "canvas-confetti";
 import { db } from "../lib/firebase";
 import { doc, getDoc, updateDoc, serverTimestamp, collection, query, orderBy, getDocs, where, limit } from "firebase/firestore";
@@ -94,6 +94,35 @@ export default function GiftViewer({ params }) {
   const pressInterval = useRef(null);
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Report Abuse State
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("Harassment or Bullying");
+  const [reportDetails, setReportDetails] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+
+  const handleReportSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmittingReport(true);
+    try {
+      const res = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          giftId: actualGiftId || giftId,
+          reason: reportReason,
+          details: reportDetails
+        })
+      });
+      if (!res.ok) throw new Error("Failed to submit report");
+      setReportSubmitted(true);
+    } catch (err) {
+      alert("Error submitting report: " + (err.message || "Please try again"));
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
 
   const handleMediaTabChange = (tab) => {
     setMediaTab(tab);
@@ -360,7 +389,9 @@ export default function GiftViewer({ params }) {
             ],
             letter: dbData.letter || "This is my letter to you...",
             signOff: `Yours forever,\n${dbData.creatorName || "Me"}`,
-            paid: dbData.paid !== false, 
+            paid: dbData.paid !== false,
+            disabled: dbData.disabled === true,
+            banned: dbData.banned === true,
           });
           return;
         }
@@ -465,6 +496,23 @@ export default function GiftViewer({ params }) {
   }, [stage, giftData]);
 
   if (!giftData) return <div className="min-h-screen bg-white dark:bg-[#0a0a0a] flex items-center justify-center"><Heart className="w-10 h-10 text-pink-500 animate-pulse" /></div>;
+
+  if (giftData.disabled || giftData.banned) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-white selection:bg-red-500/30">
+        <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center mb-6 text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-serif font-bold mb-3">Content Unavailable</h1>
+        <p className="text-slate-400 max-w-md text-sm leading-relaxed mb-8">
+          This LoveLink has been deactivated or is currently pending safety review under our Acceptable Use Policy.
+        </p>
+        <a href="/" className="px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-semibold tracking-wider uppercase transition-colors">
+          Return to LoveLink
+        </a>
+      </div>
+    );
+  }
 
   if (giftData.paid === false) {
     return (
@@ -1171,6 +1219,116 @@ export default function GiftViewer({ params }) {
             )}
           </motion.div>
         )}
+        {/* REPORT CONTENT TRIGGER BUTTON */}
+        <div className="fixed bottom-3 right-3 z-40">
+          <button
+            type="button"
+            onClick={() => setShowReportModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md border border-white/15 hover:border-white/30 text-white/50 hover:text-white/90 text-[11px] font-medium transition-all shadow-lg"
+            title="Report inappropriate content"
+          >
+            <Flag className="w-3 h-3 text-red-400" />
+            <span>Report Content</span>
+          </button>
+        </div>
+
+        {/* REPORT ABUSE MODAL */}
+        <AnimatePresence>
+          {showReportModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white shadow-2xl relative"
+              >
+                <button
+                  type="button"
+                  onClick={() => { setShowReportModal(false); setReportSubmitted(false); }}
+                  className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {reportSubmitted ? (
+                  <div className="py-8 text-center space-y-4">
+                    <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/30">
+                      <Check className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-xl font-bold">Report Received</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
+                      Thank you for letting us know. Our Trust & Safety team takes abuse seriously and will review this LoveLink immediately.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setShowReportModal(false); setReportSubmitted(false); }}
+                      className="mt-4 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-full text-xs font-semibold"
+                    >
+                      Close
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleReportSubmit} className="space-y-4">
+                    <div className="flex items-center gap-2 text-red-400">
+                      <ShieldAlert className="w-5 h-5" />
+                      <h3 className="text-lg font-bold">Report this LoveLink</h3>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      LoveLink prohibits harassment, cyberbullying, doxxing, non-consensual media, and fraudulent use.
+                    </p>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                        Reason for Report
+                      </label>
+                      <select
+                        value={reportReason}
+                        onChange={(e) => setReportReason(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-red-500"
+                      >
+                        <option value="Harassment or Bullying">Harassment or Cyberbullying</option>
+                        <option value="Non-consensual or Inappropriate Imagery">Non-consensual or Inappropriate Imagery</option>
+                        <option value="Doxxing or Privacy Violation">Doxxing or Privacy Violation</option>
+                        <option value="Spam, Scam, or Impersonation">Spam, Scam, or Impersonation</option>
+                        <option value="Other Policy Violation">Other Policy Violation</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                        Additional Details (Optional)
+                      </label>
+                      <textarea
+                        value={reportDetails}
+                        onChange={(e) => setReportDetails(e.target.value)}
+                        placeholder="Help us understand the issue..."
+                        rows={3}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white outline-none focus:border-red-500 resize-none"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowReportModal(false)}
+                        className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmittingReport}
+                        className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all disabled:opacity-50"
+                      >
+                        {isSubmittingReport ? "Submitting..." : "Submit Report"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </AnimatePresence>
     </div>
   );

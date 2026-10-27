@@ -315,14 +315,19 @@ export default function MyGifts() {
                             </Link>
                           </>
                         ) : (
-                          <>
-                            <Link href={gift.slug ? `/for/${gift.slug}` : `/gift/${gift.id}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors text-slate-500 dark:text-gray-400">
-                              <Lock className="w-4 h-4" /> Locked
-                            </Link>
-                            <button onClick={() => handlePayNow(gift.id, gift.recipientName)} className="flex-1 flex items-center justify-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-black hover:bg-gray-200 py-2 rounded-xl text-sm font-bold transition-colors">
-                              Pay $9.99 to Unlock
-                            </button>
-                          </>
+                          <div className="w-full flex flex-col gap-2">
+                            <div className="flex gap-2">
+                              <Link href={gift.slug ? `/for/${gift.slug}` : `/gift/${gift.id}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors text-slate-500 dark:text-gray-400">
+                                <Lock className="w-4 h-4" /> Locked
+                              </Link>
+                              <button onClick={() => handlePayNow(gift.id, gift.recipientName)} className="flex-1 flex items-center justify-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-black hover:bg-gray-200 py-2 rounded-xl text-sm font-bold transition-colors">
+                                Pay $9.99 to Unlock
+                              </button>
+                            </div>
+                            <p className="text-[10px] text-center text-slate-400">
+                              By unlocking, you agree to our <Link href="/terms" className="underline hover:text-pink-500">Terms</Link> &amp; <Link href="/privacy" className="underline hover:text-pink-500">Privacy Policy</Link> (All sales final).
+                            </p>
+                          </div>
                         )}
                       </div>
                     </motion.div>
