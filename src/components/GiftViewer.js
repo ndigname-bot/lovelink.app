@@ -9,6 +9,7 @@ import { PRESET_SONGS } from "./MusicSelector";
 import { parseVideoUrl } from "../lib/videoEmbed";
 import BirthdayBox from "./BirthdayBox";
 import FlipCardAlbum from "./FlipCardAlbum";
+import CrystalFlower from "./CrystalFlower";
 
 const getThemeStyles = (theme) => {
   switch (theme) {
@@ -641,6 +642,23 @@ export default function GiftViewer({ params }) {
               key="birthday-box"
               giftData={giftData}
               onOpen={handleOpenEnvelope}
+              onStartAudio={() => {
+                if (audioRef.current) {
+                  audioRef.current.play().then(() => setIsPlaying(true)).catch(console.warn);
+                }
+              }}
+              styles={styles}
+            />
+          ) : giftData.occasion === "anniversary" ? (
+            <CrystalFlower
+              key="crystal-flower"
+              giftData={giftData}
+              onOpen={handleOpenEnvelope}
+              onStartAudio={() => {
+                if (audioRef.current) {
+                  audioRef.current.play().then(() => setIsPlaying(true)).catch(console.warn);
+                }
+              }}
               styles={styles}
             />
           ) : (

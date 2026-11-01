@@ -553,10 +553,10 @@ export default function Dashboard() {
 
               {/* Reasons Why */}
               <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Heart className="w-4 h-4 text-pink-400" /> {formData.occasion === "proposal" ? "3 Promises For Our Future" : formData.occasion === "birthday" ? "3 Birthday Wishes" : formData.occasion === "family" ? "3 Things I Appreciate About You" : "3 Reasons I Love You"}</label>
+                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Heart className="w-4 h-4 text-pink-400" /> {formData.occasion === "proposal" ? "3 Promises For Our Future" : formData.occasion === "birthday" ? "3 Birthday Wishes" : formData.occasion === "anniversary" ? "3 Chapters of Our Love (Crystal Petals)" : formData.occasion === "family" ? "3 Things I Appreciate About You" : "3 Reasons I Love You"}</label>
                 <div className="space-y-3">
                   {[0, 1, 2].map(i => (
-                    <input key={i} type="text" value={formData.reasons[i]} onChange={(e) => updateReason(i, e.target.value)} placeholder={`${formData.occasion === "proposal" ? "Promise" : formData.occasion === "birthday" ? "Wish" : formData.occasion === "family" ? "Appreciation" : "Reason"} ${i+1}... (e.g. ${formData.occasion === "proposal" ? "I promise to always listen" : formData.occasion === "family" ? "Always supporting my dreams" : "Your beautiful smile"})`} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none" />
+                    <input key={i} type="text" value={formData.reasons[i]} onChange={(e) => updateReason(i, e.target.value)} placeholder={`${formData.occasion === "proposal" ? "Promise" : formData.occasion === "birthday" ? "Wish" : formData.occasion === "anniversary" ? "Chapter" : formData.occasion === "family" ? "Appreciation" : "Reason"} ${i+1}... (e.g. ${formData.occasion === "proposal" ? "I promise to always listen" : formData.occasion === "anniversary" ? "The night we talked until sunrise" : formData.occasion === "family" ? "Always supporting my dreams" : "Your beautiful smile"})`} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none" />
                   ))}
                 </div>
               </div>

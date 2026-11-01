@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Heart, Gift, Cake, Volume2, ArrowRight } from "lucide-react";
 import confetti from "canvas-confetti";
 
-export default function BirthdayBox({ giftData, onOpen, styles }) {
+export default function BirthdayBox({ giftData, onOpen, onStartAudio, styles }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLidOff, setIsLidOff] = useState(false);
   const [showContents, setShowContents] = useState(false);
@@ -24,6 +24,11 @@ export default function BirthdayBox({ giftData, onOpen, styles }) {
     if (isOpen) return;
 
     setIsOpen(true);
+
+    // Trigger audio immediately on recipient interaction
+    if (onStartAudio) {
+      onStartAudio();
+    }
 
     // 1. Confetti cannon burst
     try {
@@ -54,11 +59,6 @@ export default function BirthdayBox({ giftData, onOpen, styles }) {
         });
       } catch (e) {}
     }, 900);
-
-    // 4. Trigger audio & external progression callback
-    if (onOpen) {
-      onOpen();
-    }
   };
 
   return (
@@ -201,15 +201,26 @@ export default function BirthdayBox({ giftData, onOpen, styles }) {
                   initial={{ opacity: 0, scale: 0.5, y: 30 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                  className="relative z-20 flex flex-col items-center bg-black/50 backdrop-blur-xl border border-white/20 p-4 rounded-2xl w-full text-center shadow-2xl"
+                  className="relative z-20 flex flex-col items-center bg-black/60 backdrop-blur-xl border border-white/20 p-5 rounded-2xl w-full text-center shadow-2xl mt-2"
                 >
                   <div className="w-12 h-12 rounded-full bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-300 mb-2 shadow-[0_0_20px_rgba(251,191,36,0.4)]">
                     <Cake className="w-6 h-6 animate-bounce" />
                   </div>
-                  <h3 className="text-sm font-bold text-white">Happy Birthday! 🎉</h3>
-                  <p className="text-[11px] text-pink-200 opacity-90 mt-0.5">
+                  <h3 className="text-base font-bold text-white">Happy Birthday! 🎉</h3>
+                  <p className="text-xs text-pink-200 opacity-90 mt-0.5 mb-4">
                     Your memory album &amp; letter are ready!
                   </p>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onOpen) onOpen();
+                    }}
+                    className="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    <span>Open My Birthday Surprises 🎁</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
