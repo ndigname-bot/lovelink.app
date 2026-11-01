@@ -7,6 +7,8 @@ import { db } from "../lib/firebase";
 import { doc, getDoc, updateDoc, serverTimestamp, collection, query, orderBy, getDocs, where, limit } from "firebase/firestore";
 import { PRESET_SONGS } from "./MusicSelector";
 import { parseVideoUrl } from "../lib/videoEmbed";
+import BirthdayBox from "./BirthdayBox";
+import FlipCardAlbum from "./FlipCardAlbum";
 
 const getThemeStyles = (theme) => {
   switch (theme) {
@@ -417,6 +419,7 @@ export default function GiftViewer({ params }) {
   useEffect(() => {
     const qLen = giftData?.questions ? giftData.questions.length : 0;
     if (stage === qLen + 1) {
+      if (giftData?.occasion === "birthday") return; // Let recipient interactively flip through birthday memory cards at their own pace
       if (mediaTab === "video") return; // Do not auto-advance when watching video
       if (!giftData?.photoUrls || giftData.photoUrls.length === 0) {
         if (giftData?.videoUrl) {
@@ -633,6 +636,14 @@ export default function GiftViewer({ params }) {
       <AnimatePresence mode="wait">
         
         {stage === -2 && (
+          giftData.occasion === "birthday" ? (
+            <BirthdayBox
+              key="birthday-box"
+              giftData={giftData}
+              onOpen={handleOpenEnvelope}
+              styles={styles}
+            />
+          ) : (
           <motion.div
             key="envelope-card"
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -743,6 +754,7 @@ export default function GiftViewer({ params }) {
 
             </div>
           </motion.div>
+          )
         )}
 
         {stage === -1 && (
@@ -891,8 +903,17 @@ export default function GiftViewer({ params }) {
           </motion.div>
         )}
 
-        {/* STAGE 3: MEMORY CAROUSEL */}
+        {/* STAGE 3: MEMORY CAROUSEL / FLIP ALBUM */}
         {stage === (giftData?.questions ? giftData.questions.length : 0) + 1 && (
+          giftData.occasion === "birthday" && (!giftData.videoUrl || mediaTab === "photos") ? (
+            <FlipCardAlbum
+              key="flip-album"
+              photoUrls={giftData.photoUrls}
+              photoCaptions={giftData.photoCaptions}
+              onContinue={() => setStage(prev => prev + 1)}
+              styles={styles}
+            />
+          ) : (
           <motion.div key="carousel" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="w-full max-w-2xl text-center z-10 flex flex-col items-center overflow-hidden">
             
             <AnimatePresence mode="wait">
@@ -1006,6 +1027,7 @@ export default function GiftViewer({ params }) {
             </AnimatePresence>
             
           </motion.div>
+          )
         )}
 
         {/* STAGE 4: REASONS WHY (Floating Bubbles) */}
