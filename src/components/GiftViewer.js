@@ -598,7 +598,7 @@ export default function GiftViewer({ params }) {
           ref={audioRef} 
           loop 
           playsInline
-          src={giftData?.songQuery || "/audio/romantic.mp3"} 
+          src={(giftData?.songQuery && (giftData.songQuery.startsWith("/") || giftData.songQuery.startsWith("http"))) ? giftData.songQuery : "/audio/romantic.mp3"} 
         />
       )}
 
@@ -1255,8 +1255,10 @@ export default function GiftViewer({ params }) {
             )}
           </motion.div>
         )}
-        {/* REPORT CONTENT TRIGGER BUTTON */}
-        <div className="fixed bottom-3 right-3 z-40">
+      </AnimatePresence>
+
+      {/* REPORT CONTENT TRIGGER BUTTON */}
+      <div className="fixed bottom-3 right-3 z-40">
           <button
             type="button"
             onClick={() => setShowReportModal(true)}
@@ -1365,7 +1367,6 @@ export default function GiftViewer({ params }) {
             </div>
           )}
         </AnimatePresence>
-      </AnimatePresence>
     </div>
   );
 }
