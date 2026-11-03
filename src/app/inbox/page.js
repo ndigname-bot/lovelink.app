@@ -66,8 +66,8 @@ export default function Inbox() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0a] text-slate-900 dark:text-white transition-colors">
       <nav className="fixed top-0 left-0 w-full p-6 flex justify-between items-center z-50 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 transition-colors">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2">
-          <Logo className="w-6 h-6 text-pink-500" />
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2.5">
+          <Logo className="w-8 h-8 md:w-9 md:h-9 text-pink-500" />
           <Link href="/dashboard" className="text-xl font-bold tracking-tight">LoveLink</Link>
         </motion.div>
         <div className="flex gap-4 md:gap-6 items-center">

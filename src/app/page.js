@@ -12,9 +12,9 @@ export default function Home() {
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0a] text-slate-900 dark:text-white selection:bg-pink-500/30 font-sans overflow-x-hidden transition-colors duration-300">
       {/* Navbar */}
       <nav className="flex items-center justify-between px-4 md:px-8 py-4 md:py-6 max-w-7xl mx-auto relative z-50">
-        <div className="flex items-center gap-2">
-          <Logo className="w-6 h-6 text-pink-500" />
-          <span className="text-xl font-bold tracking-tight">LoveLink</span>
+        <div className="flex items-center gap-2.5">
+          <Logo className="w-9 h-9 md:w-10 md:h-10 text-pink-500" />
+          <span className="text-xl md:text-2xl font-bold tracking-tight">LoveLink</span>
         </div>
         <div className="flex gap-2 md:gap-6 items-center">
           <ThemeToggle />

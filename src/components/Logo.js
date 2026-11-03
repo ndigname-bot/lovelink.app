@@ -13,7 +13,7 @@ const LOVE_COLORS = [
   "#ffffff", // pure crystal light
 ];
 
-export function Logo({ className = "w-7 h-7 text-pink-500", interactive = true }) {
+export function Logo({ className = "w-9 h-9 text-pink-500", interactive = true }) {
   const canvasRef = useRef(null);
   const animFrameRef = useRef(null);
   const particlesRef = useRef({
@@ -33,21 +33,21 @@ export function Logo({ className = "w-7 h-7 text-pink-500", interactive = true }
     const portalY = height * 0.86;
     const centerX = width / 2;
 
-    const BURST_COUNT = 38;
+    const BURST_COUNT = 44;
     for (let i = 0; i < BURST_COUNT; i++) {
-      const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.1; // upward cone
-      const speed = 1.6 + Math.random() * 2.8;
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.15; // upward cone
+      const speed = 1.7 + Math.random() * 3.0;
       const color = LOVE_COLORS[Math.floor(Math.random() * LOVE_COLORS.length)];
       pState.bursts.push({
-        x: centerX + (Math.random() - 0.5) * 16,
+        x: centerX + (Math.random() - 0.5) * 18,
         y: portalY + (Math.random() - 0.5) * 4,
         vx: Math.cos(angle) * speed * (0.8 + Math.random() * 0.4),
         vy: Math.sin(angle) * speed,
-        size: 0.9 + Math.random() * 1.6,
+        size: 1.0 + Math.random() * 1.8,
         alpha: 1,
         color: color,
         life: 0,
-        maxLife: 24 + Math.random() * 20,
+        maxLife: 26 + Math.random() * 22,
       });
     }
   }, []);
@@ -69,12 +69,12 @@ export function Logo({ className = "w-7 h-7 text-pink-500", interactive = true }
     ctx.scale(dpr, dpr);
 
     const centerX = V_WIDTH / 2;
-    const centerY = V_HEIGHT * 0.42;
-    const scale = V_WIDTH * 0.0205;
+    const centerY = V_HEIGHT * 0.41;
+    const scale = V_WIDTH * 0.0225;
     const portalY = V_HEIGHT * 0.86;
 
     // 1. Initialize Heart Contour & Interior Points
-    const HEART_TOTAL = 52;
+    const HEART_TOTAL = 56;
     const heartParticles = [];
     for (let i = 0; i < HEART_TOTAL; i++) {
       const t = (i / HEART_TOTAL) * Math.PI * 2;
@@ -91,7 +91,7 @@ export function Logo({ className = "w-7 h-7 text-pink-500", interactive = true }
         y: targetY,
         vx: 0,
         vy: 0,
-        size: 1.0 + (i % 3 === 0 ? 0.6 : 0),
+        size: 1.2 + (i % 3 === 0 ? 0.7 : 0),
         alpha: 0.7 + Math.random() * 0.3,
         color: LOVE_COLORS[i % LOVE_COLORS.length],
         twinkleSpeed: 0.04 + Math.random() * 0.06,
@@ -99,9 +99,9 @@ export function Logo({ className = "w-7 h-7 text-pink-500", interactive = true }
       });
     }
 
-    // Add 14 heart core interior sparkles
-    for (let i = 0; i < 14; i++) {
-      const r = Math.random() * 0.65;
+    // Add 16 heart core interior sparkles
+    for (let i = 0; i < 16; i++) {
+      const r = Math.random() * 0.68;
       const t = Math.random() * Math.PI * 2;
       const hx = 16 * Math.pow(Math.sin(t), 3) * r;
       const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * r;
@@ -112,7 +112,7 @@ export function Logo({ className = "w-7 h-7 text-pink-500", interactive = true }
         y: centerY + hy * scale,
         vx: 0,
         vy: 0,
-        size: 0.8 + Math.random() * 0.8,
+        size: 0.9 + Math.random() * 0.9,
         alpha: 0.5 + Math.random() * 0.4,
         color: LOVE_COLORS[Math.floor(Math.random() * LOVE_COLORS.length)],
         twinkleSpeed: 0.03 + Math.random() * 0.05,

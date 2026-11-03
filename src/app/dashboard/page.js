@@ -2,7 +2,7 @@
 import imageCompression from "browser-image-compression";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X, Play, Pause, Check, Video } from "lucide-react";
+import { ChevronDown, Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X, Play, Pause, Check, Video, Shield } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { auth, db } from "../../lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
@@ -74,6 +74,7 @@ export default function Dashboard() {
               skipTrivia: data.skipTrivia || false,
               q4: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q4 },
               letter: data.letter || "",
+              retentionMode: data.retentionMode || "forever",
             };
             setFormData(loadedData);
             if (data.photoUrls) setPhotoPreviews(data.photoUrls);
@@ -116,6 +117,7 @@ export default function Dashboard() {
     q4: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "" },
     reasons: ["", "", ""],
     letter: "",
+    retentionMode: "forever",
     photoCaptions: []
   });
 
@@ -354,8 +356,8 @@ export default function Dashboard() {
       <nav className="w-full border-b border-slate-200 dark:border-white/10 bg-white dark:bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Logo className="w-6 h-6 text-pink-500" />
+            <div className="flex items-center gap-2.5">
+              <Logo className="w-8 h-8 md:w-9 md:h-9 text-pink-500" />
               <span className="font-bold text-xl tracking-tight hidden sm:block">LoveLink Builder</span>
             </div>
           </div>
@@ -565,6 +567,73 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-pink-400" /> {formData.occasion === "proposal" ? "The Big Proposal Letter" : "Final Love Letter"}</label>
                 <textarea rows="6" value={formData.letter} onChange={(e) => updateForm('letter', e.target.value)} placeholder="Pour your heart out here..." className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-6 py-5 text-slate-900 dark:text-white outline-none resize-none" />
+              </div>
+
+              {/* Privacy & Data Retention Mode */}
+              <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-white/10">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-pink-400" /> Privacy &amp; Data Retention
+                  </label>
+                  <span className="text-[11px] font-semibold text-pink-500 bg-pink-500/10 px-2.5 py-0.5 rounded-full">
+                    Your Control
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-gray-400">
+                  Choose how long this LoveLink lives online. You can also permanently delete it anytime from your dashboard.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    {
+                      id: "forever",
+                      title: "Permanent Keepsake",
+                      badge: "Most Popular",
+                      desc: "Hosted forever in the cloud. Timeless digital memories.",
+                      icon: "🌟"
+                    },
+                    {
+                      id: "7days",
+                      title: "7-Day Capsule",
+                      badge: "Self-Destruct",
+                      desc: "Auto-deletes 7 days after your recipient first opens it.",
+                      icon: "⏳"
+                    },
+                    {
+                      id: "burn",
+                      title: "Burn After Reading",
+                      badge: "Maximum Privacy",
+                      desc: "Auto-wipes within 24 hours of first view. Complete discretion.",
+                      icon: "🔥"
+                    }
+                  ].map((mode) => (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={() => updateForm('retentionMode', mode.id)}
+                      className={`relative p-4 rounded-2xl border-2 text-left transition-all flex flex-col justify-between ${
+                        (formData.retentionMode || 'forever') === mode.id
+                          ? 'border-pink-500 bg-pink-500/10 shadow-md'
+                          : 'border-slate-200 dark:border-white/10 hover:border-pink-500/50 bg-white dark:bg-white/5'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xl">{mode.icon}</span>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                            (formData.retentionMode || 'forever') === mode.id
+                              ? 'bg-pink-500 text-white'
+                              : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-gray-400'
+                          }`}>
+                            {mode.badge}
+                          </span>
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1">{mode.title}</h4>
+                        <p className="text-[11px] text-slate-500 dark:text-gray-400 leading-snug">{mode.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}

@@ -168,6 +168,15 @@ export default function GiftViewer({ params }) {
       });
     }
 
+    if (actualGiftId && actualGiftId !== "demo-gift" && actualGiftId !== "draft" && !giftData?.firstOpenedAt) {
+      try {
+        updateDoc(doc(db, "gifts", actualGiftId), {
+          firstOpenedAt: serverTimestamp(),
+          lastOpened: serverTimestamp()
+        }).catch(() => {});
+      } catch (e) {}
+    }
+
     setTimeout(() => {
       setStage(-1);
       setIsOpeningEnvelope(false);
@@ -391,6 +400,9 @@ export default function GiftViewer({ params }) {
             paid: dbData.paid !== false,
             disabled: dbData.disabled === true,
             banned: dbData.banned === true,
+            retentionMode: dbData.retentionMode || "forever",
+            firstOpenedAt: dbData.firstOpenedAt || dbData.lastOpened || null,
+            createdAt: dbData.createdAt || null,
           });
           return;
         }
@@ -522,6 +534,38 @@ export default function GiftViewer({ params }) {
           <h1 className="text-2xl font-bold mb-2">This gift is locked.</h1>
           <p className="text-slate-500 dark:text-gray-400">The creator has not completed payment for this digital letter yet.</p>
         </div>
+      </div>
+    );
+  }
+
+  // Check Ephemeral / Retention Expiration
+  const isExpired = (() => {
+    if (!giftData || !giftData.retentionMode || giftData.retentionMode === "forever") return false;
+    const startMs = giftData.firstOpenedAt?.toMillis?.() 
+      || (typeof giftData.firstOpenedAt === "number" ? giftData.firstOpenedAt : null)
+      || giftData.createdAt?.toMillis?.();
+    if (!startMs) return false;
+
+    const limitMs = giftData.retentionMode === "burn"
+      ? 24 * 60 * 60 * 1000 // 24 hours
+      : 7 * 24 * 60 * 60 * 1000; // 7 days
+
+    return Date.now() > (startMs + limitMs);
+  })();
+
+  if (isExpired) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-white selection:bg-pink-500/30">
+        <div className="w-16 h-16 rounded-2xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center mb-6 text-pink-400 shadow-[0_0_30px_rgba(236,72,153,0.3)]">
+          <Lock className="w-8 h-8" />
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-serif italic font-bold mb-3">This LoveLink Has Expired</h1>
+        <p className="text-slate-400 max-w-md text-sm leading-relaxed mb-8">
+          As requested by <span className="font-semibold text-pink-300">{giftData.creatorName}</span>, this intimate digital gift was protected with ephemeral privacy mode and has self-destructed.
+        </p>
+        <a href="/" className="px-6 py-2.5 rounded-full bg-white text-slate-900 hover:bg-slate-200 text-xs font-bold tracking-wider uppercase transition-all shadow-lg shadow-pink-500/20">
+          Create Your Own LoveLink
+        </a>
       </div>
     );
   }

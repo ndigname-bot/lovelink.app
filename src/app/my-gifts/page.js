@@ -2,11 +2,11 @@
 import { Logo } from "@/components/Logo";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 , Edit3, Mail, QrCode, Printer, X, MessageCircle } from "lucide-react";
+import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 , Edit3, Mail, QrCode, Printer, X, MessageCircle, Trash2, Shield } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import Link from "next/link";
 import { db, auth } from "../../lib/firebase";
-import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit, doc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { generateUniqueSlug } from "../../lib/slug";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -25,6 +25,23 @@ export default function MyGifts() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [activeLovecard, setActiveLovecard] = useState(null);
   const [previewLetterGift, setPreviewLetterGift] = useState(null);
+  const [giftToDelete, setGiftToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!giftToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteDoc(doc(db, "gifts", giftToDelete.id));
+      setGifts(prev => prev.filter(g => g.id !== giftToDelete.id));
+      setGiftToDelete(null);
+    } catch (err) {
+      console.error("Error deleting gift:", err);
+      alert("Failed to delete gift: " + err.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -166,8 +183,8 @@ export default function MyGifts() {
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0a] text-slate-900 dark:text-white selection:bg-pink-500/30 transition-colors duration-300">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 w-full px-4 md:px-8 py-4 flex justify-between items-center z-50 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 transition-colors">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2">
-          <Logo className="w-6 h-6 text-pink-500" />
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2.5">
+          <Logo className="w-8 h-8 md:w-9 md:h-9 text-pink-500" />
           <Link href="/" className="text-xl font-bold tracking-tight">LoveLink</Link>
         </motion.div>
         <div className="flex gap-2 md:gap-6 items-center">
@@ -264,11 +281,26 @@ export default function MyGifts() {
                           </div>
                         </div>
                         
-                        {gift.paid ? (
-                          <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Live</span>
-                        ) : (
-                          <span className="bg-orange-500/10 text-orange-400 border border-orange-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Unpaid</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {gift.retentionMode === "burn" ? (
+                            <span className="bg-red-500/10 text-red-500 border border-red-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                              🔥 24h Burn
+                            </span>
+                          ) : gift.retentionMode === "7days" ? (
+                            <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                              ⏳ 7-Day Expire
+                            </span>
+                          ) : (
+                            <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                              🌟 Forever
+                            </span>
+                          )}
+                          {gift.paid ? (
+                            <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Live</span>
+                          ) : (
+                            <span className="bg-orange-500/10 text-orange-400 border border-orange-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Unpaid</span>
+                          )}
+                        </div>
                       </div>
 
                       <div 
@@ -313,15 +345,29 @@ export default function MyGifts() {
                             <Link href={gift.slug ? `/for/${gift.slug}` : `/gift/${gift.id}`} target="_blank" className="flex-1 min-w-[60px] flex items-center justify-center gap-1.5 bg-pink-500 hover:bg-pink-600 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-lg shadow-pink-500/20 text-white" title="View Live">
                               <ExternalLink className="w-4 h-4" /> <span>View</span>
                             </Link>
+                            <button 
+                              onClick={() => setGiftToDelete(gift)} 
+                              className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors" 
+                              title="Permanently Delete Gift & Erase Data"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </>
                         ) : (
                           <div className="w-full flex flex-col gap-2">
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 items-center">
                               <Link href={gift.slug ? `/for/${gift.slug}` : `/gift/${gift.id}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors text-slate-500 dark:text-gray-400">
                                 <Lock className="w-4 h-4" /> Locked
                               </Link>
                               <button onClick={() => handlePayNow(gift.id, gift.recipientName)} className="flex-1 flex items-center justify-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-black hover:bg-gray-200 py-2 rounded-xl text-sm font-bold transition-colors">
                                 Pay $9.99 to Unlock
+                              </button>
+                              <button 
+                                onClick={() => setGiftToDelete(gift)} 
+                                className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors" 
+                                title="Delete Draft"
+                              >
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                             <p className="text-[10px] text-center text-slate-400">
@@ -539,6 +585,48 @@ export default function MyGifts() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* PERMANENT DELETE CONFIRMATION MODAL */}
+      <AnimatePresence>
+        {giftToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl relative"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-500/10">
+                <Trash2 className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-bold text-center text-slate-900 dark:text-white mb-2">
+                Permanently Delete this LoveLink?
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-gray-400 text-center leading-relaxed mb-6">
+                Are you sure you want to permanently erase the LoveLink for <strong className="text-slate-900 dark:text-white">{giftToDelete.recipientName}</strong>? All photos, letters, voice notes, and memories will be completely deleted from our servers. This action is irreversible.
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setGiftToDelete(null)}
+                  className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 font-semibold text-xs hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="flex-1 py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-lg shadow-red-500/25 transition-all flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? "Erasing..." : "Yes, Delete Forever"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
