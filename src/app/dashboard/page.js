@@ -190,7 +190,8 @@ export default function Dashboard() {
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Upload timed out. If you added large photos, try connecting to a faster network.")), 180000));
       
       const publishTask = async () => {
-        const isFreePromo = false; 
+        // Free testing & promo mode enabled: bypasses payment, sets paid: true, and redirects directly to live link!
+        const isFreePromo = true; 
 
         let photoUrls = [];
 
@@ -659,7 +660,7 @@ export default function Dashboard() {
                 ) : isEditing ? (
                   <><Check className="w-5 h-5" /> Save Changes</>
                 ) : (
-                  <><Sparkles className="w-5 h-5" /> Generate Link</>
+                  <><Sparkles className="w-5 h-5" /> Generate Link (Free Test Mode)</>
                 )}
               </button>
             </div>

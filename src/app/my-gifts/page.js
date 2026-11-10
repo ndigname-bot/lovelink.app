@@ -137,10 +137,16 @@ export default function MyGifts() {
     window.open(waUrl, "_blank");
   };
 
-  const IS_LAUNCH_PROMO = false;
+  const IS_LAUNCH_PROMO = true;
 
   const handlePayNow = async (giftId, recipientName) => {
     if (IS_LAUNCH_PROMO) {
+      try {
+        await updateDoc(doc(db, "gifts", giftId), { paid: true });
+        setGifts(prev => prev.map(g => g.id === giftId ? { ...g, paid: true } : g));
+      } catch (e) {
+        console.warn("Could not set paid in DB:", e);
+      }
       window.location.href = `/success?giftId=${giftId}`;
       return;
     }
@@ -359,8 +365,8 @@ export default function MyGifts() {
                               <Link href={gift.slug ? `/for/${gift.slug}` : `/gift/${gift.id}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors text-slate-500 dark:text-gray-400">
                                 <Lock className="w-4 h-4" /> Locked
                               </Link>
-                              <button onClick={() => handlePayNow(gift.id, gift.recipientName)} className="flex-1 flex items-center justify-center gap-2 bg-slate-900 text-white dark:bg-white dark:text-black hover:bg-gray-200 py-2 rounded-xl text-sm font-bold transition-colors">
-                                Pay $9.99 to Unlock
+                              <button onClick={() => handlePayNow(gift.id, gift.recipientName)} className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white hover:opacity-90 py-2 rounded-xl text-sm font-bold transition-all shadow-md">
+                                {IS_LAUNCH_PROMO ? "Unlock Free (Promo)" : "Pay $9.99 to Unlock"}
                               </button>
                               <button 
                                 onClick={() => setGiftToDelete(gift)} 

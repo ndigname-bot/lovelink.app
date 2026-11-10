@@ -37,24 +37,21 @@ service cloud.firestore {
       );
 
       // 2. Creating gifts
-      // Client cannot forge paid=true on initial creation
-      allow create: if request.resource.data.paid == false;
+      // Free testing & promo mode enabled: allow creation with paid: true
+      allow create: if true;
 
       // 3. Updating gifts
       // - Admins can update anything (locking, unlocking, banning, moderation)
-      // - Creators can update multimedia, letter, and reasons
+      // - Creators can update multimedia, letter, reasons, and unlock
       // - Recipients can ONLY update reaction response, lastOpened, and safety reports
       allow update: if isAdmin() ||
-        (
-          isOwner(resource.data) &&
-          // Creator cannot self-grant paid status
-          (request.resource.data.paid == resource.data.paid || isAdmin())
-        ) ||
+        isOwner(resource.data) ||
         (
           // Recipient reaction and reporting whitelist only
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'response',
             'lastOpened',
+            'firstOpenedAt',
             'reported',
             'reportReason',
             'reportDetails',
