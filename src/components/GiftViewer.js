@@ -378,10 +378,22 @@ export default function GiftViewer({ params }) {
             }
           }
 
+          let loadedWishes = [];
+          try {
+            const wishesRef = collection(db, "gifts", targetId, "wishes");
+            const wishesSnap = await getDocs(query(wishesRef, orderBy("createdAt", "asc")));
+            wishesSnap.forEach((wDoc) => loadedWishes.push({ id: wDoc.id, ...wDoc.data() }));
+          } catch (wErr) {
+            console.warn("Could not read wishes subcollection:", wErr);
+          }
+
           setGiftData({
             skipTrivia: dbData.skipTrivia || false,
             theme: dbData.theme || "blush",
             occasion: dbData.occasion || "standard",
+            giftMode: dbData.giftMode || "solo",
+            birthdayAge: dbData.birthdayAge || "",
+            wishes: loadedWishes,
             recipientName: dbData.recipientName || "Cutie",
             creatorName: dbData.creatorName || "Me",
             songQuery: dbData.songQuery || "Daniel Caesar - Get You",
@@ -972,6 +984,7 @@ export default function GiftViewer({ params }) {
               key="flip-album"
               photoUrls={giftData.photoUrls}
               photoCaptions={giftData.photoCaptions}
+              wishes={giftData.wishes || []}
               onContinue={() => setStage(prev => prev + 1)}
               styles={styles}
             />

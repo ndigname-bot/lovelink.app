@@ -181,7 +181,7 @@ export default function BirthdayBox({ giftData, onOpen, onStartAudio, styles }) 
             {/* Front Plaque / Greeting */}
             <div className="relative z-10 w-full flex flex-col items-center text-center mt-4">
               <div className="px-3.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[10px] font-mono uppercase tracking-widest text-amber-300 font-semibold mb-2 shadow-inner">
-                Exclusive Reveal
+                {giftData.birthdayAge ? `${giftData.birthdayAge} Birthday Reveal` : "Exclusive Reveal"}
               </div>
               <h2 className="text-3xl sm:text-4xl font-serif italic font-bold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
                 {giftData.recipientName}
@@ -191,6 +191,9 @@ export default function BirthdayBox({ giftData, onOpen, onStartAudio, styles }) 
                 <span className="font-bold underline decoration-amber-300 underline-offset-2">
                   {giftData.creatorName}
                 </span>
+                {giftData.wishes && giftData.wishes.length > 0 && (
+                  <span className="text-amber-300 font-semibold">&amp; {giftData.wishes.length} friends</span>
+                )}
               </p>
             </div>
 

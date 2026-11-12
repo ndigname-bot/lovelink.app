@@ -28,7 +28,9 @@ function SuccessContent() {
   const [recipientName, setRecipientName] = useState("Cutie");
   const [creatorName, setCreatorName] = useState("");
   const [occasion, setOccasion] = useState("standard");
+  const [giftMode, setGiftMode] = useState("solo");
   const [copied, setCopied] = useState(false);
+  const [squadCopied, setSquadCopied] = useState(false);
 
   useEffect(() => {
     if (!giftId) {
@@ -42,6 +44,7 @@ function SuccessContent() {
         let recipient = "Cutie";
         let creator = "";
         let occ = "standard";
+        let mode = "solo";
 
         try {
           const snap = await getDoc(doc(db, "gifts", giftId));
@@ -51,6 +54,7 @@ function SuccessContent() {
             recipient = data.recipientName || "Cutie";
             creator = data.creatorName || "";
             occ = data.occasion || "standard";
+            mode = data.giftMode || "solo";
           }
         } catch (e) {
           console.error("Error reading gift details:", e);
@@ -59,6 +63,7 @@ function SuccessContent() {
         setRecipientName(recipient);
         setCreatorName(creator);
         setOccasion(occ);
+        setGiftMode(mode);
 
         const finalUrl = slug 
           ? `${window.location.origin}/for/${slug}` 
@@ -201,6 +206,58 @@ function SuccessContent() {
             </div>
           </div>
         </div>
+
+        {/* Squad Invite Card for Group Kudoboard / Birthday */}
+        {(giftMode === "group" || occasion === "birthday") && (
+          <div className="mb-8 p-5 rounded-3xl bg-gradient-to-br from-amber-500/15 via-purple-500/10 to-pink-500/15 border border-amber-500/30 text-left space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                <span>🎉</span> Squad Contributor Link (Kudoboard Mode)
+              </span>
+              <span className="text-[10px] font-bold text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-full">
+                For Friends &amp; Family
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Share this link in your WhatsApp group, Slack, or family chat. Anyone with this link can sign their card with a photo and birthday wish to seal inside <strong className="text-white">{recipientName}</strong>&apos;s 3D box!
+            </p>
+            <div className="flex items-center gap-2 bg-black/50 p-2.5 rounded-xl border border-white/10">
+              <input
+                type="text"
+                readOnly
+                value={typeof window !== "undefined" ? `${window.location.origin}/join/${giftId}` : ""}
+                className="bg-transparent w-full outline-none text-amber-300 text-xs font-mono truncate px-1"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const inviteUrl = `${window.location.origin}/join/${giftId}`;
+                  navigator.clipboard.writeText(inviteUrl);
+                  setSquadCopied(true);
+                  setTimeout(() => setSquadCopied(false), 2500);
+                }}
+                className="bg-amber-400 hover:bg-amber-300 text-black px-3.5 py-1.5 rounded-lg font-bold text-xs shrink-0 flex items-center gap-1 transition-all"
+              >
+                {squadCopied ? (
+                  <><Check className="w-3.5 h-3.5 text-black" /> Copied!</>
+                ) : (
+                  <><Copy className="w-3.5 h-3.5" /> Copy Link</>
+                )}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const inviteUrl = `${window.location.origin}/join/${giftId}`;
+                const msg = `Hey everyone! 🎉 I created an interactive 3D Birthday Box for ${recipientName}. Add your wish and photo to seal inside their box here: ${inviteUrl}`;
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, "_blank");
+              }}
+              className="w-full py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-xs font-bold flex items-center justify-center gap-2 transition-all"
+            >
+              <span>📲 Share Contributor Link to WhatsApp Group</span>
+            </button>
+          </div>
+        )}
 
         {/* Shareable URL Copy Box */}
         <div className="flex items-center gap-2 w-full bg-slate-950/70 p-2.5 sm:p-3 rounded-2xl border border-slate-800 mb-6">

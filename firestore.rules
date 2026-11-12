@@ -67,6 +67,13 @@ service cloud.firestore {
         allow read: if true;
         allow write: if isAdmin() || isAuthenticated();
       }
+
+      // Group Wishes / Kudoboard squad subcollection
+      match /wishes/{wishId} {
+        allow read: if true;
+        allow create: if request.resource.data.authorName is string && request.resource.data.message is string;
+        allow update, delete: if isAdmin() || isOwner(get(/databases/$(database)/documents/gifts/$(giftId)).data);
+      }
     }
   }
 }

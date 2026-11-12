@@ -62,6 +62,8 @@ export default function Dashboard() {
             const loadedData = {
               theme: data.theme || "blush",
               occasion: data.occasion || "standard",
+              giftMode: data.giftMode || "solo",
+              birthdayAge: data.birthdayAge || "",
               recipientName: data.recipientName || "",
               creatorName: data.creatorName || "",
               songQuery: data.songQuery || "",
@@ -105,6 +107,8 @@ export default function Dashboard() {
 
   const [formData, setFormData] = useState({
     occasion: "standard",
+    giftMode: "solo",
+    birthdayAge: "",
     theme: "blush",
     recipientName: "",
     creatorName: "",
@@ -454,12 +458,95 @@ export default function Dashboard() {
                     </button>
                   ))}
                 </div>
+
+                {/* Birthday-Specific Format & Milestone Options */}
+                {formData.occasion === "birthday" && (
+                  <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-800 dark:text-white flex items-center justify-between">
+                        <span>Birthday Celebration Type</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                          Kudoboard Mode
+                        </span>
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => updateForm("giftMode", "solo")}
+                          className={`p-4 rounded-2xl border-2 text-left transition-all ${
+                            formData.giftMode !== "group"
+                              ? "border-pink-500 bg-pink-500/10 shadow-sm"
+                              : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-pink-500/40"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xl">🎁</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">Solo Keepsake (Just Me)</span>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-gray-400">
+                            Personal 1-on-1 package with your photos, 3 wishes, and heartfelt birthday toast.
+                          </p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => updateForm("giftMode", "group")}
+                          className={`p-4 rounded-2xl border-2 text-left transition-all ${
+                            formData.giftMode === "group"
+                              ? "border-amber-500 bg-amber-500/10 shadow-sm ring-2 ring-amber-500/30"
+                              : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-amber-500/40"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xl">🎉</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">Squad Tribute (Group Card)</span>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-gray-400">
+                            Multi-contributor! Get a shareable WhatsApp link so friends &amp; coworkers can sign with cards.
+                          </p>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-slate-600 dark:text-gray-300">
+                          Milestone / Turning Age (Optional)
+                        </label>
+                        <span className="text-[11px] text-pink-500">Appears on the 3D box lid</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={formData.birthdayAge || ""}
+                          onChange={(e) => updateForm("birthdayAge", e.target.value)}
+                          placeholder="e.g. 21st, 25th, 30th"
+                          className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none"
+                        />
+                        <div className="flex items-center gap-1 shrink-0">
+                          {["18th", "21st", "25th", "30th", "50th"].map((age) => (
+                            <button
+                              key={age}
+                              type="button"
+                              onClick={() => updateForm("birthdayAge", age)}
+                              className="text-xs px-2.5 py-2 rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-pink-500 hover:text-white text-slate-700 dark:text-gray-300 transition-all font-semibold"
+                            >
+                              {age}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-slate-600 dark:text-gray-300">Who is this for?</label>
+                    <label className="text-sm font-medium text-slate-600 dark:text-gray-300">
+                      {formData.occasion === "birthday" ? "Who is the Birthday Star? 🎂" : formData.occasion === "proposal" ? "Who are you proposing to? 💍" : formData.occasion === "family" ? "Who is this family keepsake for? 🕰️" : "Who is this for?"}
+                    </label>
                     {isEditing && (
                       <span className="text-[11px] font-semibold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 flex items-center gap-1">
                         <Lock className="w-3 h-3" /> Locked
@@ -475,7 +562,7 @@ export default function Dashboard() {
                       }} 
                       disabled={isEditing} 
                       readOnly={isEditing}
-                      placeholder="e.g. Sarah" 
+                      placeholder={formData.occasion === "birthday" ? "e.g. Jessica or Bro" : "e.g. Sarah"} 
                       className={`w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none transition-all ${isEditing ? "opacity-60 cursor-not-allowed bg-slate-200/50 dark:bg-white/[0.03] select-none pr-10" : ""}`} 
                     />
                     {isEditing && (
@@ -489,8 +576,10 @@ export default function Dashboard() {
                   )}
                 </div>
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-slate-600 dark:text-gray-300">Your Name / Nickname</label>
-                  <input type="text" value={formData.creatorName} onChange={(e) => updateForm('creatorName', e.target.value)} placeholder="e.g. John" className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none" />
+                  <label className="text-sm font-medium text-slate-600 dark:text-gray-300">
+                    {formData.occasion === "birthday" && formData.giftMode === "group" ? "Your Name / Organizer Name" : "Your Name / Nickname"}
+                  </label>
+                  <input type="text" value={formData.creatorName} onChange={(e) => updateForm('creatorName', e.target.value)} placeholder="e.g. John or Team Marketing" className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none" />
                 </div>
               </div>
             </motion.div>
@@ -499,8 +588,12 @@ export default function Dashboard() {
           {step === 2 && (
             <motion.div key="step2" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0, x:-20}} className="space-y-10">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Music & Memories</h1>
-                <p className="text-slate-500 dark:text-gray-400">Add their favorite song and inside jokes.</p>
+                <h1 className="text-3xl font-bold mb-2">
+                  {formData.occasion === "birthday" ? "Soundtrack & Celebration Vibe" : formData.occasion === "family" ? "Acoustic Memories & Music" : "Music & Memories"}
+                </h1>
+                <p className="text-slate-500 dark:text-gray-400">
+                  {formData.occasion === "birthday" ? "Choose the song that plays as the 3D box opens." : "Add their favorite song and inside jokes."}
+                </p>
               </div>
               <MusicSelector 
                 formData={formData} 
@@ -509,19 +602,74 @@ export default function Dashboard() {
                 setPreviewSong={setPreviewSong} 
                 setAudioFile={setAudioFile} 
               />
-              <TriviaBuilder 
-                formData={formData} 
-                updateForm={updateForm} 
-                updateQuestion={updateQuestion} 
-              />
+              
+              {formData.occasion === "birthday" ? (
+                formData.giftMode === "group" ? (
+                  <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-500/10 via-pink-500/10 to-purple-500/10 border border-amber-500/30 space-y-3">
+                    <div className="flex items-center gap-2 text-amber-500 font-bold text-base">
+                      <span className="text-xl">🎉</span>
+                      <span>Squad Tribute Link Ready After Publish</span>
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-gray-300 leading-relaxed">
+                      You are the organizer! Once you publish, you will get an instant invite link to paste in your WhatsApp group, Slack, or iMessage. Everyone in your group can upload their photo and birthday wish without needing an account.
+                    </p>
+                    <div className="p-3 rounded-xl bg-white/60 dark:bg-black/40 border border-white/20 text-xs text-slate-500 dark:text-gray-400 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>You can also add your own photos and personal birthday wishes in Step 3!</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div 
+                      className="flex items-center justify-between p-6 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl cursor-pointer hover:border-pink-500/50 transition-colors"
+                      onClick={() => updateForm('skipTrivia', !formData.skipTrivia)}
+                    >
+                      <div>
+                        <h3 className="font-bold text-base flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-pink-500" />
+                          <span>Include Fun Birthday Mini-Quiz / Inside Jokes (Optional)</span>
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+                          {formData.skipTrivia ? "Currently skipped (Recipient goes straight to memories & wishes)." : "Enabled: Recipient must answer your funny birthday inside jokes before unlocking!"}
+                        </p>
+                      </div>
+                      <div className={`w-12 h-6 rounded-full flex items-center p-1 transition-colors ${!formData.skipTrivia ? 'bg-pink-500' : 'bg-slate-300 dark:bg-slate-700'}`}>
+                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${!formData.skipTrivia ? 'translate-x-6' : 'translate-x-0'}`} />
+                      </div>
+                    </div>
+
+                    {!formData.skipTrivia && (
+                      <TriviaBuilder 
+                        formData={formData} 
+                        updateForm={updateForm} 
+                        updateQuestion={updateQuestion} 
+                      />
+                    )}
+                  </div>
+                )
+              ) : (
+                <TriviaBuilder 
+                  formData={formData} 
+                  updateForm={updateForm} 
+                  updateQuestion={updateQuestion} 
+                />
+              )}
             </motion.div>
           )}
 
           {step === 3 && (
             <motion.div key="step3" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0, x:-20}} className="space-y-10">
               <div>
-                <h1 className="text-3xl font-bold mb-2">The Deep Journey.</h1>
-                <p className="text-slate-500 dark:text-gray-400">Photos, reasons why you love them, and the final letter.</p>
+                <h1 className="text-3xl font-bold mb-2">
+                  {formData.occasion === "birthday" ? "Memories & Birthday Wishes" : formData.occasion === "family" ? "Generational Keepsake" : "The Deep Journey."}
+                </h1>
+                <p className="text-slate-500 dark:text-gray-400">
+                  {formData.occasion === "birthday" 
+                    ? "Polaroid flip cards, 3 wishes for the year ahead, and your birthday toast."
+                    : formData.occasion === "family"
+                    ? "Cherished family photos, heartfelt appreciations, and your permanent letter."
+                    : "Photos, reasons why you love them, and the final letter."}
+                </p>
               </div>
 
               {/* Memory Carousel Photos */}
@@ -554,20 +702,147 @@ export default function Dashboard() {
                 />
               </div>
 
-              {/* Reasons Why */}
+              {/* Reasons / Birthday Wishes / Promises */}
               <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><Heart className="w-4 h-4 text-pink-400" /> {formData.occasion === "proposal" ? "3 Promises For Our Future" : formData.occasion === "birthday" ? "3 Birthday Wishes" : formData.occasion === "anniversary" ? "3 Chapters of Our Love (Crystal Petals)" : formData.occasion === "family" ? "3 Things I Appreciate About You" : "3 Reasons I Love You"}</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-pink-400" />
+                    <span>
+                      {formData.occasion === "proposal"
+                        ? "3 Promises For Our Future"
+                        : formData.occasion === "birthday"
+                        ? `3 Birthday Wishes for ${formData.recipientName || "them"}`
+                        : formData.occasion === "anniversary"
+                        ? "3 Chapters of Our Love (Crystal Petals)"
+                        : formData.occasion === "family"
+                        ? "3 Things I Appreciate About You"
+                        : "3 Reasons I Love You"}
+                    </span>
+                  </label>
+                  {formData.occasion === "birthday" && (
+                    <span className="text-[11px] text-amber-500 font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full">
+                      Floating 3D Bubbles
+                    </span>
+                  )}
+                </div>
+
+                {/* 1-Click Birthday Wish Quick-Fill Suggestions */}
+                {formData.occasion === "birthday" && (
+                  <div className="flex flex-wrap items-center gap-1.5 p-3 rounded-2xl bg-amber-500/5 border border-amber-500/15">
+                    <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mr-1 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Quick wish ideas:</span>
+                    </span>
+                    {[
+                      "May this year bring that massive dream win you've worked for! 🚀",
+                      "Never stop laughing at your own unhinged jokes 😂",
+                      "Unlimited travels, glowing health, and zero hangovers! ✈️",
+                      "Keep glowing and inspiring everyone around you! 🌟",
+                    ].map((wishIdea, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          const emptyIndex = formData.reasons.findIndex((r) => !r.trim());
+                          const targetIdx = emptyIndex !== -1 ? emptyIndex : idx % 3;
+                          updateReason(targetIdx, wishIdea);
+                        }}
+                        className="text-[11px] bg-white dark:bg-white/10 hover:bg-amber-500 hover:text-white border border-slate-200 dark:border-white/10 rounded-full px-2.5 py-1 text-slate-700 dark:text-gray-300 transition-all font-normal"
+                      >
+                        {wishIdea}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {[0, 1, 2].map(i => (
-                    <input key={i} type="text" value={formData.reasons[i]} onChange={(e) => updateReason(i, e.target.value)} placeholder={`${formData.occasion === "proposal" ? "Promise" : formData.occasion === "birthday" ? "Wish" : formData.occasion === "anniversary" ? "Chapter" : formData.occasion === "family" ? "Appreciation" : "Reason"} ${i+1}... (e.g. ${formData.occasion === "proposal" ? "I promise to always listen" : formData.occasion === "anniversary" ? "The night we talked until sunrise" : formData.occasion === "family" ? "Always supporting my dreams" : "Your beautiful smile"})`} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none" />
+                    <input 
+                      key={i} 
+                      type="text" 
+                      value={formData.reasons[i]} 
+                      onChange={(e) => updateReason(i, e.target.value)} 
+                      placeholder={
+                        formData.occasion === "birthday"
+                          ? `Wish #${i + 1}... (e.g. ${i === 0 ? "That career breakthrough you deserve" : i === 1 ? "Unstoppable health and joy" : "More spontaneous late night adventures"})`
+                          : formData.occasion === "proposal"
+                          ? `Promise #${i + 1}... (e.g. I promise to always listen and stand with you)`
+                          : formData.occasion === "anniversary"
+                          ? `Chapter #${i + 1}... (e.g. The night we talked until sunrise)`
+                          : formData.occasion === "family"
+                          ? `Appreciation #${i + 1}... (e.g. Always believing in me when I doubted myself)`
+                          : `Reason #${i + 1}... (e.g. Your beautiful smile)`
+                      } 
+                      className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-pink-500 transition-colors" 
+                    />
                   ))}
                 </div>
               </div>
 
-              {/* Love Letter */}
+              {/* Love Letter / Birthday Toast */}
               <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-pink-400" /> {formData.occasion === "proposal" ? "The Big Proposal Letter" : "Final Love Letter"}</label>
-                <textarea rows="6" value={formData.letter} onChange={(e) => updateForm('letter', e.target.value)} placeholder="Pour your heart out here..." className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-6 py-5 text-slate-900 dark:text-white outline-none resize-none" />
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-pink-400" />
+                    <span>
+                      {formData.occasion === "proposal" 
+                        ? "The Big Proposal Letter" 
+                        : formData.occasion === "birthday" 
+                        ? "The Birthday Toast & Card Message" 
+                        : formData.occasion === "family"
+                        ? "Family Keepsake Letter"
+                        : "Final Love Letter"}
+                    </span>
+                  </label>
+                  {formData.occasion === "birthday" && (
+                    <span className="text-[11px] text-pink-500 font-semibold bg-pink-500/10 px-2 py-0.5 rounded-full">
+                      Sealed in Envelope
+                    </span>
+                  )}
+                </div>
+
+                {/* Birthday Toast Tone Starters */}
+                {formData.occasion === "birthday" && (
+                  <div className="space-y-2">
+                    <span className="text-xs text-slate-500 dark:text-gray-400">Choose a starter tone to pre-fill your message:</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateForm('letter', `Happy Birthday to one of the most incredible humans on this planet! 🥂\n\nWatching you grow, chase your dreams, and make everyone around you smile is an absolute gift. Here is to another year of massive breakthroughs, genuine happiness, and memories we'll talk about forever.\n\nLove you always!`)}
+                        className="p-3 rounded-xl border border-pink-500/30 bg-pink-500/5 hover:bg-pink-500/15 text-left transition-all"
+                      >
+                        <div className="font-bold text-xs text-pink-500">🥂 Heartfelt & Warm</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">Happy Birthday to one of the most incredible...</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => updateForm('letter', `Happy Birthday! 🤪 Another year older, zero percent wiser!\n\nHonestly, I don't know how the world survives the chaotic energy we bring when we're together, but I wouldn't trade our friendship for anything in the world. May your day be filled with cake, laughs, and zero hangovers.\n\nLet's celebrate!`)}
+                        className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/15 text-left transition-all"
+                      >
+                        <div className="font-bold text-xs text-amber-500">🤪 Hilarious Roast</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">Another year older, zero percent wiser...</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => updateForm('letter', `HAPPY BIRTHDAY TO A TRUE LEGEND! 🌟\n\nToday is all about celebrating YOU and how far you've come. You inspire everyone around you to aim higher and dream bigger. May this new chapter bring you every ounce of success and happiness you deserve.\n\nThe best is yet to come!`)}
+                        className="p-3 rounded-xl border border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/15 text-left transition-all"
+                      >
+                        <div className="font-bold text-xs text-purple-400">🌟 Hype & Motivation</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">Today is all about celebrating YOU...</div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <textarea 
+                  rows={6} 
+                  value={formData.letter} 
+                  onChange={(e) => updateForm('letter', e.target.value)} 
+                  placeholder={formData.occasion === "birthday" ? "Write your heartfelt birthday wishes or toasts here..." : "Pour your heart out here..."} 
+                  className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-6 py-5 text-slate-900 dark:text-white outline-none resize-none focus:border-pink-500 transition-colors" 
+                />
               </div>
 
               {/* Privacy & Data Retention Mode */}

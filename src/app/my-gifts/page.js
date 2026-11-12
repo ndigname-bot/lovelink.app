@@ -137,6 +137,12 @@ export default function MyGifts() {
     window.open(waUrl, "_blank");
   };
 
+  const copySquadInvite = (gift) => {
+    const inviteUrl = `${window.location.origin}/join/${gift.id}`;
+    navigator.clipboard.writeText(inviteUrl);
+    alert(`🎉 Squad contributor link copied for ${gift.recipientName || "this celebration"}!\n\nShare this link in your WhatsApp or Slack group so friends & family can sign cards into the 3D box.`);
+  };
+
   const IS_LAUNCH_PROMO = true;
 
   const handlePayNow = async (giftId, recipientName) => {
@@ -358,6 +364,23 @@ export default function MyGifts() {
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
+
+                            {/* Squad Kudoboard Invite Strip */}
+                            {(gift.occasion === "birthday" || gift.giftMode === "group") && (
+                              <div className="w-full mt-2 pt-2 border-t border-slate-200 dark:border-white/10 flex items-center justify-between">
+                                <span className="text-[11px] font-semibold text-amber-500 flex items-center gap-1">
+                                  <span>🎉</span> Squad Invite Link
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => copySquadInvite(gift)}
+                                  className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                  <span>Copy Invite Link</span>
+                                </button>
+                              </div>
+                            )}
                           </>
                         ) : (
                           <div className="w-full flex flex-col gap-2">
