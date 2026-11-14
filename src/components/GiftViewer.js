@@ -8,6 +8,7 @@ import { doc, getDoc, updateDoc, serverTimestamp, collection, query, orderBy, ge
 import { PRESET_SONGS } from "./MusicSelector";
 import { parseVideoUrl } from "../lib/videoEmbed";
 import BirthdayBox from "./BirthdayBox";
+import BirthdayExperience from "./BirthdayExperience";
 import FlipCardAlbum from "./FlipCardAlbum";
 import CrystalFlower from "./CrystalFlower";
 
@@ -647,7 +648,7 @@ export default function GiftViewer({ params }) {
   };
 
   return (
-    <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-1000`}>
+    <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-start md:justify-center py-10 px-4 sm:px-6 relative overflow-y-auto overflow-x-hidden transition-colors duration-1000 scroll-smooth`}>
       {/* Background Audio (Only plays when YouTube is not selected to prevent both songs playing together) */}
       {!giftData?.songQuery?.includes("youtube") && (
         <audio 
@@ -694,10 +695,10 @@ export default function GiftViewer({ params }) {
         
         {stage === -2 && (
           giftData.occasion === "birthday" ? (
-            <BirthdayBox
-              key="birthday-box"
+            <BirthdayExperience
+              key="birthday-experience"
               giftData={giftData}
-              onOpen={handleOpenEnvelope}
+              actualGiftId={actualGiftId || giftId}
               onStartAudio={() => {
                 if (audioRef.current) {
                   audioRef.current.play().then(() => setIsPlaying(true)).catch(console.warn);

@@ -51,7 +51,7 @@ export default function FlipCardAlbum({ photoUrls = [], photoCaptions = [], wish
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.6 }}
-      className="w-full max-w-4xl mx-auto z-10 px-4 py-8 flex flex-col items-center select-none"
+      className="w-full max-w-4xl mx-auto z-10 px-4 pt-6 pb-28 flex flex-col items-center"
     >
       {/* Header Badge */}
       <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 text-xs font-semibold uppercase tracking-wider mb-3">
