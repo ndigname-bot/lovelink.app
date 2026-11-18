@@ -2,7 +2,7 @@
 import { Logo } from "@/components/Logo";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 , Edit3, Mail, QrCode, Printer, X, MessageCircle, Trash2, Shield } from "lucide-react";
+import { Heart, Link as LinkIcon, ExternalLink, Lock, Clock, Plus, AlertCircle, Sparkles, Star, Loader2 , Edit3, Mail, QrCode, Printer, X, MessageCircle, Trash2, Shield, Copy } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import Link from "next/link";
 import { db, auth } from "../../lib/firebase";
@@ -289,7 +289,7 @@ export default function MyGifts() {
                           </div>
                           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400 mt-1">
                             <Clock className="w-4 h-4" />
-                            {gift.createdAt ? new Date(gift.createdAt.toMillis()).toLocaleDateString() : 'Just now'}
+                            {gift.createdAt ? (typeof gift.createdAt?.toMillis === 'function' ? new Date(gift.createdAt.toMillis()).toLocaleDateString() : new Date(gift.createdAt).toLocaleDateString()) : 'Just now'}
                           </div>
                         </div>
                         
