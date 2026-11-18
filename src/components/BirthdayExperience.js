@@ -23,8 +23,11 @@ import {
   PartyPopper,
   ArrowRight,
   RotateCw,
+  Download,
 } from "lucide-react";
 import confetti from "canvas-confetti";
+import { db } from "../lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
 
 export default function BirthdayExperience({
   giftData,
@@ -76,7 +79,7 @@ export default function BirthdayExperience({
     }
   }, [photoUrls]);
 
-  // Handle Initial Screen Tap: Ignites audio and illuminates room
+  // Handle Initial Screen Tap: Ignites audio, illuminates room, and notifies creator
   const handleIgniteCelebration = () => {
     if (scene !== "dark-candle") return;
 
@@ -85,6 +88,28 @@ export default function BirthdayExperience({
     }
 
     setRoomLit(true);
+
+    // Track open event & notify creator in real-time
+    const targetGiftId = actualGiftId || giftData?.id;
+    if (targetGiftId && targetGiftId !== "demo-gift" && targetGiftId !== "draft") {
+      try {
+        const giftRef = doc(db, "gifts", targetGiftId);
+        updateDoc(giftRef, {
+          lastOpened: new Date().toISOString(),
+          firstOpenedAt: giftData?.firstOpenedAt || new Date().toISOString(),
+        }).catch(console.warn);
+
+        if (!giftData?.firstOpenedAt) {
+          fetch("/api/notify-reaction", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ giftId: targetGiftId, reactionType: "opened" }),
+          }).catch(console.warn);
+        }
+      } catch (err) {
+        console.warn("Open tracking error", err);
+      }
+    }
 
     // Shockwave confetti flash
     try {
@@ -280,6 +305,17 @@ export default function BirthdayExperience({
     }
   };
 
+  const handleDownloadVideo = () => {
+    if (!recordedVideo) return;
+    const url = URL.createObjectURL(recordedVideo);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `LoveLink-Reaction-${recipient}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const handleSendReply = async () => {
     if (!replyText.trim() && !recordedVideo) {
       alert("Please enter a thank-you note or record a video reaction!");
@@ -287,13 +323,47 @@ export default function BirthdayExperience({
     }
     setIsSendingReply(true);
     try {
+      let videoContent = null;
+      if (recordedVideo) {
+        // Convert video blob to Data URL for instant, reliable persistence in creator inbox
+        const reader = new FileReader();
+        videoContent = await new Promise((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(recordedVideo);
+        });
+      }
+
+      const targetGiftId = actualGiftId || giftData?.id;
+      if (targetGiftId && targetGiftId !== "demo-gift" && targetGiftId !== "draft") {
+        const giftRef = doc(db, "gifts", targetGiftId);
+        await updateDoc(giftRef, {
+          response: {
+            type: recordedVideo ? "video" : "text",
+            content: videoContent || replyText.trim(),
+            message: replyText.trim() || "",
+            createdAt: new Date().toISOString(),
+          },
+        });
+
+        // Trigger Resend email to creator
+        await fetch("/api/notify-reaction", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            giftId: targetGiftId,
+            reactionType: recordedVideo ? "video" : "text",
+          }),
+        }).catch(console.warn);
+      }
+
       setReplySent(true);
       try {
-        confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
+        confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
       } catch (e) {}
     } catch (e) {
-      console.error(e);
-      alert("Failed to send reaction.");
+      console.error("Reaction submission error:", e);
+      alert("Failed to send reaction: " + (e.message || "Please try again."));
     } finally {
       setIsSendingReply(false);
     }
@@ -1044,7 +1114,26 @@ export default function BirthdayExperience({
 
                 {/* Recording controls */}
                 <div className="absolute bottom-3 inset-x-0 flex items-center justify-center gap-3">
-                  {!recordedVideo && (
+                  {recordedVideo ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setRecordedVideo(null)}
+                        className="px-3.5 py-1.5 rounded-xl bg-black/70 hover:bg-black/90 text-white text-xs font-semibold border border-white/20 flex items-center gap-1.5 backdrop-blur-md"
+                      >
+                        <RotateCw className="w-3 h-3 text-pink-400" />
+                        <span>Re-record</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadVideo}
+                        className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-emerald-500/30"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Save Clip (TikTok / WhatsApp)</span>
+                      </button>
+                    </div>
+                  ) : (
                     <button
                       type="button"
                       onClick={isRecording ? stopRecording : startRecording}

@@ -44,8 +44,25 @@ export async function POST(req) {
     const domain = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "https://lovelink.app";
     const sender = process.env.RESEND_SENDER_EMAIL || "notifications@lovelink.app";
 
-    const subject = `${recipientName} just reacted to your LoveLink! 💌`;
-    const actionText = reactionType === 'voice' ? 'left you a Voice Note 🎵' : 'wrote you a message ✍️';
+    const isVideo = reactionType === 'video';
+    const isVoice = reactionType === 'voice';
+    const isOpened = reactionType === 'opened';
+
+    const subject = isOpened 
+      ? `🎉 ${recipientName} just opened your LoveLink!`
+      : isVideo 
+      ? `🎥 ${recipientName} recorded a Video Reaction to your LoveLink!` 
+      : isVoice 
+      ? `🎵 ${recipientName} left you a Voice Note!` 
+      : `💌 ${recipientName} wrote you a reply!`;
+
+    const actionText = isOpened
+      ? 'just started viewing your keepsake experience! ✨'
+      : isVideo
+      ? 'recorded an emotional video reaction for you! 🎥'
+      : isVoice
+      ? 'left you a heartfelt Voice Note 🎵'
+      : 'wrote you a message ✍️';
 
     const htmlContent = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #0f172a; border-radius: 24px; color: #ffffff;">

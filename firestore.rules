@@ -20,7 +20,8 @@ service cloud.firestore {
         request.auth.token.email in [
           'admin@lovelink.app',
           'emmanuel@lovelink.app',
-          'ndigname@gmail.com'
+          'ndigname@gmail.com',
+          'ndignamadmin1@gmail.com'
         ] || request.auth.token.admin == true
       );
     }

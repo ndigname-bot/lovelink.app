@@ -59,7 +59,8 @@ import { onAuthStateChanged } from "firebase/auth";
 const DEFAULT_ADMIN_EMAILS = [
   "admin@lovelink.app",
   "emmanuel@lovelink.app",
-  "ndigname@gmail.com"
+  "ndigname@gmail.com",
+  "ndignamadmin1@gmail.com"
 ];
 
 export default function AdminDashboard() {

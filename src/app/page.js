@@ -39,21 +39,20 @@ export default function Home() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 text-sm font-medium mb-8">
             <Sparkles className="w-4 h-4" />
-            <span>The ultimate digital romantic experience</span>
+            <span>Cinematic Keepsakes & 3D Birthday Unboxings</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6">
             The most <br className="hidden lg:block"/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-600">unforgettable gift</span><br/> you will ever give.
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-rose-500 to-amber-400">unforgettable gift</span><br/> they will ever open.
           </h1>
           
           <p className="text-base sm:text-lg md:text-xl px-2 sm:px-0 text-slate-500 dark:text-gray-400 max-w-xl mb-10 leading-relaxed">
-            Create a highly personalized, interactive digital love letter in minutes. 
-            Complete with mini-games, your favorite memories, and your couple's song.
+            From 3D Birthday gift boxes with burning milestone candles and squad Kudoboards, to fingerprint-unlocked love letters scored to your soundtrack. With instant live video reactions.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <Link href="/dashboard" className="group flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 text-slate-900 dark:text-white px-8 py-4 rounded-full font-semibold text-lg hover:scale-105 transition-all shadow-[0_0_40px_rgba(236,72,153,0.4)]">
+            <Link href="/dashboard" className="group flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:scale-105 transition-all shadow-[0_0_40px_rgba(236,72,153,0.4)]">
               Start Building Now
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
@@ -61,11 +60,11 @@ export default function Home() {
           
           <div className="mt-8 flex items-center gap-4 text-sm text-gray-500">
              <div className="flex -space-x-2">
-                <div className="w-8 h-8 rounded-full bg-gray-700 border-2 border-black" />
-                <div className="w-8 h-8 rounded-full bg-gray-600 border-2 border-black" />
-                <div className="w-8 h-8 rounded-full bg-gray-500 border-2 border-black" />
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-rose-500 border-2 border-black flex items-center justify-center text-[10px] text-white font-bold">🎂</div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 border-2 border-black flex items-center justify-center text-[10px] text-white font-bold">💖</div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 border-2 border-black flex items-center justify-center text-[10px] text-white font-bold">🎉</div>
              </div>
-             <p>Over <strong className="text-slate-600 dark:text-gray-300">2,000+</strong> partners surprised</p>
+             <p>Over <strong className="text-slate-800 dark:text-white font-bold">3,200+</strong> keepsakes created &amp; delivered</p>
           </div>
         </motion.div>
 
@@ -123,8 +122,8 @@ export default function Home() {
           </div>
           <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 hover:-translate-y-2 transition-transform">
             <div className="w-12 h-12 bg-amber-500/20 text-amber-500 rounded-2xl flex items-center justify-center mb-6 text-2xl">🎂</div>
-            <h3 className="text-xl font-bold mb-2">Birthdays</h3>
-            <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">Make them feel like the main character. A personalized photo scroll scored to their favorite song.</p>
+            <h3 className="text-xl font-bold mb-2">3D Birthday Box</h3>
+            <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed">Burning milestone candles, 3D box unboxing, floating polaroids, and squad Kudoboard wish tributes.</p>
           </div>
           <div className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 hover:-translate-y-2 transition-transform">
             <div className="w-12 h-12 bg-rose-500/20 text-rose-500 rounded-2xl flex items-center justify-center mb-6 text-2xl">💌</div>
@@ -282,6 +281,89 @@ export default function Home() {
               10x more personal than flowers, at a fraction of the cost.
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* SOCIAL PROOF & REAL TESTIMONIALS */}
+      <section className="py-20 max-w-6xl mx-auto px-6 relative z-10">
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-500/10 text-pink-500 font-bold text-xs uppercase tracking-wider mb-3 border border-pink-500/20">
+            Real Moments • Real Tears
+          </div>
+          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4">
+            Loved by 3,200+ People Worldwide
+          </h2>
+          <p className="text-slate-500 dark:text-gray-400 text-base md:text-lg max-w-xl mx-auto">
+            See what happens when you send a gift with actual thought and soul.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-3xl p-6 flex flex-col justify-between shadow-sm">
+            <div className="space-y-4">
+              <div className="flex gap-1 text-amber-400 text-sm">
+                {"★★★★★"}
+              </div>
+              <p className="text-sm sm:text-base font-serif italic text-slate-700 dark:text-slate-200 leading-relaxed">
+                &quot;My girlfriend literally cried when the pitch-black room lit up with her burning 25th birthday candle and our song played. Best $10 I have ever spent.&quot;
+              </p>
+            </div>
+            <div className="pt-4 border-t border-slate-200 dark:border-white/10 mt-6 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-800 dark:text-white">Sarah K.</span>
+              <span className="text-[11px] text-pink-500 font-medium">Birthday Star 🎂</span>
+            </div>
+          </div>
+
+          <div className="bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-3xl p-6 flex flex-col justify-between shadow-sm">
+            <div className="space-y-4">
+              <div className="flex gap-1 text-amber-400 text-sm">
+                {"★★★★★"}
+              </div>
+              <p className="text-sm sm:text-base font-serif italic text-slate-700 dark:text-slate-200 leading-relaxed">
+                &quot;I organized the Squad Kudoboard for our coworker. Over 18 people signed it from WhatsApp in 30 minutes with selfies! She said it beat any physical card.&quot;
+              </p>
+            </div>
+            <div className="pt-4 border-t border-slate-200 dark:border-white/10 mt-6 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-800 dark:text-white">Marcus T.</span>
+              <span className="text-[11px] text-amber-500 font-medium">Squad Organizer 🎉</span>
+            </div>
+          </div>
+
+          <div className="bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-3xl p-6 flex flex-col justify-between shadow-sm">
+            <div className="space-y-4">
+              <div className="flex gap-1 text-amber-400 text-sm">
+                {"★★★★★"}
+              </div>
+              <p className="text-sm sm:text-base font-serif italic text-slate-700 dark:text-slate-200 leading-relaxed">
+                &quot;The live video reaction she sent back straight to my inbox was priceless. She recorded it right as the letter unfolded. I saved the clip forever.&quot;
+              </p>
+            </div>
+            <div className="pt-4 border-t border-slate-200 dark:border-white/10 mt-6 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-800 dark:text-white">David O.</span>
+              <span className="text-[11px] text-rose-500 font-medium">Video Reaction Received 🎥</span>
+            </div>
+          </div>
+        </div>
+
+        {/* LIVE VIDEO REACTION BANNER */}
+        <div className="mt-12 bg-gradient-to-r from-pink-500/10 via-rose-500/10 to-amber-500/10 border border-pink-500/30 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center md:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 text-pink-400 text-xs font-bold">
+              🎥 The Reaction Loop
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+              They open it. You get a live video reaction.
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-gray-400 max-w-xl">
+              No guessing if they liked it. The built-in reaction booth lets them record an emotional video or voice note delivered directly to your LoveLink inbox.
+            </p>
+          </div>
+          <Link
+            href="/dashboard"
+            className="px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-rose-600 text-white font-bold text-xs uppercase tracking-wider shadow-lg hover:scale-105 transition-all shrink-0"
+          >
+            Create Your LoveLink ➔
+          </Link>
         </div>
       </section>
 

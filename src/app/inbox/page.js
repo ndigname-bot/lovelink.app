@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Play, Pause, Disc, ArrowLeft, Heart, MessageSquare } from "lucide-react";
+import { Mail, Play, Pause, Disc, ArrowLeft, Heart, MessageSquare, Video, Download } from "lucide-react";
 import Link from "next/link";
 import { auth, db } from "../../lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -106,14 +106,18 @@ export default function Inbox() {
                 >
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-lg">{msg.recipientName}</h3>
-                    {msg.response.type === 'voice' ? (
+                    {msg.response.type === 'video' ? (
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full">
+                        <Video className="w-3.5 h-3.5" /> Video
+                      </div>
+                    ) : msg.response.type === 'voice' ? (
                       <Disc className="w-4 h-4 text-pink-500" />
                     ) : (
                       <MessageSquare className="w-4 h-4 text-pink-500" />
                     )}
                   </div>
                   <p className="text-xs text-slate-500 dark:text-gray-400 capitalize">
-                    {msg.response.createdAt ? new Date(msg.response.createdAt).toLocaleDateString() : 'New'} • {msg.response.type} message
+                    {msg.response.createdAt ? new Date(msg.response.createdAt).toLocaleDateString() : 'New'} • {msg.response.type} reaction
                   </p>
                 </button>
               ))}
@@ -195,6 +199,35 @@ export default function Inbox() {
                         </button>
                       </div>
                       <p className="mt-6 text-sm font-medium text-slate-500">{isPlaying ? "Playing Message..." : "Press Play to Listen"}</p>
+                    </>
+                  ) : selectedMsg.response.type === 'video' ? (
+                    <>
+                      {/* Video Player Visual */}
+                      <div className="w-full aspect-video rounded-3xl overflow-hidden bg-black border border-slate-200 dark:border-white/10 shadow-2xl relative mb-6">
+                        <video 
+                          src={selectedMsg.response.content} 
+                          controls 
+                          playsInline
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {selectedMsg.response.message && (
+                        <div className="w-full p-5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl mb-4 text-left">
+                          <p className="text-xs uppercase tracking-wider text-pink-500 font-bold mb-1">Accompanying Note</p>
+                          <p className="text-sm font-serif italic text-slate-700 dark:text-slate-300">
+                            &quot;{selectedMsg.response.message}&quot;
+                          </p>
+                        </div>
+                      )}
+
+                      <a 
+                        href={selectedMsg.response.content} 
+                        download={`LoveLink-Reaction-${selectedMsg.recipientName}.webm`}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-black font-bold text-xs hover:scale-105 transition-transform shadow-lg"
+                      >
+                        <Download className="w-4 h-4" /> Download Reaction Video
+                      </a>
                     </>
                   ) : (
                     <>
