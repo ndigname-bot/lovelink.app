@@ -22,8 +22,8 @@ export const PRESET_SONGS = [
   { title: "Duduke - Simi", url: "/audio/duduke.mp3", category: "family" },
 
   // 🎉 Congratulations & Milestones
+  { title: "Happy Birthday - Stevie Wonder (Birthday Default)", url: "/audio/happy-birthday.mp3", category: "celebration" },
   { title: "Celebration - Kool & The Gang", url: "/audio/celebration.mp3", category: "celebration" },
-  { title: "Happy Birthday - Stevie Wonder", url: "/audio/happy-birthday.mp3", category: "celebration" },
   { title: "Stand By Me - Ben E. King", url: "/audio/stand-by-me.mp3", category: "celebration" },
   { title: "Congratulations - Post Malone", url: "/audio/congratulations.mp3", category: "celebration" },
 
@@ -41,7 +41,7 @@ export const PRESET_SONGS = [
 
 export function MusicSelector({ formData, updateForm, previewSong, setPreviewSong, setAudioFile }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeCategory, setActiveCategory] = useState(formData?.occasion === "birthday" ? "celebration" : "all");
   
   const selectedPreset = PRESET_SONGS.find(s => s.url === formData.songQuery);
   const isCustom = formData.songQuery && !selectedPreset && formData.songQuery !== 'upload';
@@ -53,7 +53,9 @@ export function MusicSelector({ formData, updateForm, previewSong, setPreviewSon
   else if (isUpload) selectedDisplay = "Custom MP3 Upload";
 
   const filteredSongs = activeCategory === "all" 
-    ? PRESET_SONGS 
+    ? (formData?.occasion === "birthday"
+        ? [...PRESET_SONGS.filter(s => s.category === "celebration"), ...PRESET_SONGS.filter(s => s.category !== "celebration")]
+        : PRESET_SONGS)
     : PRESET_SONGS.filter(s => s.category === activeCategory);
 
   return (

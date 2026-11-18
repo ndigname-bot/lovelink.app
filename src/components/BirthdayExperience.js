@@ -21,8 +21,8 @@ import {
   Users,
   Image as ImageIcon,
   PartyPopper,
-  Flame,
   ArrowRight,
+  RotateCw,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
@@ -32,17 +32,18 @@ export default function BirthdayExperience({
   actualGiftId,
   styles,
 }) {
-  // Main Scenes: 'dark-candle' | 'cake-reveal' | 'box-unbox' | 'photo-stream' | 'kudoboard-playlist' | 'box-letter' | 'reaction-booth'
+  // Main Scenes: 'dark-candle' | 'cake-reveal' | 'box-ready' | 'box-unboxing' | 'photo-impact' | 'kudoboard-playlist' | 'box-letter' | 'grand-banner' | 'reaction-booth'
   const [scene, setScene] = useState("dark-candle");
   const [roomLit, setRoomLit] = useState(false);
   const [candleBlown, setCandleBlown] = useState(false);
-  const [showBoxPrompt, setShowBoxPrompt] = useState(false);
+  const [isLidOff, setIsLidOff] = useState(false);
 
   // Photo Stream State
   const photoUrls = giftData?.photoUrls || [];
   const photoCaptions = giftData?.photoCaptions || [];
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const [isPhotoPaused, setIsPhotoPaused] = useState(false);
+  const [isPhotoBlowingOff, setIsPhotoBlowingOff] = useState(false);
   const photoTimerRef = useRef(null);
 
   // Group Kudoboard State
@@ -65,7 +66,7 @@ export default function BirthdayExperience({
   const streamRef = useRef(null);
   const recordedChunksRef = useRef([]);
 
-  // Preload images silently during dark candle phase
+  // Preload images silently
   useEffect(() => {
     if (typeof window !== "undefined" && photoUrls.length > 0) {
       photoUrls.forEach((url) => {
@@ -85,15 +86,25 @@ export default function BirthdayExperience({
 
     setRoomLit(true);
 
+    // Shockwave confetti flash
+    try {
+      confetti({
+        particleCount: 40,
+        spread: 60,
+        origin: { y: 0.5 },
+        colors: ["#fbbf24", "#f59e0b", "#ec4899", "#ffffff"],
+      });
+    } catch (e) {}
+
     // Light up room and transition to 3D cake reveal
     setTimeout(() => {
       setScene("cake-reveal");
 
       // 3 seconds later, slide the 3D Birthday Box in
       setTimeout(() => {
-        setShowBoxPrompt(true);
+        setScene("box-ready");
       }, 3000);
-    }, 900);
+    }, 1000);
   };
 
   // Blow out candle interactivity
@@ -104,62 +115,87 @@ export default function BirthdayExperience({
     setCandleBlown(true);
     try {
       confetti({
-        particleCount: 60,
-        spread: 80,
-        origin: { y: 0.45 },
-        colors: ["#fbbf24", "#f59e0b", "#ec4899", "#ffffff"],
+        particleCount: 75,
+        spread: 85,
+        origin: { y: 0.42 },
+        colors: ["#fbbf24", "#f59e0b", "#ec4899", "#a855f7", "#ffffff"],
       });
     } catch (err) {}
+
+    // Advance to box if not yet shown
+    setTimeout(() => {
+      setScene("box-ready");
+    }, 1200);
   };
 
   // Open the 3D Gift Box
   const handleOpenGiftBox = () => {
-    setScene("box-unbox");
+    setScene("box-unboxing");
+    setIsLidOff(true);
 
     try {
       confetti({
-        particleCount: 110,
+        particleCount: 120,
         spread: 100,
-        origin: { y: 0.6 },
+        origin: { y: 0.65 },
         colors: ["#ec4899", "#fbbf24", "#8b5cf6", "#10b981", "#ffffff"],
       });
     } catch (err) {}
 
+    // Transition to photo impact or group playlist
     setTimeout(() => {
       if (isGroupMode && wishes.length > 0) {
-        // Group Kudoboard: burst into playlist
         setScene("kudoboard-playlist");
       } else if (photoUrls.length > 0) {
-        // Solo with photos: start photo stream
-        setScene("photo-stream");
+        setActivePhotoIdx(0);
+        setIsPhotoBlowingOff(false);
+        setScene("photo-impact");
       } else if (hasLetter) {
-        // Solo without photos: go straight to letter
         setScene("box-letter");
       } else {
-        // Solo without photos & without letter: grand banner
         setScene("grand-banner");
       }
-    }, 1200);
+    }, 1400);
   };
 
-  // Auto-advance photo stream every 3.2 seconds
-  useEffect(() => {
-    if (scene === "photo-stream" && !isPhotoPaused && photoUrls.length > 0) {
-      photoTimerRef.current = setTimeout(() => {
-        if (activePhotoIdx < photoUrls.length - 1) {
-          setActivePhotoIdx((prev) => prev + 1);
+  // Auto-advance photo stream with "blow off" effect
+  const triggerNextPhoto = () => {
+    setIsPhotoBlowingOff(true);
+    setTimeout(() => {
+      if (activePhotoIdx < photoUrls.length - 1) {
+        setActivePhotoIdx((prev) => prev + 1);
+        setIsPhotoBlowingOff(false);
+      } else {
+        // All photos completed! Transition to 90° box tilt / letter or grand banner
+        if (hasLetter) {
+          setScene("box-letter");
         } else {
-          // Photos finished! Transition to 90° box tilt / letter or grand banner
-          if (hasLetter) {
-            setScene("box-letter");
-          } else {
-            setScene("grand-banner");
-          }
+          setScene("grand-banner");
         }
-      }, 3200);
+      }
+    }, 550);
+  };
+
+  useEffect(() => {
+    if (scene === "photo-impact" && !isPhotoPaused && !isPhotoBlowingOff && photoUrls.length > 0) {
+      photoTimerRef.current = setTimeout(() => {
+        triggerNextPhoto();
+      }, 3400);
     }
     return () => clearTimeout(photoTimerRef.current);
-  }, [scene, activePhotoIdx, isPhotoPaused, photoUrls.length, hasLetter]);
+  }, [scene, activePhotoIdx, isPhotoPaused, isPhotoBlowingOff, photoUrls.length]);
+
+  // Dummy mini-polaroid cards that float up like balloons in the video
+  const dummyPictures = [
+    { text: "🎂", delay: 0, x: -75, drift: -45, rot: -18 },
+    { text: "✨", delay: 0.2, x: 65, drift: 55, rot: 15 },
+    { text: "💖", delay: 0.35, x: -25, drift: -30, rot: -8 },
+    { text: "👑", delay: 0.5, x: 80, drift: 70, rot: 20 },
+    { text: "🎈", delay: 0.65, x: -90, drift: -75, rot: -22 },
+    { text: "🎉", delay: 0.8, x: 30, drift: 35, rot: 12 },
+    { text: "⭐", delay: 0.95, x: -45, drift: -40, rot: -14 },
+    { text: "🎁", delay: 1.1, x: 50, drift: 60, rot: 16 },
+  ];
 
   // Reaction Booth Handlers
   const startRecording = async () => {
@@ -185,8 +221,8 @@ export default function BirthdayExperience({
       mediaRecorder.start();
       setIsRecording(true);
     } catch (err) {
-      console.warn("Webcam access declined or unavailable:", err);
-      alert("Camera access was not permitted. You can still type your reply below!");
+      console.warn("Camera permission error:", err);
+      alert("Camera access was not permitted. You can type your thank-you message below!");
     }
   };
 
@@ -202,12 +238,11 @@ export default function BirthdayExperience({
 
   const handleSendReply = async () => {
     if (!replyText.trim() && !recordedVideo) {
-      alert("Please enter a thank-you note or record a quick video reaction!");
+      alert("Please enter a thank-you note or record a video reaction!");
       return;
     }
     setIsSendingReply(true);
     try {
-      // In production, update Firestore doc with recipient's reaction response
       setReplySent(true);
       try {
         confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
@@ -222,17 +257,57 @@ export default function BirthdayExperience({
 
   const recipient = giftData?.recipientName || "Cutie";
   const creator = giftData?.creatorName || "Someone who loves you";
-  const age = giftData?.birthdayAge ? String(giftData.birthdayAge).replace(/[^0-9]/g, "") : null;
+  // The exact imputed age from the user
+  const rawAge = giftData?.birthdayAge ? String(giftData.birthdayAge).replace(/[^0-9]/g, "") : "";
+  const displayAge = rawAge ? rawAge : null;
 
   return (
     <div
-      className={`relative w-full min-h-[90vh] flex flex-col items-center justify-center transition-colors duration-1000 ${
+      className={`relative w-full min-h-[92vh] flex flex-col items-center justify-center transition-colors duration-1000 ${
         scene === "dark-candle" && !roomLit
-          ? "bg-[#050505] text-white"
+          ? "bg-[#030305] text-white"
           : "bg-transparent text-white"
       }`}
     >
-      {/* SCENE 1: PITCH BLACK ROOM WITH FLICKERING CANDLE */}
+      {/* FLOATING DUMMY PICTURES RISING OUT OF BOX (Inspired by Alexx.dev Balloons) */}
+      <AnimatePresence>
+        {isLidOff && (
+          <div className="fixed inset-0 pointer-events-none z-40 overflow-hidden">
+            {dummyPictures.map((d, i) => (
+              <motion.div
+                key={i}
+                initial={{
+                  opacity: 1,
+                  y: "65vh",
+                  x: `calc(50vw + ${d.x}px)`,
+                  scale: 0.35,
+                  rotate: 0,
+                }}
+                animate={{
+                  opacity: [1, 1, 0],
+                  y: "-25vh",
+                  x: `calc(50vw + ${d.x + d.drift}px)`,
+                  scale: [0.35, 1.1, 1.25],
+                  rotate: [0, d.rot * 1.5, d.rot * 2],
+                }}
+                transition={{
+                  duration: 4.2,
+                  delay: d.delay,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className="absolute w-14 h-16 rounded-xl bg-white p-1 shadow-2xl flex flex-col items-center justify-between border-2 border-pink-400"
+              >
+                <div className="w-full h-10 rounded-lg bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-lg shadow-inner">
+                  {d.text}
+                </div>
+                <div className="w-8 h-1 bg-slate-300 rounded-full mb-0.5" />
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* SCENE 1: PITCH BLACK ROOM WITH THE PERSON'S IMPUTED AGE CANDLE */}
       <AnimatePresence mode="wait">
         {scene === "dark-candle" && (
           <motion.div
@@ -240,66 +315,91 @@ export default function BirthdayExperience({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.9 }}
             onClick={handleIgniteCelebration}
-            className="fixed inset-0 z-40 bg-[#050505] flex flex-col items-center justify-center cursor-pointer select-none p-6 text-center"
+            className="fixed inset-0 z-50 bg-[#030305] flex flex-col items-center justify-center cursor-pointer select-none p-6 text-center"
           >
-            {/* Candle Container */}
+            {/* The Person's Imputed Age Burning Candle */}
             <div className="relative flex flex-col items-center">
-              {/* Flame Glow Ambient Light */}
+              {/* Flame Radiance Halo */}
               <motion.div
                 animate={{
-                  scale: [1, 1.15, 0.95, 1.2, 1],
-                  opacity: [0.7, 0.9, 0.65, 0.95, 0.7],
+                  scale: [1, 1.25, 0.95, 1.3, 1],
+                  opacity: [0.65, 0.95, 0.6, 1, 0.65],
                 }}
                 transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-                className="absolute -top-16 w-36 h-36 rounded-full bg-amber-500/20 blur-3xl pointer-events-none"
+                className="absolute -top-20 w-48 h-48 rounded-full bg-amber-400/25 blur-3xl pointer-events-none"
               />
 
-              {/* Animated Flame */}
-              <motion.div
-                animate={{
-                  rotate: [-2, 3, -1, 2, -2],
-                  scaleY: [1, 1.1, 0.95, 1.08, 1],
-                }}
-                transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
-                className="relative z-10 w-8 h-14"
-              >
-                {/* Outer Yellow Flame */}
-                <div className="w-full h-full rounded-[50%_50%_20%_20%_/_70%_70%_30%_30%] bg-gradient-to-t from-orange-500 via-amber-400 to-yellow-200 shadow-[0_0_35px_rgba(251,191,36,0.9)]" />
-                {/* Inner Cyan Core */}
-                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-3 h-5 rounded-full bg-cyan-200/90 blur-[1px]" />
-              </motion.div>
+              {/* Number Candles for the Imputed Age */}
+              <div className="relative z-10 flex items-center justify-center gap-3">
+                {displayAge ? (
+                  displayAge.split("").map((digit, idx) => (
+                    <div key={idx} className="relative flex flex-col items-center">
+                      {/* Flickering Flame */}
+                      <motion.div
+                        animate={{
+                          rotate: [-3, 4, -2, 3, -3],
+                          scaleY: [1, 1.18, 0.92, 1.12, 1],
+                        }}
+                        transition={{ repeat: Infinity, duration: 1.1 + idx * 0.15, ease: "easeInOut" }}
+                        className="relative w-6 h-10 mb-1"
+                      >
+                        <div className="w-full h-full rounded-[50%_50%_20%_20%_/_70%_70%_30%_30%] bg-gradient-to-t from-orange-500 via-amber-400 to-yellow-100 shadow-[0_0_30px_rgba(251,191,36,0.95)]" />
+                        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-2 h-4 rounded-full bg-cyan-200/90 blur-[0.5px]" />
+                      </motion.div>
 
-              {/* Candle Wick */}
-              <div className="w-1 h-3 bg-slate-900 rounded-t-sm" />
+                      {/* Candle Wick */}
+                      <div className="w-1 h-2 bg-slate-900 rounded-t-xs" />
 
-              {/* Candle Body */}
-              <div className="w-10 h-28 rounded-t-lg bg-gradient-to-b from-rose-100 via-rose-200 to-rose-300 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-2 bg-rose-200 rounded-t-lg" />
-                <div className="absolute top-2 left-2 w-1.5 h-6 bg-white/70 rounded-full blur-[0.5px]" />
+                      {/* Number Candle Body */}
+                      <div className="px-4 py-2 rounded-2xl bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 text-amber-950 font-black text-4xl sm:text-5xl font-mono shadow-[0_10px_25px_rgba(251,191,36,0.4)] border-2 border-white/80">
+                        {digit}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  /* Single Spiral Birthday Candle if Age Omitted */
+                  <div className="relative flex flex-col items-center">
+                    <motion.div
+                      animate={{
+                        rotate: [-3, 3, -2, 2, -3],
+                        scaleY: [1, 1.15, 0.95, 1.1, 1],
+                      }}
+                      transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                      className="relative w-7 h-12 mb-1"
+                    >
+                      <div className="w-full h-full rounded-[50%_50%_20%_20%_/_70%_70%_30%_30%] bg-gradient-to-t from-orange-500 via-amber-400 to-yellow-100 shadow-[0_0_35px_rgba(251,191,36,1)]" />
+                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-4.5 rounded-full bg-cyan-200/90 blur-[0.5px]" />
+                    </motion.div>
+                    <div className="w-1 h-2.5 bg-slate-900" />
+                    <div className="w-8 h-24 rounded-t-xl bg-gradient-to-b from-rose-200 via-pink-400 to-rose-500 border border-white/60 shadow-2xl flex items-center justify-center font-bold text-white text-xs">
+                      ✨
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Tap Prompt */}
+            {/* Tap Instruction */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.8 }}
-              className="mt-12 space-y-2"
+              transition={{ delay: 0.5, duration: 0.8 }}
+              className="mt-14 space-y-2"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-mono tracking-widest uppercase text-amber-300 shadow-lg">
-                <Sparkles className="w-3.5 h-3.5 animate-spin-slow" />
-                <span>Tap Anywhere to Begin</span>
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 border border-white/20 text-xs font-mono tracking-widest uppercase text-amber-300 shadow-2xl">
+                <Sparkles className="w-4 h-4 animate-spin-slow text-amber-400" />
+                <span>Tap Anywhere to Light Up</span>
               </div>
               <p className="text-sm text-slate-400 font-sans tracking-wide">
-                Touch the screen to light up your special day ✨
+                Touch your screen to ignite the celebration 🎂
               </p>
             </motion.div>
           </motion.div>
         )}
 
-        {/* SCENE 2: ROOM ILLUMINATES & 3D CAKE WITH NUMBER CANDLE */}
+        {/* SCENE 2: ROOM ILLUMINATES & 3D CAKE IS REVEALED */}
         {scene === "cake-reveal" && (
           <motion.div
             key="scene-cake"
@@ -307,9 +407,8 @@ export default function BirthdayExperience({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.8 }}
-            className="w-full max-w-xl mx-auto flex flex-col items-center text-center px-4 py-8 select-none"
+            className="w-full max-w-lg mx-auto flex flex-col items-center text-center px-4 py-8 select-none"
           >
-            {/* Header Title */}
             <motion.div
               initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -323,40 +422,38 @@ export default function BirthdayExperience({
               </h1>
             </motion.div>
 
-            {/* 3D Cake with Milestone Age Candle */}
+            {/* 3D Birthday Cake */}
             <div
               className="relative flex flex-col items-center cursor-pointer group my-4"
               onClick={handleBlowCandle}
-              title="Tap candle to make a wish & blow it out!"
+              title="Tap candle to blow it out!"
             >
-              {/* Flame Glow */}
               {!candleBlown && (
                 <motion.div
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+                  animate={{ scale: [1, 1.25, 1], opacity: [0.5, 0.8, 0.5] }}
                   transition={{ repeat: Infinity, duration: 2 }}
-                  className="absolute -top-16 w-32 h-32 rounded-full bg-amber-400/25 blur-2xl pointer-events-none"
+                  className="absolute -top-16 w-36 h-36 rounded-full bg-amber-400/25 blur-3xl pointer-events-none"
                 />
               )}
 
-              {/* Number Candle(s) */}
+              {/* Number Candles on Top of Cake */}
               <div className="relative z-10 flex items-center justify-center gap-2 mb-1">
-                {age ? (
-                  age.split("").map((digit, i) => (
-                    <div key={i} className="relative flex flex-col items-center">
+                {displayAge ? (
+                  displayAge.split("").map((digit, idx) => (
+                    <div key={idx} className="relative flex flex-col items-center">
                       {!candleBlown && (
                         <motion.div
                           animate={{ scaleY: [1, 1.15, 0.9, 1.1], rotate: [-2, 3, -2] }}
                           transition={{ repeat: Infinity, duration: 1.2 }}
-                          className="w-4 h-7 rounded-full bg-gradient-to-t from-orange-500 via-amber-400 to-yellow-200 shadow-[0_0_20px_rgba(251,191,36,0.9)] mb-1"
+                          className="w-4 h-7 rounded-full bg-gradient-to-t from-orange-500 via-amber-400 to-yellow-100 shadow-[0_0_20px_rgba(251,191,36,0.9)] mb-1"
                         />
                       )}
-                      <div className="px-3 py-1.5 rounded-xl bg-gradient-to-br from-amber-200 via-amber-400 to-amber-500 text-amber-950 font-black text-2xl sm:text-3xl font-mono shadow-lg border border-white/60">
+                      <div className="px-3 py-1.5 rounded-xl bg-gradient-to-br from-amber-200 via-amber-400 to-amber-500 text-amber-950 font-black text-2xl sm:text-3xl font-mono shadow-lg border border-white/70">
                         {digit}
                       </div>
                     </div>
                   ))
                 ) : (
-                  /* Spiral Sparkler Candle when Age is omitted */
                   <div className="relative flex flex-col items-center">
                     {!candleBlown && (
                       <motion.div
@@ -365,21 +462,19 @@ export default function BirthdayExperience({
                         className="w-5 h-8 rounded-full bg-gradient-to-t from-orange-500 via-amber-300 to-yellow-100 shadow-[0_0_25px_rgba(251,191,36,1)] mb-1"
                       />
                     )}
-                    <div className="w-6 h-12 rounded-t-lg bg-gradient-to-b from-pink-300 via-rose-400 to-pink-500 border border-white/40 shadow-md flex items-center justify-center text-xs font-bold text-white">
+                    <div className="w-6 h-12 rounded-t-lg bg-gradient-to-b from-pink-300 via-rose-400 to-pink-500 border border-white/50 shadow-md flex items-center justify-center text-xs font-bold text-white">
                       ✨
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Cake Stand & Tiers */}
+              {/* 3D Tiered Cake Stand */}
               <div className="w-56 sm:w-64 flex flex-col items-center">
-                {/* Top Tier */}
                 <div className="w-36 h-14 rounded-t-2xl bg-gradient-to-r from-pink-300 via-rose-200 to-pink-300 border-2 border-white/50 shadow-md relative overflow-hidden flex items-center justify-center">
                   <div className="absolute top-0 inset-x-0 h-3 bg-white/70 rounded-full blur-[1px]" />
                   <span className="text-xs font-serif italic text-rose-900 font-bold">celebrate</span>
                 </div>
-                {/* Bottom Tier */}
                 <div className="w-52 sm:w-60 h-20 rounded-t-3xl bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 border-2 border-pink-300/60 shadow-2xl relative overflow-hidden flex items-center justify-around px-4">
                   <div className="absolute top-0 inset-x-0 h-4 bg-white/40 [clip-path:polygon(0_0,100%_0,95%_100%,85%_60%,75%_100%,65%_60%,55%_100%,45%_60%,35%_100%,25%_60%,15%_100%,5%_60%,0_100%)]" />
                   <span className="text-xl">🍓</span>
@@ -387,154 +482,220 @@ export default function BirthdayExperience({
                   <span className="text-xl">💖</span>
                   <span className="text-xl">🍓</span>
                 </div>
-                {/* Golden Platter */}
                 <div className="w-64 sm:w-72 h-4 rounded-full bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 border border-amber-100 shadow-xl" />
               </div>
 
-              {/* Blow Candle Prompt */}
+              {/* Candle Prompt */}
               <p className="text-xs text-amber-200/90 mt-4 font-sans flex items-center gap-1.5">
                 {candleBlown ? (
-                  <span className="text-emerald-400 font-semibold">✨ Wish made! The universe is listening.</span>
+                  <span className="text-emerald-400 font-semibold">✨ Wish made! Opening your package...</span>
                 ) : (
-                  <span>💨 Tap candle to make your wish and blow it out</span>
+                  <span>💨 Tap candle to blow it out</span>
                 )}
               </p>
             </div>
-
-            {/* 3 Seconds Later: The 3D Birthday Gift Box Appears */}
-            <AnimatePresence>
-              {showBoxPrompt && (
-                <motion.div
-                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                  className="mt-8 w-full p-6 rounded-3xl bg-gradient-to-br from-pink-500/20 via-rose-500/10 to-amber-500/20 border border-pink-500/30 shadow-2xl backdrop-blur-xl flex flex-col items-center"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-amber-500 flex items-center justify-center text-white text-2xl shadow-lg shadow-pink-500/30 mb-3 animate-bounce">
-                    🎁
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-1">
-                    Here is your birthday gift, {recipient}!
-                  </h3>
-                  <p className="text-xs text-slate-300 max-w-xs mb-5">
-                    Made with love by <strong className="text-pink-400">{creator}</strong>
-                    {isGroupMode && wishes.length > 0 && ` & ${wishes.length} friends`}.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleOpenGiftBox}
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    <span>Tap Box to Open 🎁</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </motion.div>
         )}
 
-        {/* SCENE 3: BOX UNBOXING EXPLOSION */}
-        {scene === "box-unbox" && (
+        {/* SCENE 3: 3D BIRTHDAY BOX READY TO OPEN */}
+        {(scene === "box-ready" || scene === "box-unboxing") && (
           <motion.div
-            key="scene-unbox"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: [1, 1.15, 1], opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="flex flex-col items-center justify-center py-20 text-center"
+            key="scene-box"
+            initial={{ opacity: 0, scale: 0.85, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 220, damping: 22 }}
+            className="w-full max-w-sm sm:max-w-md mx-auto flex flex-col items-center px-4 py-8 select-none"
+            style={{ perspective: 1200 }}
           >
-            <motion.div
-              animate={{ rotate: [0, -10, 10, -5, 5, 0], scale: [1, 1.2, 1] }}
-              transition={{ duration: 1 }}
-              className="text-8xl mb-6"
+            <div className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 border border-pink-500/30 backdrop-blur-xl shadow-lg">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[11px] font-mono text-pink-300 font-semibold tracking-wider uppercase">
+                Special Birthday Package 🎁
+              </span>
+            </div>
+
+            {/* 3D GIFT BOX (Styled Like Alexx.dev Hello Kitty Box) */}
+            <div
+              className="relative w-72 sm:w-80 h-72 sm:h-80 flex flex-col items-center justify-center cursor-pointer group"
+              onClick={handleOpenGiftBox}
             >
-              🎉
-            </motion.div>
-            <h2 className="text-3xl font-serif italic font-bold text-white mb-2">
-              Unboxing Your Surprises...
-            </h2>
-            <p className="text-xs text-pink-300 font-mono tracking-widest uppercase">
-              Release the confetti ✨
-            </p>
+              {/* Box Ambient Glow */}
+              <div className="absolute -inset-4 rounded-[3rem] bg-gradient-to-r from-pink-500/30 via-rose-500/25 to-amber-500/20 blur-3xl pointer-events-none" />
+
+              {/* 3D BOX LID */}
+              <motion.div
+                animate={
+                  isLidOff
+                    ? {
+                        y: -140,
+                        rotateX: -115,
+                        rotateZ: -12,
+                        opacity: 0,
+                        scale: 0.85,
+                        transition: { duration: 0.85, ease: "easeOut" },
+                      }
+                    : {
+                        y: [0, -4, 0],
+                        transition: { repeat: Infinity, duration: 3, ease: "easeInOut" },
+                      }
+                }
+                style={{ transformStyle: "preserve-3d", transformOrigin: "top center" }}
+                className="absolute -top-3 z-30 w-[104%] h-20 rounded-2xl bg-gradient-to-r from-rose-100 via-pink-50 to-rose-100 border-2 border-pink-300 shadow-[0_15px_30px_rgba(0,0,0,0.4)] flex flex-col items-center justify-center overflow-visible"
+              >
+                {/* Horizontal Ribbon */}
+                <div className="absolute inset-x-0 h-6 bg-gradient-to-r from-pink-500 via-rose-400 to-pink-500 shadow-md border-y border-pink-200/60" />
+                {/* Vertical Ribbon */}
+                <div className="absolute inset-y-0 w-6 bg-gradient-to-b from-pink-500 via-rose-400 to-pink-500 shadow-md border-x border-pink-200/60" />
+
+                {/* Ribbon Bow */}
+                <div className="relative -top-4 z-40 w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 via-rose-500 to-pink-600 border-2 border-white shadow-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                  <div className="absolute -left-3 w-5 h-7 rounded-full border-2 border-pink-300 bg-pink-500/50 -rotate-35" />
+                  <div className="absolute -right-3 w-5 h-7 rounded-full border-2 border-pink-300 bg-pink-500/50 rotate-35" />
+                </div>
+              </motion.div>
+
+              {/* BOX BODY */}
+              <div className="relative w-full h-64 mt-12 rounded-3xl bg-gradient-to-b from-rose-500 via-pink-600 to-rose-700 border-2 border-pink-300/40 shadow-[0_25px_60px_-10px_rgba(244,63,94,0.5)] overflow-hidden flex flex-col items-center justify-between p-6">
+                {/* Ribbon Cross */}
+                <div className="absolute inset-y-0 w-6 bg-gradient-to-b from-pink-400 via-rose-300 to-pink-400 opacity-90 border-x border-white/30 pointer-events-none" />
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-6 bg-gradient-to-r from-pink-400 via-rose-300 to-pink-400 opacity-90 border-y border-white/30 pointer-events-none" />
+
+                {/* Front Plaque */}
+                <div className="relative z-10 w-full flex flex-col items-center text-center mt-3">
+                  <div className="px-3 py-0.5 rounded-full bg-black/40 border border-white/20 text-[10px] font-mono uppercase tracking-widest text-amber-300 font-bold mb-1">
+                    {displayAge ? `${displayAge}th Birthday Reveal` : "Exclusive Reveal"}
+                  </div>
+                  <h2 className="text-3xl font-serif italic font-bold text-white drop-shadow-md">
+                    {recipient}
+                  </h2>
+                  <p className="text-xs text-pink-100 opacity-90 mt-1">
+                    Made with love by <strong className="underline decoration-amber-300">{creator}</strong>
+                  </p>
+                </div>
+
+                {/* Tap to Open CTA */}
+                <button
+                  type="button"
+                  onClick={handleOpenGiftBox}
+                  className="relative z-10 w-full py-3 rounded-xl bg-gradient-to-r from-amber-300 via-amber-200 to-amber-400 text-amber-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all"
+                >
+                  <Gift className="w-4 h-4 text-amber-950" />
+                  <span>Tap Box to Open 🎁</span>
+                </button>
+              </div>
+            </div>
           </motion.div>
         )}
 
-        {/* SCENE 4A: PHOTO STREAM (Solo with Photos) */}
-        {scene === "photo-stream" && photoUrls.length > 0 && (
-          <motion.div
-            key="scene-photos"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="w-full max-w-lg mx-auto flex flex-col items-center px-4 py-6"
-          >
-            {/* Header Indicator */}
-            <div className="w-full flex items-center justify-between text-xs text-slate-400 mb-4 px-2">
-              <span className="font-mono text-pink-400 font-bold">
+        {/* SCENE 4: ACTUAL UPLOADED PICTURES FLY FORWARD & "HIT THE SCREEN" */}
+        {scene === "photo-impact" && photoUrls.length > 0 && (
+          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            {/* Header / Memory Progress */}
+            <div className="absolute top-6 inset-x-0 max-w-md mx-auto px-6 flex items-center justify-between text-xs text-white z-20">
+              <span className="font-mono text-pink-400 font-bold bg-black/60 px-3 py-1 rounded-full border border-pink-500/30">
                 Memory {activePhotoIdx + 1} of {photoUrls.length}
               </span>
               <button
                 type="button"
                 onClick={() => setIsPhotoPaused((prev) => !prev)}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 text-xs transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 text-slate-300 text-xs transition-colors"
               >
                 {isPhotoPaused ? <Play className="w-3 h-3 text-emerald-400" /> : <Pause className="w-3 h-3 text-amber-400" />}
                 <span>{isPhotoPaused ? "Resume" : "Pause"}</span>
               </button>
             </div>
 
-            {/* Main Zoomed Photo Display */}
-            <div className="relative w-full aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border-2 border-pink-500/30 bg-black">
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={activePhotoIdx}
-                  src={photoUrls[activePhotoIdx]}
-                  alt={`Memory ${activePhotoIdx + 1}`}
-                  initial={{ scale: 0.7, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 1.15, opacity: 0 }}
-                  transition={{ duration: 0.6, ease: "easeInOut" }}
-                  className="w-full h-full object-cover"
-                />
-              </AnimatePresence>
+            {/* THE PHOTO THAT FLIES FORWARD AND HITS THE SCREEN */}
+            <AnimatePresence mode="wait">
+              {!isPhotoBlowingOff && (
+                <motion.div
+                  key={`photo-${activePhotoIdx}`}
+                  initial={{
+                    scale: 0.15,
+                    y: 80,
+                    opacity: 0,
+                    rotate: -10,
+                  }}
+                  animate={{
+                    scale: [0.15, 1.08, 1.0],
+                    y: 0,
+                    opacity: 1,
+                    rotate: 0,
+                  }}
+                  exit={{
+                    x: 650,
+                    y: -100,
+                    rotate: 30,
+                    scale: 1.15,
+                    opacity: 0,
+                    transition: { duration: 0.55, ease: "easeInOut" },
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 24,
+                  }}
+                  className="relative w-full max-w-sm sm:max-w-md aspect-[4/5] rounded-3xl overflow-hidden shadow-[0_0_80px_rgba(236,72,153,0.5)] border-4 border-white bg-black flex flex-col justify-between p-3 select-none"
+                >
+                  {/* Photo Image */}
+                  <div className="relative w-full h-[82%] rounded-2xl overflow-hidden bg-slate-900">
+                    <img
+                      src={photoUrls[activePhotoIdx]}
+                      alt={`Memory ${activePhotoIdx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
 
-              {/* Caption Overlay */}
-              {photoCaptions[activePhotoIdx] && (
-                <div className="absolute bottom-0 inset-x-0 p-5 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-                  <p className="text-sm font-medium text-white italic text-center drop-shadow-md">
-                    &quot;{photoCaptions[activePhotoIdx]}&quot;
-                  </p>
-                </div>
+                  {/* Caption Strip */}
+                  <div className="h-[18%] flex items-center justify-between px-3 text-left">
+                    <p className="text-xs sm:text-sm font-serif italic text-white line-clamp-2">
+                      &quot;{photoCaptions[activePhotoIdx] || `Cherished memory #${activePhotoIdx + 1}`}&quot;
+                    </p>
+                    <span className="text-[10px] font-mono text-pink-400 shrink-0 ml-2">
+                      0{activePhotoIdx + 1}
+                    </span>
+                  </div>
+
+                  {/* 3-Second Glowing Progress Bar */}
+                  {!isPhotoPaused && (
+                    <motion.div
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 3.2, ease: "linear" }}
+                      className="absolute bottom-0 inset-x-0 h-1.5 bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400"
+                    />
+                  )}
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
 
-            {/* Navigation Buttons */}
-            <div className="flex items-center justify-between w-full mt-6 px-2">
+            {/* Skip / Next Controls */}
+            <div className="absolute bottom-6 inset-x-0 max-w-md mx-auto px-6 flex items-center justify-between z-20">
               <button
                 type="button"
                 disabled={activePhotoIdx === 0}
-                onClick={() => setActivePhotoIdx((prev) => Math.max(0, prev - 1))}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 text-xs font-semibold flex items-center gap-1"
+                onClick={() => {
+                  if (activePhotoIdx > 0) {
+                    setActivePhotoIdx((prev) => prev - 1);
+                    setIsPhotoBlowingOff(false);
+                  }
+                }}
+                className="px-4 py-2 rounded-xl bg-black/70 hover:bg-black/90 disabled:opacity-30 text-xs font-semibold text-white border border-white/10 flex items-center gap-1"
               >
-                <ChevronLeft className="w-4 h-4" /> Previous
+                <ChevronLeft className="w-4 h-4" /> Prev
               </button>
 
               <button
                 type="button"
-                onClick={() => {
-                  if (activePhotoIdx < photoUrls.length - 1) {
-                    setActivePhotoIdx((prev) => prev + 1);
-                  } else {
-                    setScene(hasLetter ? "box-letter" : "grand-banner");
-                  }
-                }}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-pink-500/25"
+                onClick={triggerNextPhoto}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-xl shadow-pink-500/30"
               >
-                <span>{activePhotoIdx < photoUrls.length - 1 ? "Next Memory" : "View Birthday Letter"}</span>
-                <ChevronRight className="w-4 h-4" />
+                <span>{activePhotoIdx < photoUrls.length - 1 ? "Next Memory ➔" : "Read Birthday Letter"}</span>
               </button>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* SCENE 4D: KUDOBOARD WISH PLAYLIST (Group Mode) */}
@@ -569,7 +730,6 @@ export default function BirthdayExperience({
                   className="p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 flex items-center justify-between gap-4 cursor-pointer transition-all shadow-md group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    {/* Track Number / Avatar */}
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500/20 to-amber-500/20 border border-pink-500/30 flex items-center justify-center shrink-0 overflow-hidden text-sm font-bold text-amber-300">
                       {w.photoUrl ? (
                         <img src={w.photoUrl} alt={w.authorName} className="w-full h-full object-cover" />
@@ -594,7 +754,6 @@ export default function BirthdayExperience({
               ))}
             </div>
 
-            {/* Action Button to Transition to Reaction / Next */}
             <button
               type="button"
               onClick={() => setScene("reaction-booth")}
@@ -605,18 +764,18 @@ export default function BirthdayExperience({
           </motion.div>
         )}
 
-        {/* SCENE 5: 90° CAMERA TILT & WAX-SEALED LETTER */}
+        {/* SCENE 5: 90° CAMERA TILT INTO BOX & WAX-SEALED LETTER */}
         {scene === "box-letter" && (
           <motion.div
             key="scene-letter"
-            initial={{ opacity: 0, rotateX: 45 }}
+            initial={{ opacity: 0, rotateX: 60 }}
             animate={{ opacity: 1, rotateX: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             className="w-full max-w-xl mx-auto px-4 py-8 flex flex-col items-center select-none"
+            style={{ perspective: 1200 }}
           >
             {!isLetterOpen ? (
-              /* Sealed Wax Envelope inside Box */
               <div
                 onClick={() => setIsLetterOpen(true)}
                 className="w-full max-w-md p-8 rounded-3xl bg-gradient-to-br from-[#2a131b] via-[#1a0c12] to-slate-950 border-2 border-pink-500/40 shadow-2xl flex flex-col items-center text-center cursor-pointer hover:scale-102 transition-transform group"
@@ -636,11 +795,10 @@ export default function BirthdayExperience({
                 </div>
               </div>
             ) : (
-              /* Unfolded Heartfelt Letter */
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="w-full bg-[#160d1b]/90 border border-pink-500/30 p-6 sm:p-10 rounded-3xl shadow-2xl backdrop-blur-2xl text-left space-y-6"
+                className="w-full bg-[#160d1b]/95 border border-pink-500/30 p-6 sm:p-10 rounded-3xl shadow-2xl backdrop-blur-2xl text-left space-y-6"
               >
                 <div className="border-b border-white/10 pb-4 flex items-center justify-between">
                   <span className="text-xs font-mono uppercase tracking-widest text-pink-400 font-bold">
@@ -681,7 +839,6 @@ export default function BirthdayExperience({
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-md mx-auto px-4 py-12 flex flex-col items-center text-center space-y-6"
           >
-            {/* Grand Oval Ribbon */}
             <div className="w-full py-8 px-6 rounded-[3rem] bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 border-4 border-amber-300 shadow-[0_0_50px_rgba(244,63,94,0.5)] text-white">
               <span className="text-xs font-mono uppercase tracking-widest text-amber-200">
                 ⭐ Official Birthday Toast ⭐
@@ -690,7 +847,7 @@ export default function BirthdayExperience({
                 Happy Birthday, {recipient}!
               </h2>
               <p className="text-xs text-white/90 mt-2 font-sans font-medium">
-                May your new year be packed with breakthroughs, unforgettable memories, and non-stop joy!
+                May your new chapter be packed with breakthroughs, unforgettable memories, and non-stop joy!
               </p>
             </div>
 

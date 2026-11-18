@@ -647,6 +647,171 @@ export default function GiftViewer({ params }) {
     confetti({ particleCount: 30, spread: 50, origin: { y: 0.5 }, colors: styles.particles });
   };
 
+  // 🎂 100% ISOLATED BIRTHDAY EXPERIENCE (Decoupled from romantic/couples trivia)
+  if (giftData?.occasion === "birthday") {
+    const birthdaySongUrl = (giftData?.songQuery && (giftData.songQuery.startsWith("/") || giftData.songQuery.startsWith("http"))) 
+      ? giftData.songQuery 
+      : "/audio/happy-birthday.mp3";
+
+    return (
+      <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-start py-8 px-4 relative overflow-y-auto overflow-x-hidden scroll-smooth transition-colors duration-1000`}>
+        {/* Isolated Birthday Audio */}
+        {!giftData?.songQuery?.includes("youtube") && (
+          <audio 
+            ref={audioRef} 
+            loop 
+            playsInline
+            src={birthdaySongUrl} 
+          />
+        )}
+        {giftData?.songQuery?.includes("youtube") && (
+          <iframe 
+            className="absolute pointer-events-none opacity-0 -z-50"
+            style={{ width: "1px", height: "1px", left: "-9999px", top: "-9999px" }}
+            src={`https://www.youtube.com/embed/${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}?autoplay=1&playsinline=1&enablejsapi=1&loop=1&playlist=${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}`}
+            allow="autoplay; encrypted-media" 
+          />
+        )}
+
+        {/* Floating Top Birthday Music Bar */}
+        <motion.div 
+          initial={{ y: -50, opacity: 0 }} 
+          animate={{ y: 0, opacity: 1 }} 
+          onClick={toggleAudio}
+          className={`fixed top-4 left-1/2 -translate-x-1/2 ${styles.glass} ${styles.border} px-4 py-2 rounded-full border flex items-center gap-2 z-50 cursor-pointer hover:scale-105 active:scale-95 transition-transform backdrop-blur-xl shadow-lg`}
+        >
+          <Music className={`w-3.5 h-3.5 text-amber-400 ${isPlaying ? "animate-pulse" : "opacity-60"}`} />
+          <span className="text-xs font-medium tracking-wide">
+            {isPlaying ? "Playing: " : "Tap to Play: "}
+            {PRESET_SONGS.find(s => s.url === giftData.songQuery)?.title || (giftData.songQuery?.startsWith("http") ? "Birthday Special 🎵" : "Happy Birthday 🎂")}
+          </span>
+        </motion.div>
+
+        {/* Isolated Birthday Experience Engine */}
+        <BirthdayExperience
+          giftData={giftData}
+          actualGiftId={actualGiftId || giftId}
+          onStartAudio={() => {
+            if (audioRef.current) {
+              audioRef.current.play().then(() => setIsPlaying(true)).catch(console.warn);
+            }
+          }}
+          styles={styles}
+        />
+
+        {/* Safety & Report Footer */}
+        <div className="mt-8 mb-4 z-20">
+          <button 
+            type="button" 
+            onClick={() => setShowReportModal(true)} 
+            className="text-[11px] text-slate-400 hover:text-rose-400 underline transition-colors"
+          >
+            Report Inappropriate Content
+          </button>
+        </div>
+
+        {/* REPORT ABUSE MODAL */}
+        <AnimatePresence>
+          {showReportModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white shadow-2xl relative"
+              >
+                <button
+                  type="button"
+                  onClick={() => { setShowReportModal(false); setReportSubmitted(false); }}
+                  className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {reportSubmitted ? (
+                  <div className="py-8 text-center space-y-4">
+                    <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/30">
+                      <Check className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-xl font-bold">Report Received</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
+                      Thank you for letting us know. Our Trust & Safety team takes abuse seriously and will review this LoveLink immediately.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setShowReportModal(false); setReportSubmitted(false); }}
+                      className="mt-4 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-full text-xs font-semibold"
+                    >
+                      Close
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleReportSubmit} className="space-y-4">
+                    <div className="flex items-center gap-2 text-red-400">
+                      <ShieldAlert className="w-5 h-5" />
+                      <h3 className="text-lg font-bold">Report this LoveLink</h3>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      LoveLink prohibits harassment, cyberbullying, doxxing, non-consensual media, and fraudulent use.
+                    </p>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                        Reason for Report
+                      </label>
+                      <select
+                        value={reportReason}
+                        onChange={(e) => setReportReason(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-red-500"
+                      >
+                        <option value="Harassment or Bullying">Harassment or Bullying</option>
+                        <option value="Non-consensual Intimate Imagery">Non-consensual Intimate Imagery</option>
+                        <option value="Doxxing or Privacy Violation">Doxxing or Privacy Violation</option>
+                        <option value="Hate Speech or Violence">Hate Speech or Violence</option>
+                        <option value="Scam or Fraud">Scam or Fraud</option>
+                        <option value="Other Policy Violation">Other Policy Violation</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                        Additional Details (Optional)
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={reportDetails}
+                        onChange={(e) => setReportDetails(e.target.value)}
+                        placeholder="Please provide any context that will help us investigate..."
+                        className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500 resize-none"
+                      />
+                    </div>
+
+                    <div className="pt-2 flex items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowReportModal(false)}
+                        className="px-4 py-2 rounded-full text-xs font-semibold text-slate-400 hover:text-white"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmittingReport}
+                        className="px-5 py-2 rounded-full text-xs font-semibold bg-red-600 hover:bg-red-500 text-white disabled:opacity-50 transition-colors"
+                      >
+                        {isSubmittingReport ? "Submitting..." : "Submit Report"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-start md:justify-center py-10 px-4 sm:px-6 relative overflow-y-auto overflow-x-hidden transition-colors duration-1000 scroll-smooth`}>
       {/* Background Audio (Only plays when YouTube is not selected to prevent both songs playing together) */}
@@ -694,19 +859,7 @@ export default function GiftViewer({ params }) {
       <AnimatePresence mode="wait">
         
         {stage === -2 && (
-          giftData.occasion === "birthday" ? (
-            <BirthdayExperience
-              key="birthday-experience"
-              giftData={giftData}
-              actualGiftId={actualGiftId || giftId}
-              onStartAudio={() => {
-                if (audioRef.current) {
-                  audioRef.current.play().then(() => setIsPlaying(true)).catch(console.warn);
-                }
-              }}
-              styles={styles}
-            />
-          ) : giftData.occasion === "anniversary" ? (
+          giftData.occasion === "anniversary" ? (
             <CrystalFlower
               key="crystal-flower"
               giftData={giftData}

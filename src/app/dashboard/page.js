@@ -448,6 +448,11 @@ export default function Dashboard() {
                         } else { 
                           updateForm('skipTrivia', false); 
                         } 
+                        if (occ.id === 'birthday') {
+                          if (!formData.songQuery || formData.songQuery === '/audio/romantic.mp3') {
+                            updateForm('songQuery', '/audio/happy-birthday.mp3');
+                          }
+                        }
                       }} 
                       disabled={isEditing}
                       className={`relative p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${formData.occasion === occ.id ? 'border-pink-500 bg-pink-500/10 text-pink-600 dark:text-pink-400 shadow-md' : 'border-slate-200 dark:border-white/10 hover:border-pink-500/50 bg-white dark:bg-white/5 text-slate-600 dark:text-gray-300'} ${isEditing && formData.occasion !== occ.id ? 'opacity-30 cursor-not-allowed hidden md:flex' : ''} ${isEditing && formData.occasion === occ.id ? 'cursor-default' : ''}`}
@@ -513,18 +518,18 @@ export default function Dashboard() {
                         <label className="text-sm font-medium text-slate-600 dark:text-gray-300">
                           Milestone / Turning Age (Optional)
                         </label>
-                        <span className="text-[11px] text-pink-500">Appears on the 3D box lid</span>
+                        <span className="text-[11px] text-amber-500 font-medium">Ignites as burning number candles 🕯️</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <input
                           type="text"
                           value={formData.birthdayAge || ""}
                           onChange={(e) => updateForm("birthdayAge", e.target.value)}
-                          placeholder="e.g. 21st, 25th, 30th"
+                          placeholder="e.g. 21, 25, 30, Sweet 16"
                           className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:border-pink-500 outline-none"
                         />
                         <div className="flex items-center gap-1 shrink-0">
-                          {["18th", "21st", "25th", "30th", "50th"].map((age) => (
+                          {["18", "21", "25", "30", "50"].map((age) => (
                             <button
                               key={age}
                               type="button"
