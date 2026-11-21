@@ -41,9 +41,13 @@ export default function BirthdayExperience({
   const [candleBlown, setCandleBlown] = useState(false);
   const [isLidOff, setIsLidOff] = useState(false);
 
-  // Photo Stream State
-  const photoUrls = giftData?.photoUrls || [];
-  const photoCaptions = giftData?.photoCaptions || [];
+  const isFree = giftData?.tier === "free";
+
+  // Photo Stream State (Free tier limited to 1 hero photo)
+  const rawPhotoUrls = giftData?.photoUrls || [];
+  const rawCaptions = giftData?.photoCaptions || [];
+  const photoUrls = isFree ? rawPhotoUrls.slice(0, 1) : rawPhotoUrls;
+  const photoCaptions = isFree ? rawCaptions.slice(0, 1) : rawCaptions;
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const [isPhotoPaused, setIsPhotoPaused] = useState(false);
   const [isPhotoBlowingOff, setIsPhotoBlowingOff] = useState(false);
@@ -83,7 +87,7 @@ export default function BirthdayExperience({
   const handleIgniteCelebration = () => {
     if (scene !== "dark-candle") return;
 
-    if (onStartAudio) {
+    if (onStartAudio && !isFree) {
       onStartAudio();
     }
 

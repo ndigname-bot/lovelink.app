@@ -2,7 +2,7 @@
 import imageCompression from "browser-image-compression";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X, Play, Pause, Check, Video, Shield } from "lucide-react";
+import { ChevronDown, Heart, UploadCloud, ChevronRight, ChevronLeft, Sparkles, Image as ImageIcon, Music, Lock, MessageSquare, Loader2, Link as LinkIcon, Plus, X, Play, Pause, Check, Video, Shield, Crown, Gift } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { auth, db } from "../../lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
@@ -77,6 +77,7 @@ export default function Dashboard() {
               q4: { type: "multiple_choice", question: "", correct: "", wrong1: "", wrong2: "", ...data.q4 },
               letter: data.letter || "",
               retentionMode: data.retentionMode || "forever",
+              tier: data.tier || "standard",
             };
             setFormData(loadedData);
             if (data.photoUrls) setPhotoPreviews(data.photoUrls);
@@ -122,6 +123,7 @@ export default function Dashboard() {
     reasons: ["", "", ""],
     letter: "",
     retentionMode: "forever",
+    tier: "standard",
     photoCaptions: []
   });
 
@@ -194,8 +196,9 @@ export default function Dashboard() {
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Upload timed out. If you added large photos, try connecting to a faster network.")), 180000));
       
       const publishTask = async () => {
-        // Free testing & promo mode enabled: bypasses payment, sets paid: true, and redirects directly to live link!
-        const isFreePromo = true; 
+        const isAdmin = auth.currentUser?.email === "ndignamadmin1@gmail.com" || auth.currentUser?.email === "admin@lovelink.app";
+        const isFreeTier = (formData.tier || "standard") === "free";
+        const shouldBypassPayment = isFreeTier || isAdmin; 
 
         let photoUrls = [];
 
@@ -314,7 +317,8 @@ export default function Dashboard() {
             creatorId: auth.currentUser.uid,
             creatorEmail: auth.currentUser.email || "",
             createdAt: serverTimestamp(),
-            paid: isFreePromo 
+            paid: shouldBypassPayment,
+            tier: formData.tier || "standard"
           });
           finalGiftId = docRef.id;
           
@@ -329,7 +333,7 @@ export default function Dashboard() {
             }
           }
           
-          if (isFreePromo) {
+          if (shouldBypassPayment) {
             setPublishStatus("Redirecting...");
             router.push(`/success?giftId=${finalGiftId}`);
             return;
@@ -340,7 +344,12 @@ export default function Dashboard() {
         const res = await fetch("/api/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ giftId: finalGiftId, recipientName: formData.recipientName, email: auth.currentUser?.email })
+          body: JSON.stringify({ 
+            giftId: finalGiftId, 
+            recipientName: formData.recipientName, 
+            email: auth.currentUser?.email,
+            tier: formData.tier || "standard"
+          })
         });
         const data = await res.json();
         if (data.url) router.push(data.url);
@@ -850,6 +859,112 @@ export default function Dashboard() {
                 />
               </div>
 
+              {/* Experience Tier Selector */}
+              <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-white/10">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-600 dark:text-gray-300 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-pink-400" /> Choose Experience Tier
+                  </label>
+                  <span className="text-[11px] font-semibold text-pink-500 bg-pink-500/10 px-2.5 py-0.5 rounded-full">
+                    No Subscriptions • One-Time
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-gray-400">
+                  Select the experience level for this keepsake. You can start free or unlock 3D and Hollywood cinematic intros.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  {[
+                    {
+                      id: "free",
+                      title: "Free Teaser",
+                      price: "$0",
+                      badge: "100% Free",
+                      badgeColor: "bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300",
+                      icon: <Gift className="w-5 h-5 text-slate-500 dark:text-gray-400" />,
+                      features: [
+                        "1 hero photo",
+                        "Heartfelt letter & toast",
+                        "Basic greeting card mode",
+                        "LoveLink watermark"
+                      ]
+                    },
+                    {
+                      id: "standard",
+                      title: "Interactive 3D",
+                      price: "$9.99",
+                      badge: "Most Popular",
+                      badgeColor: "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm",
+                      icon: <Sparkles className="w-5 h-5 text-pink-500" />,
+                      features: [
+                        "Interactive 3D unboxing / flower",
+                        "Up to 10 HD photos & captions",
+                        "Atmospheric music / song",
+                        "Squad invites (Kudoboard)",
+                        "Zero watermark"
+                      ]
+                    },
+                    {
+                      id: "vip",
+                      title: "Cinematic VIP",
+                      price: "$24.99",
+                      badge: "Hollywood VIP",
+                      badgeColor: "bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-extrabold shadow-sm",
+                      icon: <Crown className="w-5 h-5 text-amber-500" />,
+                      features: [
+                        "4K AI Cinema Movie Intro",
+                        "Unlimited photos & video clips",
+                        "Custom soundtrack upload",
+                        "VIP gold effects & particles",
+                        "100% lifetime cloud archival"
+                      ]
+                    }
+                  ].map((tier) => {
+                    const isSelected = (formData.tier || "standard") === tier.id;
+                    return (
+                      <button
+                        key={tier.id}
+                        type="button"
+                        onClick={() => updateForm('tier', tier.id)}
+                        className={`relative p-5 rounded-2xl border-2 text-left transition-all flex flex-col justify-between ${
+                          isSelected
+                            ? 'border-pink-500 bg-pink-500/10 shadow-lg ring-1 ring-pink-500/30'
+                            : 'border-slate-200 dark:border-white/10 hover:border-pink-500/40 bg-white dark:bg-white/5'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="p-2 rounded-xl bg-slate-100 dark:bg-white/5">
+                              {tier.icon}
+                            </div>
+                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${tier.badgeColor}`}>
+                              {tier.badge}
+                            </span>
+                          </div>
+                          <div className="flex items-baseline justify-between mt-1 mb-2">
+                            <h4 className="text-base font-bold text-slate-900 dark:text-white">{tier.title}</h4>
+                            <span className="text-lg font-black text-pink-500 dark:text-pink-400">{tier.price}</span>
+                          </div>
+                          <ul className="space-y-1.5 text-[11px] text-slate-600 dark:text-gray-300">
+                            {tier.features.map((feat, i) => (
+                              <li key={i} className="flex items-center gap-1.5">
+                                <Check className="w-3.5 h-3.5 text-pink-500 shrink-0" />
+                                <span>{feat}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        {isSelected && (
+                          <div className="mt-4 pt-2 border-t border-pink-500/20 text-center text-[11px] font-bold text-pink-600 dark:text-pink-400 flex items-center justify-center gap-1">
+                            <Check className="w-3.5 h-3.5" /> Selected Tier
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Privacy & Data Retention Mode */}
               <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between">
@@ -939,8 +1054,12 @@ export default function Dashboard() {
                   <><Loader2 className="w-5 h-5 animate-spin" /> {publishStatus}</>
                 ) : isEditing ? (
                   <><Check className="w-5 h-5" /> Save Changes</>
+                ) : (formData.tier || "standard") === "free" ? (
+                  <><Gift className="w-5 h-5" /> Publish Free Keepsake ($0)</>
+                ) : formData.tier === "vip" ? (
+                  <><Crown className="w-5 h-5 text-amber-200" /> Unlock Cinematic VIP ($24.99)</>
                 ) : (
-                  <><Sparkles className="w-5 h-5" /> Generate Link (Free Test Mode)</>
+                  <><Sparkles className="w-5 h-5" /> Unlock Interactive 3D ($9.99)</>
                 )}
               </button>
             </div>

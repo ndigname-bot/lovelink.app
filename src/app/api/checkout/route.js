@@ -3,13 +3,23 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { giftId, recipientName, email } = body;
+    const { giftId, recipientName, email, tier = "standard" } = body;
 
     if (!giftId) {
       return NextResponse.json({ error: "Missing giftId" }, { status: 400 });
     }
 
     const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "https://lovelink-app-beta.vercel.app";
+
+    // 0. FREE TIER BYPASS
+    if (tier === "free") {
+      return NextResponse.json({ url: `${origin}/success?giftId=${giftId}` });
+    }
+
+    const isVip = tier === "vip";
+    const paystackAmount = isVip ? 24900 : 9900; // 249 GHS (~$24.99) vs 99 GHS (~$9.99)
+    const stripeAmount = isVip ? 2499 : 999;     // $24.99 vs $9.99
+    const tierName = isVip ? "Cinematic VIP LoveLink" : "Interactive 3D LoveLink";
 
     // 1. PRIMARY GATEWAY: Paystack (Direct Settlement to Ghana Bank / MoMo + Global Cards)
     // Works 100% without needing a US registered company or US bank account!
@@ -23,12 +33,13 @@ export async function POST(req) {
         },
         body: JSON.stringify({
           email: email || "customer@lovelink.app",
-          amount: 9900, // 99 GHS in pesewas (~$9.99 USD)
+          amount: paystackAmount,
           currency: "GHS",
           channels: ["card", "mobile_money", "apple_pay"],
           metadata: {
             giftId: giftId,
             recipientName: recipientName || "Special Someone",
+            tier: tier,
           },
           callback_url: `${origin}/success?giftId=${giftId}`,
         }),
@@ -51,13 +62,14 @@ export async function POST(req) {
       stripeParams.append("cancel_url", `${origin}/my-gifts`);
       stripeParams.append("client_reference_id", giftId);
       stripeParams.append("metadata[giftId]", giftId);
+      stripeParams.append("metadata[tier]", tier);
       if (recipientName) stripeParams.append("metadata[recipientName]", recipientName);
       if (email) stripeParams.append("customer_email", email);
 
       stripeParams.append("line_items[0][price_data][currency]", "usd");
-      stripeParams.append("line_items[0][price_data][unit_amount]", "999"); // $9.99 USD
-      stripeParams.append("line_items[0][price_data][product_data][name]", `LoveLink for ${recipientName || "Your Special Someone"}`);
-      stripeParams.append("line_items[0][price_data][product_data][description]", "Permanent digital keepsake, 100% lifetime cloud preservation, no recurring subscriptions.");
+      stripeParams.append("line_items[0][price_data][unit_amount]", String(stripeAmount));
+      stripeParams.append("line_items[0][price_data][product_data][name]", `${tierName} for ${recipientName || "Your Special Someone"}`);
+      stripeParams.append("line_items[0][price_data][product_data][description]", isVip ? "Photorealistic 4K AI Cinema Movie Intro, 3D experience, unlimited photos, lifetime cloud archival." : "Permanent digital keepsake, 100% lifetime cloud preservation, no recurring subscriptions.");
       stripeParams.append("line_items[0][quantity]", "1");
 
       const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {

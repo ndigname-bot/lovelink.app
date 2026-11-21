@@ -673,19 +673,21 @@ export default function GiftViewer({ params }) {
           />
         )}
 
-        {/* Floating Top Birthday Music Bar */}
-        <motion.div 
-          initial={{ y: -50, opacity: 0 }} 
-          animate={{ y: 0, opacity: 1 }} 
-          onClick={toggleAudio}
-          className={`fixed top-4 left-1/2 -translate-x-1/2 ${styles.glass} ${styles.border} px-4 py-2 rounded-full border flex items-center gap-2 z-50 cursor-pointer hover:scale-105 active:scale-95 transition-transform backdrop-blur-xl shadow-lg`}
-        >
-          <Music className={`w-3.5 h-3.5 text-amber-400 ${isPlaying ? "animate-pulse" : "opacity-60"}`} />
-          <span className="text-xs font-medium tracking-wide">
-            {isPlaying ? "Playing: " : "Tap to Play: "}
-            {PRESET_SONGS.find(s => s.url === giftData.songQuery)?.title || (giftData.songQuery?.startsWith("http") ? "Birthday Special 🎵" : "Happy Birthday 🎂")}
-          </span>
-        </motion.div>
+        {/* Floating Top Birthday Music Bar (Paid standard / VIP tiers only) */}
+        {giftData?.tier !== "free" && (
+          <motion.div 
+            initial={{ y: -50, opacity: 0 }} 
+            animate={{ y: 0, opacity: 1 }} 
+            onClick={toggleAudio}
+            className={`fixed top-4 left-1/2 -translate-x-1/2 ${styles.glass} ${styles.border} px-4 py-2 rounded-full border flex items-center gap-2 z-50 cursor-pointer hover:scale-105 active:scale-95 transition-transform backdrop-blur-xl shadow-lg`}
+          >
+            <Music className={`w-3.5 h-3.5 text-amber-400 ${isPlaying ? "animate-pulse" : "opacity-60"}`} />
+            <span className="text-xs font-medium tracking-wide">
+              {isPlaying ? "Playing: " : "Tap to Play: "}
+              {PRESET_SONGS.find(s => s.url === giftData.songQuery)?.title || (giftData.songQuery?.startsWith("http") ? "Birthday Special 🎵" : "Happy Birthday 🎂")}
+            </span>
+          </motion.div>
+        )}
 
         {/* Isolated Birthday Experience Engine */}
         <BirthdayExperience
@@ -698,6 +700,20 @@ export default function GiftViewer({ params }) {
           }}
           styles={styles}
         />
+
+        {/* Free Tier Floating Watermark Badge */}
+        {giftData?.tier === "free" && (
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs font-semibold hover:bg-black/95 hover:scale-105 transition-all shadow-xl flex items-center gap-2"
+          >
+            <span>Made with <strong className="text-pink-400">LoveLink</strong></span>
+            <span className="text-white/40">•</span>
+            <span className="text-pink-300">Create yours free 💖</span>
+          </a>
+        )}
 
         {/* Safety & Report Footer */}
         <div className="mt-8 mb-4 z-20">
@@ -1578,6 +1594,22 @@ export default function GiftViewer({ params }) {
             </div>
           )}
         </AnimatePresence>
+
+        {/* Free Tier Watermark Badge */}
+        {giftData?.tier === "free" && (
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs font-semibold hover:bg-black/95 hover:scale-105 transition-all shadow-xl flex items-center gap-2"
+            >
+              <span>Made with <strong className="text-pink-400">LoveLink</strong></span>
+              <span className="text-white/40">•</span>
+              <span className="text-pink-300">Create yours free 💖</span>
+            </a>
+          </div>
+        )}
     </div>
   );
 }

@@ -143,10 +143,11 @@ export default function MyGifts() {
     alert(`🎉 Squad contributor link copied for ${gift.recipientName || "this celebration"}!\n\nShare this link in your WhatsApp or Slack group so friends & family can sign cards into the 3D box.`);
   };
 
-  const IS_LAUNCH_PROMO = true;
+  const handlePayNow = async (giftId, recipientName, tier = "standard") => {
+    const isAdmin = auth.currentUser?.email === "ndignamadmin1@gmail.com" || auth.currentUser?.email === "admin@lovelink.app";
+    const isFreeTier = tier === "free";
 
-  const handlePayNow = async (giftId, recipientName) => {
-    if (IS_LAUNCH_PROMO) {
+    if (isFreeTier || isAdmin) {
       try {
         await updateDoc(doc(db, "gifts", giftId), { paid: true });
         setGifts(prev => prev.map(g => g.id === giftId ? { ...g, paid: true } : g));
@@ -160,7 +161,7 @@ export default function MyGifts() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ giftId, recipientName })
+        body: JSON.stringify({ giftId, recipientName, email: auth.currentUser?.email, tier })
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
@@ -293,7 +294,20 @@ export default function MyGifts() {
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                          {gift.tier === "free" ? (
+                            <span className="bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-gray-300 border border-slate-300 dark:border-white/10 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                              Free
+                            </span>
+                          ) : gift.tier === "vip" ? (
+                            <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                              👑 VIP
+                            </span>
+                          ) : (
+                            <span className="bg-pink-500/10 text-pink-500 border border-pink-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                              ✨ 3D
+                            </span>
+                          )}
                           {gift.retentionMode === "burn" ? (
                             <span className="bg-red-500/10 text-red-500 border border-red-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
                               🔥 24h Burn
@@ -388,8 +402,8 @@ export default function MyGifts() {
                               <Link href={gift.slug ? `/for/${gift.slug}` : `/gift/${gift.id}`} target="_blank" className="flex-1 flex items-center justify-center gap-2 bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:bg-white/20 py-2 rounded-xl text-sm font-medium transition-colors text-slate-500 dark:text-gray-400">
                                 <Lock className="w-4 h-4" /> Locked
                               </Link>
-                              <button onClick={() => handlePayNow(gift.id, gift.recipientName)} className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white hover:opacity-90 py-2 rounded-xl text-sm font-bold transition-all shadow-md">
-                                {IS_LAUNCH_PROMO ? "Unlock Free (Promo)" : "Pay $9.99 to Unlock"}
+                              <button onClick={() => handlePayNow(gift.id, gift.recipientName, gift.tier)} className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white hover:opacity-90 py-2 rounded-xl text-sm font-bold transition-all shadow-md">
+                                {gift.tier === "free" ? "Activate Free Link" : gift.tier === "vip" ? "Unlock VIP ($24.99)" : "Unlock 3D ($9.99)"}
                               </button>
                               <button 
                                 onClick={() => setGiftToDelete(gift)} 
