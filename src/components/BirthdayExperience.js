@@ -962,13 +962,15 @@ export default function BirthdayExperience({
               ))}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setScene("reaction-booth")}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-pink-500/25"
-            >
-              <span>Record Video Reaction or Thank Your Squad 🎥</span>
-            </button>
+            {!isFree && (
+              <button
+                type="button"
+                onClick={() => setScene("reaction-booth")}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-pink-500/25"
+              >
+                <span>Record Video Reaction or Thank Your Squad 🎥</span>
+              </button>
+            )}
           </motion.div>
         )}
 
@@ -1025,14 +1027,16 @@ export default function BirthdayExperience({
                   <p className="text-xs font-serif italic text-amber-300">
                     — Forever with love, {creator}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setScene("reaction-booth")}
-                    className="px-5 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-bold text-xs transition-colors flex items-center gap-1.5"
-                  >
-                    <span>Send Reaction</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  {!isFree && (
+                    <button
+                      type="button"
+                      onClick={() => setScene("reaction-booth")}
+                      className="px-5 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-bold text-xs transition-colors flex items-center gap-1.5"
+                    >
+                      <span>Send Reaction</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -1059,18 +1063,20 @@ export default function BirthdayExperience({
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setScene("reaction-booth")}
-              className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition-all"
-            >
-              Send Reaction / Thank You
-            </button>
+            {!isFree && (
+              <button
+                type="button"
+                onClick={() => setScene("reaction-booth")}
+                className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Send Reaction / Thank You
+              </button>
+            )}
           </motion.div>
         )}
 
         {/* SCENE 6: LIVE REACTION BOOTH & REPLY */}
-        {scene === "reaction-booth" && (
+        {!isFree && scene === "reaction-booth" && (
           <motion.div
             key="scene-reaction"
             initial={{ opacity: 0, y: 20 }}

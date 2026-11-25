@@ -300,13 +300,14 @@ export default function GiftViewer({ params }) {
             const draftData = JSON.parse(saved);
             setGiftData({
               skipTrivia: draftData.skipTrivia || false,
+              tier: draftData.tier || "standard",
               theme: draftData.theme || "blush",
               occasion: draftData.occasion || "standard",
               recipientName: draftData.recipientName || "Cutie",
               creatorName: draftData.creatorName || "Me",
-              songQuery: draftData.songQuery || "Daniel Caesar - Get You",
-              photoUrls: draftData.photoUrls || [], 
-              photoCaptions: draftData.photoCaptions || [],
+              songQuery: draftData.tier === "free" ? "" : (draftData.songQuery || "Daniel Caesar - Get You"),
+              photoUrls: draftData.tier === "free" ? (draftData.photoUrls || []).slice(0, 1) : (draftData.photoUrls || []), 
+              photoCaptions: draftData.tier === "free" ? (draftData.photoCaptions || []).slice(0, 1) : (draftData.photoCaptions || []),
               videoUrl: draftData.videoUrl || "",
               reasons: draftData.reasons || ["Your smile", "Your laugh", "Your kindness"],
               questions: [
@@ -398,9 +399,9 @@ export default function GiftViewer({ params }) {
             wishes: loadedWishes,
             recipientName: dbData.recipientName || "Cutie",
             creatorName: dbData.creatorName || "Me",
-            songQuery: dbData.songQuery || "Daniel Caesar - Get You",
-            photoUrls: loadedPhotoUrls,
-            photoCaptions: loadedPhotoCaptions,
+            songQuery: dbData.tier === "free" ? "" : (dbData.songQuery || "Daniel Caesar - Get You"),
+            photoUrls: dbData.tier === "free" ? loadedPhotoUrls.slice(0, 1) : loadedPhotoUrls,
+            photoCaptions: dbData.tier === "free" ? loadedPhotoCaptions.slice(0, 1) : loadedPhotoCaptions,
             videoUrl: dbData.videoUrl || "",
             reasons: dbData.reasons || ["Your beautiful smile", "How you care for me", "Your incredible patience"],
             questions: [
@@ -656,8 +657,8 @@ export default function GiftViewer({ params }) {
 
     return (
       <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-start py-8 px-4 relative overflow-y-auto overflow-x-hidden scroll-smooth transition-colors duration-1000`}>
-        {/* Isolated Birthday Audio */}
-        {!giftData?.songQuery?.includes("youtube") && (
+        {/* Isolated Birthday Audio (Paid standard / VIP tiers only) */}
+        {giftData?.tier !== "free" && !giftData?.songQuery?.includes("youtube") && (
           <audio 
             ref={audioRef} 
             loop 
@@ -665,7 +666,7 @@ export default function GiftViewer({ params }) {
             src={birthdaySongUrl} 
           />
         )}
-        {giftData?.songQuery?.includes("youtube") && (
+        {giftData?.tier !== "free" && giftData?.songQuery?.includes("youtube") && (
           <iframe 
             className="absolute pointer-events-none opacity-0 -z-50"
             style={{ width: "1px", height: "1px", left: "-9999px", top: "-9999px" }}
@@ -841,11 +842,11 @@ export default function GiftViewer({ params }) {
       <div
         className={`min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-black ${styles.text} ${styles.font} flex flex-col items-center justify-start py-0 px-0 relative overflow-y-auto overflow-x-hidden transition-colors duration-1000`}
       >
-        {/* Isolated Anniversary Audio */}
-        {!giftData?.songQuery?.includes("youtube") && (
+        {/* Isolated Anniversary Audio (Paid standard / VIP tiers only) */}
+        {giftData?.tier !== "free" && !giftData?.songQuery?.includes("youtube") && (
           <audio ref={audioRef} loop playsInline src={anniversarySongUrl} />
         )}
-        {giftData?.songQuery?.includes("youtube") && (
+        {giftData?.tier !== "free" && giftData?.songQuery?.includes("youtube") && (
           <iframe
             className="absolute pointer-events-none opacity-0 -z-50"
             style={{ width: "1px", height: "1px", left: "-9999px", top: "-9999px" }}
@@ -1011,8 +1012,8 @@ export default function GiftViewer({ params }) {
 
   return (
     <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-start md:justify-center py-10 px-4 sm:px-6 relative overflow-y-auto overflow-x-hidden transition-colors duration-1000 scroll-smooth`}>
-      {/* Background Audio (Only plays when YouTube is not selected to prevent both songs playing together) */}
-      {!giftData?.songQuery?.includes("youtube") && (
+      {/* Background Audio (Paid standard / VIP tiers only, and only when YouTube is not selected) */}
+      {giftData?.tier !== "free" && !giftData?.songQuery?.includes("youtube") && (
         <audio 
           ref={audioRef} 
           loop 
@@ -1021,8 +1022,8 @@ export default function GiftViewer({ params }) {
         />
       )}
 
-      {/* YouTube Background Player */}
-      {giftData?.songQuery?.includes("youtube") && stage >= -1 && (
+      {/* YouTube Background Player (Paid standard / VIP tiers only) */}
+      {giftData?.tier !== "free" && giftData?.songQuery?.includes("youtube") && stage >= -1 && (
         <iframe 
           className="absolute pointer-events-none opacity-0 -z-50"
           style={{ width: "1px", height: "1px", left: "-9999px", top: "-9999px" }}
@@ -1031,7 +1032,7 @@ export default function GiftViewer({ params }) {
         />
       )}
 
-      {((giftData?.occasion === "family" ? (typeof stage === "number" && stage >= (giftData?.questions ? giftData.questions.length : 0) + 1) : (typeof stage === "number" && stage >= -1))) && (
+      {giftData?.tier !== "free" && ((giftData?.occasion === "family" ? (typeof stage === "number" && stage >= (giftData?.questions ? giftData.questions.length : 0) + 1) : (typeof stage === "number" && stage >= -1))) && (
         <motion.div 
           initial={{y:-50, opacity:0}} 
           animate={{y:0, opacity:1}} 
@@ -1563,11 +1564,13 @@ export default function GiftViewer({ params }) {
                   {giftData.signOff}
                 </p>
               </div>
-              <div className="mt-12 w-full flex justify-center">
-                <button onClick={() => setStage(prev => prev + 1)} className={`px-8 py-4 bg-gradient-to-r ${styles.accentGradient} rounded-full font-bold shadow-lg hover:scale-105 transition-transform text-slate-900 dark:text-white text-lg flex items-center justify-center gap-2`}>
-                  Continue <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
+              {(giftData?.tier !== "free" || giftData?.occasion === "proposal") && (
+                <div className="mt-12 w-full flex justify-center">
+                  <button onClick={() => setStage(prev => prev + 1)} className={`px-8 py-4 bg-gradient-to-r ${styles.accentGradient} rounded-full font-bold shadow-lg hover:scale-105 transition-transform text-slate-900 dark:text-white text-lg flex items-center justify-center gap-2`}>
+                    Continue <ArrowRight className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -1582,7 +1585,11 @@ export default function GiftViewer({ params }) {
                   onClick={() => {
                     confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, colors: ['#FFD700', '#FFA500', '#FF69B4', '#FFFFFF'] });
                     confetti({ particleCount: 100, spread: 120, origin: { y: 0.3 }, colors: ['#FFD700', '#FFA500', '#FF69B4', '#FFFFFF'] });
-                    setStage(prev => prev + 1);
+                    if (giftData?.tier !== "free") {
+                      setStage(prev => prev + 1);
+                    } else {
+                      setStage(prev => prev - 1);
+                    }
                   }} 
                   className="w-full py-5 bg-white text-black rounded-full font-bold text-2xl shadow-[0_0_40px_rgba(255,255,255,0.6)] hover:scale-110 transition-transform"
                 >
@@ -1593,8 +1600,8 @@ export default function GiftViewer({ params }) {
           </motion.div>
         )}
 
-        {/* STAGE: REACTION BOOTH */}
-        {stage === (giftData?.questions ? giftData.questions.length : 0) + (giftData?.occasion === 'proposal' ? 5 : 4) && (
+        {/* STAGE: REACTION BOOTH (Paid standard / VIP tiers only) */}
+        {giftData?.tier !== "free" && stage === (giftData?.questions ? giftData.questions.length : 0) + (giftData?.occasion === 'proposal' ? 5 : 4) && (
           <motion.div key="reaction" initial={{opacity:0, scale:0.9}} animate={{opacity:1, scale:1}} className={`w-full max-w-xl ${styles.glass} p-8 md:p-12 rounded-[3rem] border ${styles.border} text-center shadow-2xl relative z-10`}>
             {reactionSent ? (
               <div className="flex flex-col items-center justify-center py-8">

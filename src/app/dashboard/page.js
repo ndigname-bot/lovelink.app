@@ -201,12 +201,13 @@ export default function Dashboard() {
         const shouldBypassPayment = isFreeTier || isAdmin; 
 
         let photoUrls = [];
+        const photosToProcess = isFreeTier ? photos.slice(0, 1) : photos;
 
-                if (photos.length > 0) {
-          for (let i = 0; i < photos.length; i++) {
-            const photo = photos[i];
+        if (photosToProcess.length > 0) {
+          for (let i = 0; i < photosToProcess.length; i++) {
+            const photo = photosToProcess[i];
             try {
-              setPublishStatus(`Processing photo ${i + 1} of ${photos.length}...`);
+              setPublishStatus(`Processing photo ${i + 1} of ${photosToProcess.length}...`);
               
               let dataUrl;
               try {
@@ -238,8 +239,8 @@ export default function Dashboard() {
           }
         }
 
-        let finalSongUrl = formData.songQuery;
-        if (formData.songQuery === "upload" && audioFile) {
+        let finalSongUrl = isFreeTier ? "" : formData.songQuery;
+        if (!isFreeTier && formData.songQuery === "upload" && audioFile) {
           setPublishStatus("Processing audio file...");
           if (audioFile.size > 800 * 1024) {
             alert("Custom audio file is too large for the database (max 800KB). Please select a preset song or paste a YouTube link instead!");
@@ -311,6 +312,7 @@ export default function Dashboard() {
           const docRef = await addDoc(collection(db, "gifts"), {
             ...formData,
             photoUrls: isMultiSub ? photoUrls.slice(0, 4) : photoUrls,
+            photoCaptions: isFreeTier ? (formData.photoCaptions || []).slice(0, 1) : formData.photoCaptions,
             hasSubPhotos: isMultiSub,
             songQuery: finalSongUrl,
             slug: autoSlug,
