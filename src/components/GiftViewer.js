@@ -393,10 +393,12 @@ export default function GiftViewer({ params }) {
 
           setGiftData({
             skipTrivia: dbData.skipTrivia || false,
+            tier: dbData.tier || "standard",
             theme: dbData.theme || "blush",
             occasion: dbData.occasion || "standard",
             giftMode: dbData.giftMode || "solo",
             birthdayAge: dbData.birthdayAge || "",
+            anniversaryYears: dbData.anniversaryYears || "",
             wishes: loadedWishes,
             recipientName: dbData.recipientName || "Cutie",
             creatorName: dbData.creatorName || "Me",
