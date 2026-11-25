@@ -38,8 +38,14 @@ service cloud.firestore {
       );
 
       // 2. Creating gifts
-      // Free testing & promo mode enabled: allow creation with paid: true
-      allow create: if true;
+      // Require authenticated creator; only admins or free-tier gifts may start with paid: true
+      allow create: if isAuthenticated() &&
+        request.resource.data.creatorId == request.auth.uid &&
+        (
+          request.resource.data.paid == false ||
+          request.resource.data.tier == 'free' ||
+          isAdmin()
+        );
 
       // 3. Updating gifts
       // - Admins can update anything (locking, unlocking, banning, moderation)
@@ -66,7 +72,7 @@ service cloud.firestore {
       // Subcollections
       match /photos/{photoId} {
         allow read: if true;
-        allow write: if isAdmin() || isAuthenticated();
+        allow write: if isAdmin() || isOwner(get(/databases/$(database)/documents/gifts/$(giftId)).data);
       }
 
       // Group Wishes / Kudoboard squad subcollection

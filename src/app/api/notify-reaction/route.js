@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { db } from "../../../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { escapeHtml, getSafeAppOrigin } from "../../../lib/security";
 
 export async function POST(req) {
   try {
@@ -41,8 +42,10 @@ export async function POST(req) {
     }
 
     const resend = new Resend(resendApiKey);
-    const domain = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "https://lovelink.app";
+    const domain = getSafeAppOrigin(req.headers.get("origin"));
     const sender = process.env.RESEND_SENDER_EMAIL || "notifications@lovelink.app";
+    const safeCreatorName = escapeHtml(creatorName);
+    const safeRecipientName = escapeHtml(recipientName);
 
     const isVideo = reactionType === 'video';
     const isVoice = reactionType === 'voice';
@@ -71,10 +74,10 @@ export async function POST(req) {
         </div>
         
         <div style="background-color: #1e293b; padding: 40px; border-radius: 20px; border: 1px solid #334155;">
-          <h2 style="color: #f8fafc; margin-top: 0; font-size: 22px;">Hey ${creatorName},</h2>
+          <h2 style="color: #f8fafc; margin-top: 0; font-size: 22px;">Hey ${safeCreatorName},</h2>
           
           <p style="color: #cbd5e1; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
-            Great news! <strong>${recipientName}</strong> just opened your keepsake and ${actionText}.
+            Great news! <strong>${safeRecipientName}</strong> just opened your keepsake and ${actionText}.
           </p>
           
           <div style="text-align: center; margin-top: 35px; margin-bottom: 20px;">

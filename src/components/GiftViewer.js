@@ -7,6 +7,7 @@ import { db } from "../lib/firebase";
 import { doc, getDoc, updateDoc, serverTimestamp, collection, query, orderBy, getDocs, where, limit } from "firebase/firestore";
 import { PRESET_SONGS } from "./MusicSelector";
 import { parseVideoUrl } from "../lib/videoEmbed";
+import { extractSafeYouTubeId } from "../lib/security";
 import BirthdayBox from "./BirthdayBox";
 import BirthdayExperience from "./BirthdayExperience";
 import AnniversaryExperience from "./AnniversaryExperience";
@@ -666,11 +667,11 @@ export default function GiftViewer({ params }) {
             src={birthdaySongUrl} 
           />
         )}
-        {giftData?.tier !== "free" && giftData?.songQuery?.includes("youtube") && (
+        {giftData?.tier !== "free" && extractSafeYouTubeId(giftData?.songQuery) && (
           <iframe 
             className="absolute pointer-events-none opacity-0 -z-50"
             style={{ width: "1px", height: "1px", left: "-9999px", top: "-9999px" }}
-            src={`https://www.youtube.com/embed/${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}?autoplay=1&playsinline=1&enablejsapi=1&loop=1&playlist=${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}`}
+            src={`https://www.youtube.com/embed/${extractSafeYouTubeId(giftData.songQuery)}?autoplay=1&playsinline=1&enablejsapi=1&loop=1&playlist=${extractSafeYouTubeId(giftData.songQuery)}`}
             allow="autoplay; encrypted-media" 
           />
         )}
@@ -846,19 +847,11 @@ export default function GiftViewer({ params }) {
         {giftData?.tier !== "free" && !giftData?.songQuery?.includes("youtube") && (
           <audio ref={audioRef} loop playsInline src={anniversarySongUrl} />
         )}
-        {giftData?.tier !== "free" && giftData?.songQuery?.includes("youtube") && (
+        {giftData?.tier !== "free" && extractSafeYouTubeId(giftData?.songQuery) && (
           <iframe
             className="absolute pointer-events-none opacity-0 -z-50"
             style={{ width: "1px", height: "1px", left: "-9999px", top: "-9999px" }}
-            src={`https://www.youtube.com/embed/${
-              giftData.songQuery.includes("v=")
-                ? giftData.songQuery.split("v=")[1]?.split("&")[0]
-                : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]
-            }?autoplay=1&playsinline=1&enablejsapi=1&loop=1&playlist=${
-              giftData.songQuery.includes("v=")
-                ? giftData.songQuery.split("v=")[1]?.split("&")[0]
-                : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]
-            }`}
+            src={`https://www.youtube.com/embed/${extractSafeYouTubeId(giftData.songQuery)}?autoplay=1&playsinline=1&enablejsapi=1&loop=1&playlist=${extractSafeYouTubeId(giftData.songQuery)}`}
             allow="autoplay; encrypted-media"
           />
         )}
@@ -969,12 +962,11 @@ export default function GiftViewer({ params }) {
                         onChange={(e) => setReportReason(e.target.value)}
                         className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500"
                       >
-                        <option value="">Select a reason...</option>
-                        <option value="harassment">Harassment or Bullying</option>
-                        <option value="nonconsensual">Non-consensual Content</option>
-                        <option value="fraud">Fraud or Scam</option>
-                        <option value="hate">Hate Speech</option>
-                        <option value="other">Other</option>
+                        <option value="Harassment or Bullying">Harassment or Bullying</option>
+                        <option value="Non-consensual Content">Non-consensual Content</option>
+                        <option value="Fraud or Scam">Fraud or Scam</option>
+                        <option value="Hate Speech">Hate Speech</option>
+                        <option value="Other">Other</option>
                       </select>
                     </div>
                     <textarea
@@ -1023,11 +1015,11 @@ export default function GiftViewer({ params }) {
       )}
 
       {/* YouTube Background Player (Paid standard / VIP tiers only) */}
-      {giftData?.tier !== "free" && giftData?.songQuery?.includes("youtube") && stage >= -1 && (
+      {giftData?.tier !== "free" && extractSafeYouTubeId(giftData?.songQuery) && stage >= -1 && (
         <iframe 
           className="absolute pointer-events-none opacity-0 -z-50"
           style={{ width: "1px", height: "1px", left: "-9999px", top: "-9999px" }}
-          src={`https://www.youtube.com/embed/${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}?autoplay=1&playsinline=1&enablejsapi=1&loop=1&playlist=${giftData.songQuery.includes("v=") ? giftData.songQuery.split("v=")[1]?.split("&")[0] : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]}`}
+          src={`https://www.youtube.com/embed/${extractSafeYouTubeId(giftData.songQuery)}?autoplay=1&playsinline=1&enablejsapi=1&loop=1&playlist=${extractSafeYouTubeId(giftData.songQuery)}`}
           allow="autoplay; encrypted-media" 
         />
       )}

@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { db } from "../../../lib/firebase";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+function isExpectedAmount(tier, amountPaid, gateway) {
+  const isVip = tier === "vip";
+  const expected = gateway === "paystack" ? (isVip ? 24900 : 9900) : (isVip ? 2499 : 999);
+  return typeof amountPaid === "number" && amountPaid >= expected;
+}
 
 export async function POST(req) {
   try {
@@ -58,10 +64,17 @@ export async function POST(req) {
       const event = JSON.parse(payload);
       if (event.type === "checkout.session.completed") {
         const giftId = event.data?.object?.client_reference_id || event.data?.object?.metadata?.giftId;
+        const amountTotal = event.data?.object?.amount_total;
         if (giftId) {
-          console.log(`[STRIPE CONFIRMED] Payment verified for giftId: ${giftId}. Marking paid...`);
           const giftRef = doc(db, "gifts", giftId);
-          await updateDoc(giftRef, { paid: true });
+          const giftSnap = await getDoc(giftRef);
+          const giftTier = giftSnap.exists() ? (giftSnap.data().tier || "standard") : "standard";
+          if (!isExpectedAmount(giftTier, amountTotal, "stripe")) {
+            console.warn(`[SECURITY ALERT] Stripe amount mismatch for giftId=${giftId}: got ${amountTotal} for tier=${giftTier}`);
+            return NextResponse.json({ error: "Payment amount mismatch" }, { status: 400 });
+          }
+          console.log(`[STRIPE CONFIRMED] Payment verified for giftId: ${giftId}. Marking paid...`);
+          await updateDoc(giftRef, { paid: true, paymentGateway: "stripe", paidAt: new Date().toISOString() });
         }
       }
 
@@ -84,10 +97,17 @@ export async function POST(req) {
       const event = JSON.parse(payload);
       if (event.event === "charge.success") {
         const giftId = event.data?.metadata?.giftId;
+        const amountPaid = event.data?.amount;
         if (giftId) {
-          console.log(`[PAYSTACK CONFIRMED] Payment verified for giftId: ${giftId}. Marking paid...`);
           const giftRef = doc(db, "gifts", giftId);
-          await updateDoc(giftRef, { paid: true });
+          const giftSnap = await getDoc(giftRef);
+          const giftTier = giftSnap.exists() ? (giftSnap.data().tier || "standard") : "standard";
+          if (!isExpectedAmount(giftTier, amountPaid, "paystack")) {
+            console.warn(`[SECURITY ALERT] Paystack amount mismatch for giftId=${giftId}: got ${amountPaid} for tier=${giftTier}`);
+            return NextResponse.json({ error: "Payment amount mismatch" }, { status: 400 });
+          }
+          console.log(`[PAYSTACK CONFIRMED] Payment verified for giftId: ${giftId}. Marking paid...`);
+          await updateDoc(giftRef, { paid: true, paymentGateway: "paystack", paidAt: new Date().toISOString() });
         }
       }
 

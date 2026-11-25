@@ -1,17 +1,28 @@
 import { NextResponse } from "next/server";
+import { db } from "../../../lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { getSafeAppOrigin } from "../../../lib/security";
 
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { giftId, recipientName, email, tier = "standard" } = body;
+    const { giftId, recipientName, email } = body;
 
-    if (!giftId) {
-      return NextResponse.json({ error: "Missing giftId" }, { status: 400 });
+    if (!giftId || typeof giftId !== "string") {
+      return NextResponse.json({ error: "Missing or invalid giftId" }, { status: 400 });
     }
 
-    const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "https://lovelink-app-beta.vercel.app";
+    // SECURITY: Read authoritative tier from Firestore rather than trusting client-supplied tier
+    const giftSnap = await getDoc(doc(db, "gifts", giftId));
+    if (!giftSnap.exists()) {
+      return NextResponse.json({ error: "Gift not found" }, { status: 404 });
+    }
+    const giftData = giftSnap.data();
+    const tier = ["free", "standard", "vip"].includes(giftData.tier) ? giftData.tier : "standard";
 
-    // 0. FREE TIER BYPASS
+    const origin = getSafeAppOrigin(req.headers.get("origin"));
+
+    // 0. FREE TIER BYPASS (only when Firestore record is genuinely tier === "free")
     if (tier === "free") {
       return NextResponse.json({ url: `${origin}/success?giftId=${giftId}` });
     }
@@ -89,8 +100,12 @@ export async function POST(req) {
       return NextResponse.json({ url: stripeData.url });
     }
 
-    // 3. Fallback Development Bypass Mode
-    console.warn("Using Payment Bypass Mode because neither PAYSTACK_SECRET_KEY nor STRIPE_SECRET_KEY is configured.");
+    // 3. Fail closed in production if no payment gateway is configured
+    if (process.env.NODE_ENV === "production") {
+      console.error("[SECURITY] Neither PAYSTACK_SECRET_KEY nor STRIPE_SECRET_KEY is configured.");
+      return NextResponse.json({ error: "Payment gateway is not configured" }, { status: 503 });
+    }
+    console.warn("Using Payment Bypass Mode in development because no payment keys are configured.");
     return NextResponse.json({ url: `${origin}/success?giftId=${giftId}` });
 
   } catch (error) {

@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 
-const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || process.env.NEXT_PUBLIC_ADMIN_PASSCODE || "lovelink2026!";
+const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE;
 
 export async function POST(req) {
   try {
+    if (!ADMIN_PASSCODE) {
+      console.error("[ADMIN SECURITY] ADMIN_PASSCODE environment variable is not configured.");
+      return NextResponse.json({ error: "Admin authentication is not configured" }, { status: 500 });
+    }
+
     const { passcode } = await req.json();
 
     if (!passcode || typeof passcode !== "string") {

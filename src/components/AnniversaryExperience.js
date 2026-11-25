@@ -79,14 +79,21 @@ const PETAL_CHAPTERS = (giftData) => [
 
 // ─── Starfield Particles ───────────────────────────────────────────────────
 function StarField() {
-  const stars = Array.from({ length: 60 }, (_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    size: Math.random() * 2.5 + 0.5,
-    duration: Math.random() * 4 + 2,
-    delay: Math.random() * 4,
-  }));
+  const [stars, setStars] = useState([]);
+
+  useEffect(() => {
+    setStars(
+      Array.from({ length: 60 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() * 2.5 + 0.5,
+        duration: Math.random() * 4 + 2,
+        delay: Math.random() * 4,
+      }))
+    );
+  }, []);
+
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       {stars.map((s) => (
@@ -230,6 +237,7 @@ export default function AnniversaryExperience({ giftData, actualGiftId, onStartA
   // Reaction Booth
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState(null);
+  const [recordedVideoUrl, setRecordedVideoUrl] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [replySent, setReplySent] = useState(false);
@@ -237,6 +245,16 @@ export default function AnniversaryExperience({ giftData, actualGiftId, onStartA
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const recordedChunksRef = useRef([]);
+
+  useEffect(() => {
+    if (!recordedVideo) {
+      setRecordedVideoUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(recordedVideo);
+    setRecordedVideoUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [recordedVideo]);
 
   // ─── Open Tracking (fires once on first interaction) ─────────────────────
   const handleFirstInteraction = () => {
@@ -822,9 +840,9 @@ export default function AnniversaryExperience({ giftData, actualGiftId, onStartA
                 <>
                   {/* Webcam / Preview */}
                   <div className="mx-auto w-64 h-48 rounded-2xl overflow-hidden bg-black/50 border border-white/10 shadow-xl relative">
-                    {recordedVideo ? (
+                    {recordedVideoUrl ? (
                       <video
-                        src={URL.createObjectURL(recordedVideo)}
+                        src={recordedVideoUrl}
                         controls
                         className="w-full h-full object-cover"
                       />
