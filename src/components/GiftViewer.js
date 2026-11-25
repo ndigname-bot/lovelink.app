@@ -9,6 +9,7 @@ import { PRESET_SONGS } from "./MusicSelector";
 import { parseVideoUrl } from "../lib/videoEmbed";
 import BirthdayBox from "./BirthdayBox";
 import BirthdayExperience from "./BirthdayExperience";
+import AnniversaryExperience from "./AnniversaryExperience";
 import FlipCardAlbum from "./FlipCardAlbum";
 import CrystalFlower from "./CrystalFlower";
 
@@ -814,6 +815,186 @@ export default function GiftViewer({ params }) {
                         type="submit"
                         disabled={isSubmittingReport}
                         className="px-5 py-2 rounded-full text-xs font-semibold bg-red-600 hover:bg-red-500 text-white disabled:opacity-50 transition-colors"
+                      >
+                        {isSubmittingReport ? "Submitting..." : "Submit Report"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // 🌹 100% ISOLATED ANNIVERSARY EXPERIENCE (Decoupled from romantic/couples trivia)
+  if (giftData?.occasion === "anniversary") {
+    const anniversarySongUrl =
+      giftData?.songQuery &&
+      (giftData.songQuery.startsWith("/") || giftData.songQuery.startsWith("http"))
+        ? giftData.songQuery
+        : "/audio/a-thousand-years.mp3";
+
+    return (
+      <div
+        className={`min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-black ${styles.text} ${styles.font} flex flex-col items-center justify-start py-0 px-0 relative overflow-y-auto overflow-x-hidden transition-colors duration-1000`}
+      >
+        {/* Isolated Anniversary Audio */}
+        {!giftData?.songQuery?.includes("youtube") && (
+          <audio ref={audioRef} loop playsInline src={anniversarySongUrl} />
+        )}
+        {giftData?.songQuery?.includes("youtube") && (
+          <iframe
+            className="absolute pointer-events-none opacity-0 -z-50"
+            style={{ width: "1px", height: "1px", left: "-9999px", top: "-9999px" }}
+            src={`https://www.youtube.com/embed/${
+              giftData.songQuery.includes("v=")
+                ? giftData.songQuery.split("v=")[1]?.split("&")[0]
+                : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]
+            }?autoplay=1&playsinline=1&enablejsapi=1&loop=1&playlist=${
+              giftData.songQuery.includes("v=")
+                ? giftData.songQuery.split("v=")[1]?.split("&")[0]
+                : giftData.songQuery.split("youtu.be/")[1]?.split("?")[0]
+            }`}
+            allow="autoplay; encrypted-media"
+          />
+        )}
+
+        {/* Floating Music Bar (Standard/VIP only) */}
+        {giftData?.tier !== "free" && (
+          <motion.div
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            onClick={toggleAudio}
+            className="fixed top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-xl border border-purple-500/30 px-4 py-2 rounded-full flex items-center gap-2 z-50 cursor-pointer hover:scale-105 active:scale-95 transition-transform shadow-lg"
+          >
+            <Music className={`w-3.5 h-3.5 text-pink-400 ${isPlaying ? "animate-pulse" : "opacity-60"}`} />
+            <span className="text-xs font-medium text-white tracking-wide">
+              {isPlaying ? "Playing: " : "Tap to Play: "}
+              {PRESET_SONGS.find((s) => s.url === giftData.songQuery)?.title ||
+                (giftData.songQuery?.startsWith("http") ? "Our Special Song 🎵" : "A Thousand Years 🎵")}
+            </span>
+          </motion.div>
+        )}
+
+        {/* 🌹 Isolated Anniversary Experience Engine */}
+        <AnniversaryExperience
+          giftData={giftData}
+          actualGiftId={actualGiftId || giftId}
+          onStartAudio={() => {
+            if (audioRef.current) {
+              audioRef.current.play().then(() => setIsPlaying(true)).catch(console.warn);
+            }
+          }}
+          styles={styles}
+        />
+
+        {/* Free Tier Floating Watermark Badge */}
+        {giftData?.tier === "free" && (
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs font-semibold hover:bg-black/95 hover:scale-105 transition-all shadow-xl flex items-center gap-2"
+          >
+            <span>Made with <strong className="text-pink-400">LoveLink</strong></span>
+            <span className="text-white/40">•</span>
+            <span className="text-pink-300">Create yours free 💖</span>
+          </a>
+        )}
+
+        {/* Safety & Report Footer */}
+        <div className="mt-8 mb-4 z-20">
+          <button
+            type="button"
+            onClick={() => setShowReportModal(true)}
+            className="text-[11px] text-slate-400 hover:text-rose-400 underline transition-colors"
+          >
+            Report Inappropriate Content
+          </button>
+        </div>
+
+        {/* REPORT ABUSE MODAL */}
+        <AnimatePresence>
+          {showReportModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white shadow-2xl relative"
+              >
+                <button
+                  type="button"
+                  onClick={() => { setShowReportModal(false); setReportSubmitted(false); }}
+                  className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                {reportSubmitted ? (
+                  <div className="py-8 text-center space-y-4">
+                    <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/30">
+                      <Check className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-xl font-bold">Report Received</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
+                      Thank you. Our Trust & Safety team will review this LoveLink immediately.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setShowReportModal(false); setReportSubmitted(false); }}
+                      className="mt-4 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-full text-xs font-semibold"
+                    >
+                      Close
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleReportSubmit} className="space-y-4">
+                    <div className="flex items-center gap-2 text-red-400">
+                      <ShieldAlert className="w-5 h-5" />
+                      <h3 className="text-lg font-bold">Report this LoveLink</h3>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      LoveLink prohibits harassment, cyberbullying, doxxing, non-consensual media, and fraudulent use.
+                    </p>
+                    <div>
+                      <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                        Reason for Report
+                      </label>
+                      <select
+                        value={reportReason}
+                        onChange={(e) => setReportReason(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500"
+                      >
+                        <option value="">Select a reason...</option>
+                        <option value="harassment">Harassment or Bullying</option>
+                        <option value="nonconsensual">Non-consensual Content</option>
+                        <option value="fraud">Fraud or Scam</option>
+                        <option value="hate">Hate Speech</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <textarea
+                      value={reportDetails}
+                      onChange={(e) => setReportDetails(e.target.value)}
+                      placeholder="Additional details (optional)..."
+                      rows={3}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm placeholder:text-slate-500 resize-none focus:outline-none focus:border-red-500"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowReportModal(false)}
+                        className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmittingReport}
+                        className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-all disabled:opacity-50"
                       >
                         {isSubmittingReport ? "Submitting..." : "Submit Report"}
                       </button>
