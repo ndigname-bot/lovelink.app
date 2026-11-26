@@ -1004,6 +1004,64 @@ export default function GiftViewer({ params }) {
     );
   }
 
+  // 💌 100% ISOLATED FREE TIER FLAT CARD (All other occasions — No 3D, No Trivia, No Music, No Reaction Booth)
+  if (giftData?.tier === "free") {
+    const heroPhoto = giftData?.photoUrls?.[0] || null;
+    return (
+      <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-center py-12 px-4 relative overflow-x-hidden`}>
+        <div className={`w-full max-w-md mx-auto rounded-3xl border ${styles.border} ${styles.glass} p-7 sm:p-9 text-center space-y-6 shadow-2xl`}>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/25 text-pink-400 text-xs font-semibold uppercase tracking-wider">
+            <Heart className="w-3.5 h-3.5 fill-pink-500/40" />
+            <span>A LoveLink Keepsake</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl font-serif italic font-bold">
+            For {giftData?.recipientName || "You"}
+          </h1>
+
+          {heroPhoto && (
+            <div className="mx-auto w-64 h-64 rounded-2xl overflow-hidden border border-white/15 shadow-lg">
+              <img src={heroPhoto} alt="Keepsake memory" className="w-full h-full object-cover" />
+            </div>
+          )}
+
+          {giftData?.letter && (
+            <p className="text-sm sm:text-base opacity-85 italic leading-relaxed whitespace-pre-line font-serif text-left">
+              {giftData.letter}
+            </p>
+          )}
+
+          <p className={`text-sm font-serif italic ${styles.accentText} text-right pt-3 border-t ${styles.border}`}>
+            {giftData?.signOff || `— ${giftData?.creatorName || "Me"}`}
+          </p>
+        </div>
+
+        {/* Free Tier Floating Watermark Badge */}
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs font-semibold hover:bg-black/95 hover:scale-105 transition-all shadow-xl flex items-center gap-2"
+        >
+          <span>Made with <strong className="text-pink-400">LoveLink</strong></span>
+          <span className="text-white/40">•</span>
+          <span className="text-pink-300">Create yours free 💖</span>
+        </a>
+
+        {/* Safety & Report Footer */}
+        <div className="mt-8 mb-12 z-20">
+          <button
+            type="button"
+            onClick={() => setShowReportModal(true)}
+            className="text-[11px] text-slate-400 hover:text-rose-400 underline transition-colors"
+          >
+            Report Inappropriate Content
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen ${styles.bg} ${styles.text} ${styles.font} flex flex-col items-center justify-start md:justify-center py-10 px-4 sm:px-6 relative overflow-y-auto overflow-x-hidden transition-colors duration-1000 scroll-smooth`}>
       {/* Background Audio (Paid standard / VIP tiers only, and only when YouTube is not selected) */}

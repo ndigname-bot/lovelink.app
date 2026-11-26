@@ -146,8 +146,13 @@ export default function Dashboard() {
 
   const handlePhotoSelect = (e) => {
     const files = Array.from(e.target.files);
-    if (photos.length + files.length > 10) {
-      alert("You can only upload up to 10 photos!");
+    const maxPhotos = (formData.tier || "standard") === "free" ? 1 : 10;
+    if (photos.length + files.length > maxPhotos) {
+      alert(
+        maxPhotos === 1
+          ? "Free Tier allows 1 photo max. Upgrade to Interactive 3D ($9.99) for up to 10 photos!"
+          : "You can only upload up to 10 photos!"
+      );
       return;
     }
     
@@ -965,6 +970,16 @@ export default function Dashboard() {
                     );
                   })}
                 </div>
+                {(formData.tier || "standard") === "free" && (
+                  <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                    <strong>Free Tier Rules:</strong> Your gift will render as a clean flat card with <strong>1 photo max</strong>, <strong>no music</strong>, <strong>no 3D animations / trivia</strong>, <strong>no Reaction Booth</strong>, and a <strong>LoveLink watermark</strong>.
+                    {(photos.length > 1 || photoPreviews.length > 1 || formData.songQuery) && (
+                      <span className="block mt-1 font-semibold">
+                        Note: Any extra photos beyond your 1st photo and any selected song will be excluded on Free Tier.
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Privacy & Data Retention Mode */}

@@ -379,6 +379,42 @@ export default function BirthdayExperience({
   const rawAge = giftData?.birthdayAge ? String(giftData.birthdayAge).replace(/[^0-9]/g, "") : "";
   const displayAge = rawAge ? rawAge : null;
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // FREE TIER — Flat Static Birthday Card (No 3D Cake/Box, No Music, No Booth)
+  // ══════════════════════════════════════════════════════════════════════════
+  if (isFree) {
+    return (
+      <div className="relative w-full min-h-[85vh] flex flex-col items-center justify-center px-4 py-10">
+        <div className="w-full max-w-sm mx-auto rounded-3xl border border-white/15 bg-slate-900/90 backdrop-blur-xl p-6 text-center space-y-5 shadow-2xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-xs font-semibold">
+            <Cake className="w-3.5 h-3.5" />
+            <span>Happy Birthday{displayAge ? ` • ${displayAge}` : ""} 🎂</span>
+          </div>
+
+          <h1 className="text-3xl font-serif italic font-bold text-white">
+            For {recipient}
+          </h1>
+
+          {photoUrls[0] && (
+            <div className="mx-auto w-60 h-60 rounded-2xl overflow-hidden border border-white/15 shadow-lg">
+              <img src={photoUrls[0]} alt="Birthday memory" className="w-full h-full object-cover" />
+            </div>
+          )}
+
+          {giftData?.letter && (
+            <p className="text-sm text-white/80 italic leading-relaxed whitespace-pre-line font-serif px-1">
+              "{giftData.letter.substring(0, 350)}{giftData.letter.length > 350 ? "…" : ""}"
+            </p>
+          )}
+
+          <p className="text-xs text-pink-300/80 font-medium pt-2 border-t border-white/10">
+            — with love, {creator} 💕
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`relative w-full min-h-[92vh] flex flex-col items-center justify-center transition-colors duration-1000 ${
