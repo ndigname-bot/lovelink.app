@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /**
- * Global water-ripple feedback on every mouse click or touch tap.
+ * Global glowing aqua water-ripple feedback on every mouse click or touch tap.
  */
 export default function ClickRipple() {
   const [ripples, setRipples] = useState([]);
@@ -15,7 +15,6 @@ export default function ClickRipple() {
     if (prefersReduced) return;
 
     const handlePointerDown = (e) => {
-      // Ignore non-primary mouse buttons (e.g. right-click)
       if (e.pointerType === "mouse" && e.button !== 0) return;
 
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -24,7 +23,7 @@ export default function ClickRipple() {
       setRipples((prev) => [...prev.slice(-6), ripple]);
       setTimeout(() => {
         setRipples((prev) => prev.filter((r) => r.id !== id));
-      }, 700);
+      }, 1300);
     };
 
     window.addEventListener("pointerdown", handlePointerDown, { passive: true });
@@ -40,21 +39,21 @@ export default function ClickRipple() {
             className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: r.x, top: r.y }}
           >
-            {/* Outer water ripple */}
+            {/* Main soft glowing aqua water orb */}
             <motion.span
-              initial={{ width: 8, height: 8, opacity: 0.75 }}
-              animate={{ width: 76, height: 76, opacity: 0 }}
+              initial={{ width: 16, height: 16, opacity: 0.78 }}
+              animate={{ width: 140, height: 140, opacity: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.62, ease: "easeOut" }}
-              className="block rounded-full border-2 border-pink-400/80 shadow-[0_0_12px_rgba(244,114,182,0.45)]"
+              transition={{ duration: 1.15, ease: [0.16, 1, 0.3, 1] }}
+              className="block rounded-full bg-cyan-300/60 blur-[5px] shadow-[0_0_32px_rgba(103,232,249,0.8)]"
             />
-            {/* Inner secondary water ring */}
+            {/* Secondary outer water ripple ring */}
             <motion.span
-              initial={{ width: 4, height: 4, opacity: 0.65 }}
-              animate={{ width: 44, height: 44, opacity: 0 }}
+              initial={{ width: 12, height: 12, opacity: 0.65 }}
+              animate={{ width: 165, height: 165, opacity: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.48, delay: 0.08, ease: "easeOut" }}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 block rounded-full border border-white/75"
+              transition={{ duration: 1.25, delay: 0.06, ease: "easeOut" }}
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 block rounded-full border-2 border-cyan-300/60 blur-[1px]"
             />
           </div>
         ))}
