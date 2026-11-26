@@ -109,34 +109,134 @@ function StarField() {
   );
 }
 
-// ─── Crystal Petal ────────────────────────────────────────────────────────
-function CrystalPetal({ chapter, discovered, onTap, petalIndex }) {
-  const radius = 108;
-  const angleRad = ((chapter.angle - 90) * Math.PI) / 180;
-  const cx = 50 + radius * Math.cos(angleRad);
-  const cy = 50 + radius * Math.sin(angleRad);
+// ─── Lush Bouquet of Roses SVG ─────────────────────────────────────────────
+function RoseBouquetSVG({ className = "w-44 h-44" }) {
+  const rosePositions = [
+    { cx: 100, cy: 62, r: 22, fill: "#e11d48", inner: "#fda4af" },
+    { cx: 70, cy: 78, r: 19, fill: "#be123c", inner: "#fb7185" },
+    { cx: 130, cy: 78, r: 19, fill: "#db2777", inner: "#f9a8d4" },
+    { cx: 82, cy: 106, r: 18, fill: "#f43f5e", inner: "#fecdd3" },
+    { cx: 118, cy: 106, r: 18, fill: "#c026d3", inner: "#f5d0fe" },
+    { cx: 100, cy: 88, r: 21, fill: "#fb7185", inner: "#fde047" },
+    { cx: 56, cy: 102, r: 15, fill: "#9f1239", inner: "#fda4af" },
+    { cx: 144, cy: 102, r: 15, fill: "#be185d", inner: "#f9a8d4" },
+  ];
+
+  return (
+    <svg viewBox="0 0 200 210" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bouquetGlow" cx="50%" cy="45%" r="50%">
+          <stop offset="0%" stopColor="#f472b6" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="ribbonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#fbbf24" />
+          <stop offset="50%" stopColor="#f472b6" />
+          <stop offset="100%" stopColor="#d97706" />
+        </linearGradient>
+      </defs>
+
+      {/* Soft aura */}
+      <circle cx="100" cy="90" r="85" fill="url(#bouquetGlow)" />
+
+      {/* Leaves */}
+      <path d="M55 115 C30 95, 32 72, 62 82 Z" fill="#166534" opacity="0.9" />
+      <path d="M145 115 C170 95, 168 72, 138 82 Z" fill="#15803d" opacity="0.9" />
+      <path d="M100 125 C80 140, 62 125, 76 105 Z" fill="#14532d" opacity="0.9" />
+      <path d="M100 125 C120 140, 138 125, 124 105 Z" fill="#166534" opacity="0.9" />
+
+      {/* Stems */}
+      <path d="M72 115 L94 185 M85 118 L98 188 M100 115 L100 190 M115 118 L102 188 M128 115 L106 185" stroke="#15803d" strokeWidth="3.5" strokeLinecap="round" />
+
+      {/* Bouquet wrap cone */}
+      <path d="M62 122 L100 192 L138 122 Q100 136 62 122 Z" fill="#581c87" fillOpacity="0.75" stroke="#f9a8d4" strokeOpacity="0.4" strokeWidth="1.5" />
+
+      {/* Satin ribbon */}
+      <ellipse cx="100" cy="148" rx="19" ry="5" fill="url(#ribbonGrad)" />
+      <path d="M100 148 C82 138, 76 154, 96 152 M100 148 C118 138, 124 154, 104 152" stroke="#fde047" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+
+      {/* Layered Roses */}
+      {rosePositions.map((rose, idx) => (
+        <g key={idx}>
+          <circle cx={rose.cx} cy={rose.cy} r={rose.r} fill={rose.fill} />
+          <circle cx={rose.cx - 3} cy={rose.cy - 2} r={rose.r * 0.68} fill={rose.inner} fillOpacity="0.35" />
+          <path
+            d={`M ${rose.cx - rose.r * 0.45} ${rose.cy} Q ${rose.cx} ${rose.cy - rose.r * 0.55}, ${rose.cx + rose.r * 0.45} ${rose.cy} Q ${rose.cx} ${rose.cy + rose.r * 0.45}, ${rose.cx - rose.r * 0.25} ${rose.cy - rose.r * 0.1}`}
+            stroke="#fff1f2"
+            strokeOpacity="0.75"
+            strokeWidth="1.6"
+            fill="none"
+            strokeLinecap="round"
+          />
+        </g>
+      ))}
+
+      {/* Golden baby's breath sparkles */}
+      {[[48, 70], [152, 70], [88, 42], [116, 44], [64, 122], [136, 122]].map(([sx, sy], i) => (
+        <circle key={i} cx={sx} cy={sy} r="2.2" fill="#fde047" opacity="0.9" />
+      ))}
+    </svg>
+  );
+}
+
+// ─── Constellation Star Node ───────────────────────────────────────────────
+const STAR_COORDS = [
+  { x: 50, y: 12 }, // Top
+  { x: 86, y: 38 }, // Top-Right
+  { x: 72, y: 82 }, // Bottom-Right
+  { x: 28, y: 82 }, // Bottom-Left
+  { x: 14, y: 38 }, // Top-Left
+];
+
+function StarNode({ chapter, discovered, onTap, starIndex, counterRotate }) {
+  const pos = STAR_COORDS[starIndex];
+  const isGolden = starIndex === 4;
 
   return (
     <motion.button
       type="button"
-      className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center cursor-pointer border-2 shadow-xl transition-all duration-300 ${
-        discovered
-          ? "bg-gradient-to-br " + chapter.color + " border-white/50 shadow-pink-500/40"
-          : "bg-white/5 border-white/20 backdrop-blur-sm hover:border-white/50"
-      }`}
-      style={{
-        left: `${cx}%`,
-        top: `${cy}%`,
-        width: "54px",
-        height: "54px",
+      className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer focus:outline-none z-20 flex flex-col items-center justify-center"
+      style={{ left: `${pos.x}%`, top: `${pos.y}%`, width: "56px", height: "56px" }}
+      whileTap={{ scale: 0.85 }}
+      whileHover={{ scale: 1.12 }}
+      animate={{
+        rotate: counterRotate,
+        scale: discovered ? [1, 1.12, 1] : [0.95, 1.04, 0.95],
       }}
-      whileTap={{ scale: 0.88 }}
-      animate={discovered ? { scale: [1, 1.18, 1], boxShadow: ["0 0 10px rgba(236,72,153,0.4)", "0 0 30px rgba(236,72,153,0.8)", "0 0 10px rgba(236,72,153,0.4)"] } : {}}
-      transition={discovered ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : {}}
-      onClick={() => onTap(petalIndex)}
-      title={discovered ? chapter.title : "Tap to reveal"}
+      transition={{
+        rotate: { duration: 0.8, ease: "easeInOut" },
+        scale: { duration: 2.2, repeat: Infinity, ease: "easeInOut" },
+      }}
+      onClick={() => onTap(starIndex)}
+      title={discovered ? chapter.title : "Tap star to reveal"}
     >
-      <span className="text-xl">{discovered ? chapter.icon : "✦"}</span>
+      <svg
+        viewBox="0 0 64 64"
+        className={`w-12 h-12 transition-all duration-300 ${
+          discovered
+            ? isGolden
+              ? "drop-shadow-[0_0_16px_rgba(251,191,36,0.95)]"
+              : "drop-shadow-[0_0_14px_rgba(244,114,182,0.9)]"
+            : "drop-shadow-[0_0_8px_rgba(255,255,255,0.45)] opacity-80 hover:opacity-100"
+        }`}
+      >
+        <defs>
+          <linearGradient id={`starGrad-${starIndex}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={discovered ? (isGolden ? "#fef08a" : "#fbcfe8") : "#e2e8f0"} />
+            <stop offset="100%" stopColor={discovered ? (isGolden ? "#f59e0b" : "#ec4899") : "#94a3b8"} />
+          </linearGradient>
+        </defs>
+        <polygon
+          points="32,4 39.5,22 59,23.5 44,36.5 48.5,56 32,45.5 15.5,56 20,36.5 5,23.5 24.5,22"
+          fill={discovered ? `url(#starGrad-${starIndex})` : "rgba(255,255,255,0.12)"}
+          stroke={discovered ? "#ffffff" : "rgba(255,255,255,0.65)"}
+          strokeWidth={discovered ? "2" : "1.8"}
+          strokeLinejoin="round"
+        />
+      </svg>
+      <span className="text-[10px] font-semibold tracking-wide text-white/80 -mt-1 drop-shadow">
+        {discovered ? chapter.icon : `${starIndex + 1}`}
+      </span>
     </motion.button>
   );
 }
@@ -221,9 +321,10 @@ export default function AnniversaryExperience({ giftData, actualGiftId, onStartA
   const [scene, setScene] = useState(isFree ? "flat-card" : "bloom-intro");
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  // Crystal Rose state
+  // Crystal Rose Constellation state
   const chapters = PETAL_CHAPTERS(giftData);
   const [discoveredPetals, setDiscoveredPetals] = useState({ 0: false, 1: false, 2: false, 3: false, 4: false });
+  const [discoveryOrder, setDiscoveryOrder] = useState([]);
   const [activeChapter, setActiveChapter] = useState(null);
   const allDiscovered = Object.values(discoveredPetals).every(Boolean);
 
@@ -285,10 +386,11 @@ export default function AnniversaryExperience({ giftData, actualGiftId, onStartA
     }
   };
 
-  // ─── Petal tap ───────────────────────────────────────────────────────────
+  // ─── Star tap ────────────────────────────────────────────────────────────
   const handlePetalTap = (idx) => {
     if (!discoveredPetals[idx]) {
       setDiscoveredPetals((prev) => ({ ...prev, [idx]: true }));
+      setDiscoveryOrder((prev) => (prev.includes(idx) ? prev : [...prev, idx]));
       try {
         confetti({
           particleCount: 55,
@@ -524,13 +626,13 @@ export default function AnniversaryExperience({ giftData, actualGiftId, onStartA
             <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-purple-950 to-black" />
             <div className="absolute w-72 h-72 rounded-full bg-purple-600/20 blur-[80px] pointer-events-none" />
 
-            {/* Pulsing crystal bud */}
+            {/* Pulsing Bouquet of Roses */}
             <motion.div
-              animate={{ scale: [1, 1.12, 1], filter: ["drop-shadow(0 0 12px rgba(216,180,254,0.5))", "drop-shadow(0 0 32px rgba(216,180,254,0.9))", "drop-shadow(0 0 12px rgba(216,180,254,0.5))"] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-              className="relative z-10 mb-8"
+              animate={{ scale: [1, 1.07, 1], filter: ["drop-shadow(0 0 18px rgba(244,114,182,0.5))", "drop-shadow(0 0 36px rgba(244,114,182,0.9))", "drop-shadow(0 0 18px rgba(244,114,182,0.5))"] }}
+              transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+              className="relative z-10 mb-6"
             >
-              <div className="text-7xl">🌹</div>
+              <RoseBouquetSVG className="w-44 h-44" />
             </motion.div>
 
             <motion.h1
@@ -564,7 +666,7 @@ export default function AnniversaryExperience({ giftData, actualGiftId, onStartA
           </motion.div>
         )}
 
-        {/* ── SCENE 2: CRYSTAL ROSE ────────────────────────────────────────── */}
+        {/* ── SCENE 2: BOUQUET & STAR CONSTELLATION ────────────────────────── */}
         {scene === "crystal-rose" && (
           <motion.div
             key="crystal-rose"
@@ -581,39 +683,120 @@ export default function AnniversaryExperience({ giftData, actualGiftId, onStartA
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="relative z-10 text-center mb-6"
+              className="relative z-10 text-center mb-4"
             >
               <p className="text-xs uppercase tracking-widest text-purple-400 font-semibold mb-1">Our Love Story</p>
-              <h2 className="text-2xl font-serif italic font-bold text-white">The Crystal Rose 🌹</h2>
+              <h2 className="text-2xl font-serif italic font-bold text-white">Bouquet of Stars &amp; Roses 💐</h2>
               <p className="text-xs text-white/50 mt-1">
-                {Object.values(discoveredPetals).filter(Boolean).length} / {chapters.length} petals discovered
+                {discoveryOrder.length} / {chapters.length} stars connected
               </p>
             </motion.div>
 
-            {/* Flower Container */}
-            <div className="relative z-10" style={{ width: "280px", height: "280px" }}>
-              {/* Center golden heart */}
-              <motion.button
-                type="button"
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-amber-400/90 to-yellow-500/90 border-2 border-amber-300/60 shadow-[0_0_30px_rgba(251,191,36,0.5)] flex items-center justify-center cursor-pointer z-20"
-                animate={{ scale: [1, 1.08, 1], boxShadow: ["0 0 20px rgba(251,191,36,0.4)", "0 0 40px rgba(251,191,36,0.8)", "0 0 20px rgba(251,191,36,0.4)"] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                onClick={() => handlePetalTap(4)}
-                whileTap={{ scale: 0.9 }}
+            {/* Constellation + Bouquet Container */}
+            <div className="relative z-10 flex items-center justify-center" style={{ width: "310px", height: "310px" }}>
+              {/* Center Bouquet of Roses */}
+              <motion.div
+                animate={{
+                  scale: allDiscovered ? [1, 1.08, 1] : 1,
+                  filter: allDiscovered
+                    ? "drop-shadow(0 0 32px rgba(244,114,182,0.85))"
+                    : "drop-shadow(0 0 14px rgba(244,114,182,0.35))",
+                }}
+                transition={{ duration: 2.4, repeat: allDiscovered ? Infinity : 0, ease: "easeInOut" }}
+                className="pointer-events-none z-10"
               >
-                <span className="text-2xl">{discoveredPetals[4] ? "💛" : "✦"}</span>
-              </motion.button>
+                <RoseBouquetSVG className="w-40 h-40 opacity-90" />
+              </motion.div>
 
-              {/* 4 Surrounding Petals */}
-              {chapters.slice(0, 4).map((ch, idx) => (
-                <CrystalPetal
-                  key={ch.id}
-                  chapter={ch}
-                  discovered={discoveredPetals[idx]}
-                  onTap={handlePetalTap}
-                  petalIndex={idx}
-                />
-              ))}
+              {/* Rotating Star Constellation Layer */}
+              <motion.div
+                className="absolute inset-0"
+                animate={{ rotate: allDiscovered ? 360 : discoveryOrder.length * 36 }}
+                transition={{ duration: allDiscovered ? 1.4 : 0.8, ease: "easeInOut" }}
+              >
+                {/* Connected Constellation Lines */}
+                <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                  <defs>
+                    <linearGradient id="constellationLine" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#fde047" />
+                      <stop offset="50%" stopColor="#f472b6" />
+                      <stop offset="100%" stopColor="#c084fc" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Sequential lines connecting clicked stars */}
+                  {discoveryOrder.map((starIdx, i) => {
+                    if (i === 0) return null;
+                    const p1 = STAR_COORDS[discoveryOrder[i - 1]];
+                    const p2 = STAR_COORDS[starIdx];
+                    return (
+                      <motion.line
+                        key={`seq-${discoveryOrder[i - 1]}-${starIdx}`}
+                        x1={p1.x}
+                        y1={p1.y}
+                        x2={p2.x}
+                        y2={p2.y}
+                        stroke="url(#constellationLine)"
+                        strokeWidth="1.4"
+                        strokeLinecap="round"
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: 0.9 }}
+                        transition={{ duration: 0.6 }}
+                      />
+                    );
+                  })}
+
+                  {/* Final Rose-Star Constellation closure when all 5 stars are linked */}
+                  {allDiscovered && (
+                    <>
+                      {STAR_COORDS.map((p1, i) => {
+                        const p2 = STAR_COORDS[(i + 1) % STAR_COORDS.length];
+                        const pStar = STAR_COORDS[(i + 2) % STAR_COORDS.length];
+                        return (
+                          <g key={`rose-web-${i}`}>
+                            <motion.line
+                              x1={p1.x}
+                              y1={p1.y}
+                              x2={p2.x}
+                              y2={p2.y}
+                              stroke="#f472b6"
+                              strokeWidth="1.2"
+                              strokeOpacity="0.85"
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                              transition={{ duration: 0.8, delay: i * 0.08 }}
+                            />
+                            <motion.line
+                              x1={p1.x}
+                              y1={p1.y}
+                              x2={pStar.x}
+                              y2={pStar.y}
+                              stroke="#fde047"
+                              strokeWidth="1.1"
+                              strokeOpacity="0.7"
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                              transition={{ duration: 0.9, delay: 0.25 + i * 0.08 }}
+                            />
+                          </g>
+                        );
+                      })}
+                    </>
+                  )}
+                </svg>
+
+                {/* 5 Glowing Star Nodes */}
+                {chapters.map((ch, idx) => (
+                  <StarNode
+                    key={ch.id}
+                    chapter={ch}
+                    discovered={discoveredPetals[idx]}
+                    onTap={handlePetalTap}
+                    starIndex={idx}
+                    counterRotate={allDiscovered ? -360 : -(discoveryOrder.length * 36)}
+                  />
+                ))}
+              </motion.div>
             </div>
 
             {/* Discover hint */}
@@ -624,7 +807,7 @@ export default function AnniversaryExperience({ giftData, actualGiftId, onStartA
                 transition={{ delay: 1, duration: 2.5, repeat: Infinity }}
                 className="relative z-10 mt-5 text-xs text-white/40 text-center"
               >
-                Tap each petal to reveal a chapter 🌸
+                Tap each star to connect the rose constellation ✨
               </motion.p>
             )}
 
