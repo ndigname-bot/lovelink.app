@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import ClickRipple from "@/components/ClickRipple";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -69,6 +70,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           <ServiceWorkerRegister />
+          <ClickRipple />
           {children}
         </ThemeProvider>
       </body>
